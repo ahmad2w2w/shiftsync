@@ -1,0 +1,177 @@
+import { useState, type FormEvent } from 'react'
+import { Plus, Trash2 } from 'lucide-react'
+import type { ShiftTemplate } from '../../types/database'
+import {
+  createShiftTemplate,
+  deleteShiftTemplate,
+} from '../../services/shiftTemplates'
+import { useOrganization } from '../../context/OrganizationContext'
+import { DAY_NAMES } from '../../lib/plannerEngine'
+import { SHIFT_POSITIONS } from '../../lib/utils'
+import { Card, CardHeader } from '../ui/Card'
+import { Button } from '../ui/Button'
+import { Input } from '../ui/Input'
+import { Select } from '../ui/Select'
+
+interface TemplateManagerProps {
+  templates: ShiftTemplate[]
+  onChange: () => void
+}
+
+export function TemplateManager({ templates, onChange }: TemplateManagerProps) {
+  const { organization } = useOrganization()
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({
+    day_of_week: '5',
+    position: 'Keuken',
+    start_time: '17:00',
+    end_time: '22:00',
+    required_count: '2',
+    label: '',
+  })
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!organization) return
+    await createShiftTemplate({
+      organization_id: organization.id,
+      day_of_week: Number(form.day_of_week),
+      position: form.position,
+      start_time: form.start_time,
+      end_time: form.end_time,
+      required_count: Number(form.required_count),
+      label: form.label || null,
+    })
+    setShowForm(false)
+    onChange()
+  }
+
+  const byDay = DAY_NAMES.map((_, dow) => templates.filter((t) => t.day_of_week === dow))
+
+  const duplicateKeys = new Set<string>()
+  const seen = new Set<string>()
+  for (const t of templates) {
+    const k = `${t.day_of_week}|${t.position}|${t.start_time}|${t.end_time}`
+    if (seen.has(k)) duplicateKeys.add(k)
+    seen.add(k)
+  }
+  const hasDuplicates = duplicateKeys.size > 0
+
+  return (
+    <Card>
+      <CardHeader
+        title="Dienst-templates"
+        subtitle="Elke regel = één blok (bv. 2× Keuken op vrijdag). Meerdere regels voor dezelfde functie+tijd tellen op."
+        action={
+          <Button size="sm" onClick={() => setShowForm(!showForm)}>
+            <Plus className="h-4 w-4" />
+            Template
+          </Button>
+        }
+      />
+
+      {hasDuplicates && (
+        <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          Let op: je hebt meerdere templates met dezelfde dag, functie en tijden. Dat geeft extra
+          diensten in de planner. Verwijder dubbele regels of pas het aantal aan.
+        </p>
+      )}
+
+      {showForm && (
+        <form onSubmit={handleSubmit} className="mb-6 grid gap-3 border-b border-gray-100 pb-6 sm:grid-cols-3">
+          <Select
+            label="Weekdag"
+            value={form.day_of_week}
+            onChange={(e) => setForm({ ...form, day_of_week: e.target.value })}
+            options={DAY_NAMES.map((d, i) => ({ value: String(i), label: d }))}
+          />
+          <Select
+            label="Functie"
+            value={form.position}
+            onChange={(e) => setForm({ ...form, position: e.target.value })}
+            options={[...SHIFT_POSITIONS]}
+          />
+          <Input
+            label="Aantal"
+            type="number"
+            min={1}
+            value={form.required_count}
+            onChange={(e) => setForm({ ...form, required_count: e.target.value })}
+          />
+          <Input
+            label="Start"
+            type="time"
+            value={form.start_time}
+            onChange={(e) => setForm({ ...form, start_time: e.target.value })}
+          />
+          <Input
+            label="Einde"
+            type="time"
+            value={form.end_time}
+            onChange={(e) => setForm({ ...form, end_time: e.target.value })}
+          />
+          <Input
+            label="Label (optioneel)"
+            value={form.label}
+            onChange={(e) => setForm({ ...form, label: e.target.value })}
+            placeholder="bv. Vrijdag"
+          />
+          <div className="flex gap-2 sm:col-span-3">
+            <Button type="submit">Opslaan</Button>
+            <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>
+              Annuleren
+            </Button>
+          </div>
+        </form>
+      )}
+
+      <div className="space-y-4">
+        {DAY_NAMES.map((dayName, dow) => {
+          const items = byDay[dow]
+          if (items.length === 0) return null
+          const dayTotal = items.reduce((s, t) => s + t.required_count, 0)
+          return (
+            <div key={dow}>
+              <p className="mb-2 text-sm font-semibold text-navy-800">
+                {dayName}
+                <span className="ml-2 font-normal text-gray-500">
+                  → {dayTotal} dienst{dayTotal !== 1 ? 'en' : ''} per {dayName.toLowerCase()}
+                </span>
+              </p>
+              <ul className="space-y-2">
+                {items.map((t) => (
+                  <li
+                    key={t.id}
+                    className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm"
+                  >
+                    <span>
+                      <strong>{t.required_count}×</strong> {t.position}{' '}
+                      <span className="text-gray-500">
+                        {t.start_time.slice(0, 5)}–{t.end_time.slice(0, 5)}
+                      </span>
+                      {t.label && (
+                        <span className="ml-2 text-xs text-gray-400">({t.label})</span>
+                      )}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (confirm('Template verwijderen?')) {
+                          await deleteShiftTemplate(t.id)
+                          onChange()
+                        }
+                      }}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        })}
+      </div>
+    </Card>
+  )
+}

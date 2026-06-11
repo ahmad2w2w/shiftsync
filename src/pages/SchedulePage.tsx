@@ -136,7 +136,7 @@ export function SchedulePage() {
           <div
             key={label}
             className="rounded-xl px-4 py-2"
-            style={{ background: '#18181b', border: '1px solid rgba(255,255,255,0.08)' }}
+            style={{ background: 'var(--surface-card)', border: '1px solid var(--border)' }}
           >
             <p className="text-xs text-zinc-500">{label}</p>
             <p className={cn('font-semibold text-zinc-100', capitalize && 'capitalize')}>{value}</p>
@@ -147,7 +147,7 @@ export function SchedulePage() {
       {/* Kalender */}
       <div
         className="rounded-2xl p-4 sm:p-6"
-        style={{ background: '#18181b', border: '1px solid rgba(255,255,255,0.08)' }}
+        style={{ background: 'var(--surface-card)', border: '1px solid var(--border)' }}
       >
         <MonthCalendar
           size="large"
@@ -185,7 +185,7 @@ export function SchedulePage() {
           'rounded-2xl p-4 sm:p-5 transition-opacity',
           refreshing && 'opacity-50'
         )}
-        style={{ background: '#18181b', border: '1px solid rgba(255,255,255,0.08)' }}
+        style={{ background: 'var(--surface-card)', border: '1px solid var(--border)' }}
       >
         {!selectedDate ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -238,7 +238,7 @@ export function SchedulePage() {
       {!isAdmin && monthShiftCount > 0 && (
         <div
           className="rounded-2xl p-4 sm:p-5"
-          style={{ background: '#18181b', border: '1px solid rgba(255,255,255,0.08)' }}
+          style={{ background: 'var(--surface-card)', border: '1px solid var(--border)' }}
         >
           <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-zinc-600">
             Alle diensten in {monthLabel(monthAnchor)}

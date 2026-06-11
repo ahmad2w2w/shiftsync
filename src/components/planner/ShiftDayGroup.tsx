@@ -5,11 +5,11 @@ import type { ShiftGroup } from '../../lib/shiftGroups'
 import { formatTime, cn } from '../../lib/utils'
 
 const POSITION_COLOR: Record<string, { bg: string; border: string; text: string }> = {
-  Keuken:    { bg: 'rgba(249,115,22,0.12)', border: 'rgba(249,115,22,0.25)', text: '#fb923c' },
-  Bezorging: { bg: 'rgba(234,179,8,0.12)',  border: 'rgba(234,179,8,0.25)',  text: '#facc15' },
-  Bediening: { bg: 'rgba(37,99,235,0.12)',  border: 'rgba(37,99,235,0.25)',  text: '#60a5fa' },
+  Keuken:    { bg: 'rgba(249,115,22,0.1)',  border: 'rgba(249,115,22,0.25)', text: '#ea580c' },
+  Bezorging: { bg: 'rgba(234,179,8,0.1)',   border: 'rgba(234,179,8,0.25)',  text: '#ca8a04' },
+  Bediening: { bg: 'rgba(59,130,246,0.1)',  border: 'rgba(59,130,246,0.25)', text: '#2563eb' },
 }
-const FALLBACK_COLOR = { bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.1)', text: '#a1a1aa' }
+const FALLBACK_COLOR = { bg: 'var(--surface-subtle)', border: 'var(--border)', text: 'var(--text-muted)' }
 
 function AssignedChip({ shift, selected, onSelect, hasConflict }: { shift: Shift; selected: boolean; onSelect: () => void; hasConflict: boolean }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -25,14 +25,14 @@ function AssignedChip({ shift, selected, onSelect, hasConflict }: { shift: Shift
       onClick={(e) => { e.stopPropagation(); onSelect() }}
       className={cn('flex cursor-grab items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-all', isDragging && 'opacity-50')}
       style={{
-        background: selected ? 'rgba(37,99,235,0.2)' : 'rgba(255,255,255,0.08)',
-        border: selected ? '1px solid rgba(37,99,235,0.5)' : hasConflict ? '1px solid rgba(239,68,68,0.5)' : '1px solid rgba(255,255,255,0.1)',
-        color: '#d4d4d8',
+        background: selected ? 'rgba(59,130,246,0.15)' : 'var(--surface-card)',
+        border: selected ? '1px solid rgba(59,130,246,0.4)' : hasConflict ? '1px solid rgba(239,68,68,0.4)' : '1px solid var(--border)',
+        color: 'var(--text-primary)',
       }}
     >
-      <GripVertical className="h-3 w-3 text-zinc-600" />
+      <GripVertical className="h-3 w-3" style={{ color: 'var(--text-disabled)' }} />
       <span className="truncate">{(shift.user as { full_name?: string })?.full_name ?? 'Medewerker'}</span>
-      {hasConflict && <AlertTriangle className="h-3 w-3 shrink-0 text-red-400" />}
+      {hasConflict && <AlertTriangle className="h-3 w-3 shrink-0 text-red-500" />}
     </div>
   )
 }
@@ -47,9 +47,9 @@ function OpenDropSlot({ shift, selected, onSelect }: { shift: Shift; selected: b
       onClick={(e) => { e.stopPropagation(); onSelect() }}
       className="w-full rounded-lg px-2 py-1 text-left text-[11px] transition-all"
       style={{
-        background: isOver ? 'rgba(37,99,235,0.15)' : 'rgba(255,255,255,0.03)',
-        border: `1px dashed ${isOver || selected ? 'rgba(37,99,235,0.6)' : 'rgba(255,255,255,0.15)'}`,
-        color: isOver ? '#60a5fa' : '#71717a',
+        background: isOver ? 'rgba(59,130,246,0.1)' : 'transparent',
+        border: `1px dashed ${isOver || selected ? '#3B82F6' : 'var(--border-strong)'}`,
+        color: isOver ? '#3B82F6' : 'var(--text-muted)',
       }}
     >
       Open plek
@@ -78,9 +78,9 @@ export function ShiftDayGroup({ group, selectedSlotId, onSelectSlot, expanded, o
     >
       <div className="mb-1.5 flex items-center justify-between gap-1">
         <span className="font-semibold" style={{ color: color.text }}>{group.position}</span>
-        <span className="text-zinc-500">{formatTime(group.start_time)}–{formatTime(group.end_time)}</span>
+        <span style={{ color: 'var(--text-muted)' }}>{formatTime(group.start_time)}–{formatTime(group.end_time)}</span>
       </div>
-      <p className="mb-1.5 text-[10px] text-zinc-600">
+      <p className="mb-1.5 text-[10px]" style={{ color: 'var(--text-muted)' }}>
         {filled.length} ingevuld{open.length > 0 && ` · ${open.length} open`}
       </p>
 
@@ -96,7 +96,7 @@ export function ShiftDayGroup({ group, selectedSlotId, onSelectSlot, expanded, o
             />
           ))}
           {!showAll && filled.length > 2 && (
-            <span className="px-1 text-[10px] text-zinc-600">+{filled.length - 2}</span>
+            <span className="px-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>+{filled.length - 2}</span>
           )}
         </div>
       )}
@@ -120,7 +120,7 @@ export function ShiftDayGroup({ group, selectedSlotId, onSelectSlot, expanded, o
             type="button"
             onClick={(e) => { e.stopPropagation(); onToggleExpand?.() }}
             className="flex w-full items-center justify-center gap-1 rounded-lg py-1 text-[11px] font-medium transition-colors"
-            style={{ background: 'rgba(255,255,255,0.05)', color: '#a1a1aa' }}
+            style={{ background: 'var(--surface-card)', color: 'var(--text-secondary)' }}
           >
             {open.length} open plekken
             <ChevronDown className="h-3 w-3" />
@@ -132,7 +132,8 @@ export function ShiftDayGroup({ group, selectedSlotId, onSelectSlot, expanded, o
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onToggleExpand() }}
-          className="mt-1 w-full text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
+          className="mt-1 w-full text-[10px] transition-colors hover:text-brand-500"
+          style={{ color: 'var(--text-muted)' }}
         >
           Minder tonen
         </button>

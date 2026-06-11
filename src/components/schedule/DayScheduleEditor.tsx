@@ -115,11 +115,11 @@ export function DayScheduleEditor({ date, availability, shifts, onSaved }: DaySc
     return (
       <div
         className="flex flex-col items-center justify-center rounded-2xl px-6 py-14 text-center"
-        style={{ border: '1px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)' }}
+        style={{ border: '1px dashed var(--border-strong)', background: 'var(--surface-subtle)' }}
       >
-        <Users className="mb-3 h-10 w-10 text-zinc-700" />
-        <p className="font-medium text-zinc-300">Geen beschikbaarheid</p>
-        <p className="mt-1 max-w-sm text-sm text-zinc-600">
+        <Users className="mb-3 h-10 w-10" style={{ color: 'var(--text-disabled)' }} />
+        <p className="font-medium" style={{ color: 'var(--text-primary)' }}>Geen beschikbaarheid</p>
+        <p className="mt-1 max-w-sm text-sm" style={{ color: 'var(--text-muted)' }}>
           Op {formatDayHeader(date)} heeft nog niemand zich beschikbaar gemeld.
         </p>
       </div>
@@ -130,8 +130,10 @@ export function DayScheduleEditor({ date, availability, shifts, onSaved }: DaySc
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold capitalize text-zinc-100">{formatDayHeader(date)}</h2>
-          <p className="text-sm text-zinc-500">
+          <h2 className="text-base font-semibold capitalize" style={{ color: 'var(--text-primary)' }}>
+            {formatDayHeader(date)}
+          </h2>
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
             {selectedCount} van {rows.length} beschikbare medewerkers ingepland
           </p>
         </div>
@@ -155,8 +157,8 @@ export function DayScheduleEditor({ date, availability, shifts, onSaved }: DaySc
             className="rounded-2xl transition-all"
             style={
               row.selected
-                ? { background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.25)' }
-                : { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }
+                ? { background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.25)' }
+                : { background: 'var(--surface-subtle)', border: '1px solid var(--border)' }
             }
           >
             <label className="flex cursor-pointer items-center gap-3 px-4 py-3">
@@ -164,18 +166,24 @@ export function DayScheduleEditor({ date, availability, shifts, onSaved }: DaySc
                 type="checkbox"
                 checked={row.selected}
                 onChange={(e) => updateRow(row.user_id, { selected: e.target.checked })}
-                className="h-4 w-4 rounded accent-brand-600"
+                className="h-4 w-4 rounded accent-brand-500"
               />
-              <span className={cn('flex-1 font-medium', row.selected ? 'text-zinc-100' : 'text-zinc-400')}>
+              <span
+                className={cn('flex-1 font-medium')}
+                style={{ color: row.selected ? 'var(--text-primary)' : 'var(--text-muted)' }}
+              >
                 {row.user_name}
               </span>
               {row.selected && (
-                <span className="text-xs text-brand-400">{row.start_time}–{row.end_time}</span>
+                <span className="text-xs text-brand-500">{row.start_time}–{row.end_time}</span>
               )}
             </label>
 
             {row.selected && (
-              <div className="grid gap-3 px-4 pb-4 pt-2 sm:grid-cols-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+              <div
+                className="grid gap-3 px-4 pb-4 pt-2 sm:grid-cols-3"
+                style={{ borderTop: '1px solid var(--border)' }}
+              >
                 <Input label="Start" type="time" value={row.start_time} onChange={(e) => updateRow(row.user_id, { start_time: e.target.value })} />
                 <Input label="Eind" type="time" value={row.end_time} onChange={(e) => updateRow(row.user_id, { end_time: e.target.value })} />
                 <Select label="Functie" value={row.position} onChange={(e) => updateRow(row.user_id, { position: e.target.value })} options={[...SHIFT_POSITIONS]} />
@@ -186,12 +194,12 @@ export function DayScheduleEditor({ date, availability, shifts, onSaved }: DaySc
       </ul>
 
       {error && (
-        <p className="rounded-xl px-4 py-3 text-sm text-red-400" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
+        <p className="rounded-xl px-4 py-3 text-sm text-red-500 dark:text-red-400" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
           {error}
         </p>
       )}
       {success && (
-        <p className="rounded-xl px-4 py-3 text-sm text-emerald-400" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)' }}>
+        <p className="rounded-xl px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400" style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}>
           Rooster opgeslagen voor deze dag.
         </p>
       )}

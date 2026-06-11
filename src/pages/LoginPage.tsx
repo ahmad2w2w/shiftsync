@@ -32,11 +32,14 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-navy-950">
-      {/* Left: branding panel (desktop) */}
-      <div className="gradient-hero hidden flex-col justify-between p-10 lg:flex lg:w-[420px] xl:w-[480px]">
+    <div className="flex min-h-screen" style={{ background: 'var(--surface-page)' }}>
+      {/* Left: branding panel — always dark */}
+      <div
+        className="hidden flex-col justify-between p-10 lg:flex lg:w-[420px] xl:w-[480px]"
+        style={{ background: 'linear-gradient(160deg, #0F172A 0%, #1e3a8a 100%)' }}
+      >
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 shadow-md shadow-brand-600/40">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500 shadow-md shadow-brand-500/40">
             <Zap className="h-5 w-5 text-white" />
           </div>
           <span className="text-base font-bold text-white">ShiftSync</span>
@@ -46,10 +49,10 @@ export function LoginPage() {
             "ShiftSync heeft ons roosterproces compleet getransformeerd."
           </blockquote>
           <div className="mt-4 flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-600/20 text-sm font-bold text-brand-400">S</div>
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-500/20 text-sm font-bold text-brand-400">S</div>
             <div>
               <p className="text-sm font-semibold text-white">Sarah van den Berg</p>
-              <p className="text-xs text-navy-400">Eigenaar, Bistro de Linde</p>
+              <p className="text-xs text-white/50">Eigenaar, Bistro de Linde</p>
             </div>
           </div>
         </div>
@@ -60,14 +63,14 @@ export function LoginPage() {
         <div className="w-full max-w-sm">
           {/* Mobile logo */}
           <div className="mb-8 flex items-center gap-2.5 lg:hidden">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500">
               <Zap className="h-5 w-5 text-white" />
             </div>
-            <span className="text-base font-bold text-white">ShiftSync</span>
+            <span className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>ShiftSync</span>
           </div>
 
-          <h1 className="text-2xl font-bold text-white">Welkom terug</h1>
-          <p className="mt-1.5 text-sm text-navy-400">Log in op je account</p>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Welkom terug</h1>
+          <p className="mt-1.5 text-sm" style={{ color: 'var(--text-muted)' }}>Log in op je account</p>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
             <Input
@@ -79,12 +82,11 @@ export function LoginPage() {
               required
               autoComplete="email"
               autoFocus
-              className="bg-navy-800 border-navy-700 text-white placeholder:text-navy-500 focus:border-brand-500"
             />
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-navy-300">Wachtwoord</label>
-              </div>
+              <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                Wachtwoord
+              </label>
               <input
                 type="password"
                 value={password}
@@ -92,12 +94,17 @@ export function LoginPage() {
                 required
                 autoComplete="current-password"
                 placeholder="••••••••"
-                className="w-full rounded-xl border border-navy-700 bg-navy-800 px-3.5 py-2.5 text-sm text-white placeholder:text-navy-500 focus:border-brand-500 focus:outline-none focus:ring-3 focus:ring-brand-500/15 transition-shadow"
+                className="w-full rounded-xl border px-3.5 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
+                style={{
+                  background: 'var(--surface-input)',
+                  color: 'var(--text-primary)',
+                  borderColor: 'var(--border-input)',
+                }}
               />
             </div>
 
             {error && (
-              <div className="rounded-xl border border-red-900/50 bg-red-950/50 px-4 py-3 text-sm text-red-400">
+              <div className="rounded-xl px-4 py-3 text-sm text-red-500 dark:text-red-400" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
                 {error}
               </div>
             )}
@@ -107,9 +114,9 @@ export function LoginPage() {
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-navy-500">
+          <p className="mt-6 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
             Nog geen account?{' '}
-            <Link to="/register" className="font-semibold text-brand-400 hover:text-brand-300 transition-colors">
+            <Link to="/register" className="font-semibold text-brand-500 hover:text-brand-600 transition-colors">
               Gratis aanmaken
             </Link>
           </p>

@@ -4,6 +4,7 @@ import { Zap, CheckCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { Button } from '../components/ui/Button'
+import { Input } from '../components/ui/Input'
 
 export function RegisterPage() {
   const { session, loading } = useAuth()
@@ -40,11 +41,14 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen" style={{ background: '#09090b' }}>
-      {/* Left branding panel */}
-      <div className="gradient-hero hidden flex-col justify-between p-10 lg:flex lg:w-[420px]">
+    <div className="flex min-h-screen" style={{ background: 'var(--surface-page)' }}>
+      {/* Left branding panel — always dark */}
+      <div
+        className="hidden flex-col justify-between p-10 lg:flex lg:w-[420px]"
+        style={{ background: 'linear-gradient(160deg, #0F172A 0%, #1e3a8a 100%)' }}
+      >
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 shadow-md shadow-brand-600/40">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500 shadow-md shadow-brand-500/40">
             <Zap className="h-5 w-5 text-white" />
           </div>
           <span className="text-base font-bold text-white">ShiftSync</span>
@@ -52,13 +56,13 @@ export function RegisterPage() {
         <div>
           <div className="space-y-4 mb-8">
             {['Gratis tot 5 medewerkers', 'Geen creditcard nodig', 'Direct toegang', 'Opzegbaar per maand'].map((item) => (
-              <div key={item} className="flex items-center gap-3 text-sm text-zinc-300">
+              <div key={item} className="flex items-center gap-3 text-sm text-white/70">
                 <CheckCircle className="h-4 w-4 text-brand-400 shrink-0" />
                 {item}
               </div>
             ))}
           </div>
-          <p className="text-xs text-zinc-600">© {new Date().getFullYear()} ShiftSync</p>
+          <p className="text-xs text-white/30">© {new Date().getFullYear()} ShiftSync</p>
         </div>
       </div>
 
@@ -66,56 +70,47 @@ export function RegisterPage() {
       <div className="flex flex-1 flex-col items-center justify-center px-5 py-12">
         <div className="w-full max-w-sm">
           <div className="mb-8 lg:hidden flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500">
               <Zap className="h-5 w-5 text-white" />
             </div>
-            <span className="text-base font-bold text-white">ShiftSync</span>
+            <span className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>ShiftSync</span>
           </div>
 
-          <h1 className="text-2xl font-bold text-white">Account aanmaken</h1>
-          <p className="mt-1.5 text-sm text-zinc-500">Gratis beginnen, geen creditcard nodig</p>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Account aanmaken</h1>
+          <p className="mt-1.5 text-sm" style={{ color: 'var(--text-muted)' }}>Gratis beginnen, geen creditcard nodig</p>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-zinc-300">Volledige naam</label>
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Jan de Vries"
-                required
-                autoComplete="name"
-                autoFocus
-                className="w-full rounded-xl border border-white/8 bg-zinc-900 px-3.5 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-brand-500/70 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all hover:border-white/15"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-zinc-300">E-mailadres</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="jan@bedrijf.nl"
-                required
-                autoComplete="email"
-                className="w-full rounded-xl border border-white/8 bg-zinc-900 px-3.5 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-brand-500/70 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all hover:border-white/15"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-zinc-300">Wachtwoord</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Minimaal 8 tekens"
-                required
-                autoComplete="new-password"
-                className="w-full rounded-xl border border-white/8 bg-zinc-900 px-3.5 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-brand-500/70 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all hover:border-white/15"
-              />
-            </div>
+            <Input
+              label="Volledige naam"
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Jan de Vries"
+              required
+              autoComplete="name"
+              autoFocus
+            />
+            <Input
+              label="E-mailadres"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="jan@bedrijf.nl"
+              required
+              autoComplete="email"
+            />
+            <Input
+              label="Wachtwoord"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Minimaal 8 tekens"
+              required
+              autoComplete="new-password"
+            />
 
             {error && (
-              <div className="rounded-xl px-4 py-3 text-sm text-red-400" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
+              <div className="rounded-xl px-4 py-3 text-sm text-red-500 dark:text-red-400" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
                 {error}
               </div>
             )}
@@ -125,9 +120,9 @@ export function RegisterPage() {
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-zinc-600">
+          <p className="mt-6 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
             Al een account?{' '}
-            <Link to="/login" className="font-semibold text-brand-400 hover:text-brand-300 transition-colors">
+            <Link to="/login" className="font-semibold text-brand-500 hover:text-brand-600 transition-colors">
               Inloggen
             </Link>
           </p>

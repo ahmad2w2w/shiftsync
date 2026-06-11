@@ -67,13 +67,13 @@ export function TemplateManager({ templates, onChange }: TemplateManagerProps) {
       />
 
       {duplicateKeys.size > 0 && (
-        <p className="mb-4 rounded-xl px-4 py-3 text-sm text-amber-400" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)' }}>
+        <p className="mb-4 rounded-xl px-4 py-3 text-sm text-amber-600 dark:text-amber-400" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
           Let op: je hebt dubbele templates. Verwijder ze of pas het aantal aan.
         </p>
       )}
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="mb-6 grid gap-3 pb-6 sm:grid-cols-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <form onSubmit={handleSubmit} className="mb-6 grid gap-3 pb-6 sm:grid-cols-3" style={{ borderBottom: '1px solid var(--border)' }}>
           <Select label="Weekdag" value={form.day_of_week} onChange={(e) => setForm({ ...form, day_of_week: e.target.value })} options={DAY_NAMES.map((d, i) => ({ value: String(i), label: d }))} />
           <Select label="Functie" value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} options={[...SHIFT_POSITIONS]} />
           <Input label="Aantal" type="number" min={1} value={form.required_count} onChange={(e) => setForm({ ...form, required_count: e.target.value })} />
@@ -94,9 +94,9 @@ export function TemplateManager({ templates, onChange }: TemplateManagerProps) {
           const dayTotal = items.reduce((s, t) => s + t.required_count, 0)
           return (
             <div key={dow}>
-              <p className="mb-2 text-sm font-semibold text-zinc-200">
+              <p className="mb-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                 {dayName}
-                <span className="ml-2 font-normal text-zinc-500">
+                <span className="ml-2 font-normal" style={{ color: 'var(--text-muted)' }}>
                   → {dayTotal} dienst{dayTotal !== 1 ? 'en' : ''} per {dayName.toLowerCase()}
                 </span>
               </p>
@@ -105,12 +105,12 @@ export function TemplateManager({ templates, onChange }: TemplateManagerProps) {
                   <li
                     key={t.id}
                     className="flex items-center justify-between rounded-xl px-4 py-3 text-sm"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+                    style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
                   >
-                    <span className="text-zinc-300">
-                      <strong className="text-zinc-100">{t.required_count}×</strong> {t.position}{' '}
-                      <span className="text-zinc-500">{t.start_time.slice(0, 5)}–{t.end_time.slice(0, 5)}</span>
-                      {t.label && <span className="ml-2 text-xs text-zinc-600">({t.label})</span>}
+                    <span style={{ color: 'var(--text-secondary)' }}>
+                      <strong style={{ color: 'var(--text-primary)' }}>{t.required_count}×</strong> {t.position}{' '}
+                      <span style={{ color: 'var(--text-muted)' }}>{t.start_time.slice(0, 5)}–{t.end_time.slice(0, 5)}</span>
+                      {t.label && <span className="ml-2 text-xs" style={{ color: 'var(--text-disabled)' }}>({t.label})</span>}
                     </span>
                     <button
                       type="button"
@@ -120,7 +120,8 @@ export function TemplateManager({ templates, onChange }: TemplateManagerProps) {
                           onChange()
                         }
                       }}
-                      className="text-zinc-600 hover:text-red-400 transition-colors"
+                      className="transition-colors hover:text-red-500"
+                      style={{ color: 'var(--text-disabled)' }}
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -131,7 +132,7 @@ export function TemplateManager({ templates, onChange }: TemplateManagerProps) {
           )
         })}
         {templates.length === 0 && (
-          <p className="py-4 text-center text-sm text-zinc-600">Nog geen templates aangemaakt.</p>
+          <p className="py-4 text-center text-sm" style={{ color: 'var(--text-muted)' }}>Nog geen templates aangemaakt.</p>
         )}
       </div>
     </Card>

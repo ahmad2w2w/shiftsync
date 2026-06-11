@@ -18,13 +18,15 @@ export function Button({
 }: ButtonProps) {
   const variants = {
     primary:
-      'bg-brand-600 text-white hover:bg-brand-500 active:bg-brand-700 shadow-md shadow-brand-600/25',
+      'bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700 shadow-sm shadow-brand-500/20',
     secondary:
-      'bg-zinc-800 text-zinc-100 border border-white/10 hover:bg-zinc-700 hover:border-white/20',
+      'bg-white text-[#0F172A] border border-[#CBD5E1] hover:bg-[#F8FAFC] ' +
+      'dark:bg-zinc-800 dark:text-zinc-100 dark:border-white/10 dark:hover:bg-zinc-700',
     danger:
-      'bg-red-600 text-white hover:bg-red-500 active:bg-red-700 shadow-md shadow-red-600/25',
+      'bg-red-500 text-white hover:bg-red-600 active:bg-red-700 shadow-sm shadow-red-500/20',
     ghost:
-      'text-zinc-400 hover:bg-white/6 hover:text-zinc-100',
+      'text-[#475569] hover:bg-[#F1F5F9] hover:text-[#0F172A] ' +
+      'dark:text-zinc-400 dark:hover:bg-white/6 dark:hover:text-zinc-100',
   }
   const sizes = {
     sm: 'px-3 py-1.5 text-xs font-semibold rounded-lg',

@@ -7,30 +7,42 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   hint?: string
 }
 
-export function Input({ label, error, hint, className, id, ...props }: InputProps) {
+export function Input({ label, error, hint, className, id, style, ...props }: InputProps) {
   const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-')
   return (
     <div className="space-y-1.5">
       {label && (
-        <label htmlFor={inputId} className="block text-sm font-medium text-zinc-300">
+        <label
+          htmlFor={inputId}
+          className="block text-sm font-medium"
+          style={{ color: 'var(--text-secondary)' }}
+        >
           {label}
         </label>
       )}
       <input
         id={inputId}
         className={cn(
-          'w-full rounded-xl border bg-zinc-900 px-3.5 py-2.5 text-sm text-zinc-100',
-          'placeholder:text-zinc-600 transition-all duration-150',
-          'focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500/70',
+          'w-full rounded-xl px-3.5 py-2.5 text-sm transition-all duration-150',
+          'placeholder:text-[#94A3B8] dark:placeholder:text-zinc-600',
+          'focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500',
           error
-            ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/30'
-            : 'border-white/8 hover:border-white/15',
+            ? 'border border-red-500 focus:ring-red-500/20'
+            : 'border hover:border-brand-500/50',
           className
         )}
+        style={{
+          background: 'var(--surface-input)',
+          color: 'var(--text-primary)',
+          borderColor: error ? undefined : 'var(--border-input)',
+          ...style,
+        }}
         {...props}
       />
-      {hint && !error && <p className="text-xs text-zinc-600">{hint}</p>}
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {hint && !error && (
+        <p className="text-xs" style={{ color: 'var(--text-disabled)' }}>{hint}</p>
+      )}
+      {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
   )
 }

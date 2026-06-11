@@ -138,8 +138,8 @@ export function BillingPage() {
                 className="relative flex flex-col rounded-2xl p-6 transition-all"
                 style={
                   isCurrent
-                    ? { background: 'rgba(37,99,235,0.1)', border: '2px solid rgba(37,99,235,0.4)' }
-                    : { background: '#18181b', border: '1px solid rgba(255,255,255,0.08)' }
+                    ? { background: 'rgba(59,130,246,0.08)', border: '2px solid rgba(59,130,246,0.35)' }
+                    : { background: 'var(--surface-subtle)', border: '1px solid var(--border)' }
                 }
               >
                 {p.highlighted && !isCurrent && (

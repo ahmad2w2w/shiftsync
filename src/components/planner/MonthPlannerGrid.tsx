@@ -22,9 +22,9 @@ export function MonthPlannerGrid({ monthAnchor, shifts, selectedSlotId, onSelect
   return (
     <div className="overflow-x-auto">
       <div className="min-w-[900px]">
-        <div className="grid grid-cols-7 gap-1 pb-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="grid grid-cols-7 gap-1 pb-2" style={{ borderBottom: '1px solid var(--border)' }}>
           {WEEKDAYS.map((d) => (
-            <div key={d} className="text-center text-xs font-semibold text-zinc-500">{d}</div>
+            <div key={d} className="text-center text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>{d}</div>
           ))}
         </div>
         <div className="grid grid-cols-7 gap-1 pt-1">
@@ -40,18 +40,18 @@ export function MonthPlannerGrid({ monthAnchor, shifts, selectedSlotId, onSelect
                 className={cn('min-h-[100px] rounded-xl p-1.5')}
                 style={
                   inMonth
-                    ? { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }
+                    ? { background: 'var(--surface-subtle)', border: '1px solid var(--border)' }
                     : { background: 'transparent', border: '1px solid transparent' }
                 }
               >
                 {inMonth && (
                   <>
-                    <p className="mb-1 text-xs font-semibold text-zinc-400">
+                    <p className="mb-1 text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
                       {format(day, 'd', { locale: nl })}
                     </p>
                     <div className="space-y-1.5">
                       {groups.length === 0 ? (
-                        <p className="text-[10px] text-zinc-700">—</p>
+                        <p className="text-[10px]" style={{ color: 'var(--text-disabled)' }}>—</p>
                       ) : (
                         groups.map((group) => {
                           const expandKey = `${dateStr}|${group.key}`

@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './context/AuthContext'
 import { OrganizationProvider } from './context/OrganizationContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
@@ -27,6 +28,7 @@ import { BillingPage } from './pages/BillingPage'
 export default function App() {
   return (
     <ErrorBoundary>
+      <ThemeProvider>
       <AuthProvider>
         <OrganizationProvider>
           <BrowserRouter>
@@ -74,6 +76,7 @@ export default function App() {
           </BrowserRouter>
         </OrganizationProvider>
       </AuthProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   )
 }

@@ -20,11 +20,14 @@ export function AvailabilityOverview({ monthAnchor, availability }: Availability
       />
       <div className="max-h-[600px] overflow-y-auto">
         <table className="w-full text-sm">
-          <thead className="sticky top-0" style={{ background: '#111113' }}>
-            <tr className="text-left text-zinc-500">
-              <th className="px-3 py-2 font-medium">Datum</th>
-              <th className="px-3 py-2 font-medium">Medewerkers beschikbaar</th>
-              <th className="px-3 py-2 font-medium text-right">Aantal</th>
+          <thead
+            className="sticky top-0"
+            style={{ background: 'var(--surface-card)' }}
+          >
+            <tr className="text-left">
+              <th className="px-3 py-2 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Datum</th>
+              <th className="px-3 py-2 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Medewerkers beschikbaar</th>
+              <th className="px-3 py-2 font-medium text-xs uppercase tracking-wide text-right" style={{ color: 'var(--text-muted)' }}>Aantal</th>
             </tr>
           </thead>
           <tbody>
@@ -32,18 +35,14 @@ export function AvailabilityOverview({ monthAnchor, availability }: Availability
               const dateStr = format(day, 'yyyy-MM-dd')
               const dayAvail = availability.filter((a) => a.date === dateStr)
               return (
-                <tr key={dateStr} style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                  <td className="px-3 py-2 font-medium text-zinc-300 whitespace-nowrap">
+                <tr key={dateStr} style={{ borderTop: '1px solid var(--border)' }}>
+                  <td className="px-3 py-2 font-medium whitespace-nowrap" style={{ color: 'var(--text-primary)' }}>
                     {format(day, 'EEE d MMM', { locale: nl })}
                   </td>
-                  <td className="px-3 py-2 text-zinc-400">
-                    {dayAvail.length === 0 ? (
-                      <span className="text-zinc-700">—</span>
-                    ) : (
-                      dayAvail.map((a) => a.users?.full_name ?? '?').join(', ')
-                    )}
+                  <td className="px-3 py-2" style={{ color: dayAvail.length === 0 ? 'var(--text-disabled)' : 'var(--text-secondary)' }}>
+                    {dayAvail.length === 0 ? '—' : dayAvail.map((a) => a.users?.full_name ?? '?').join(', ')}
                   </td>
-                  <td className="px-3 py-2 text-right text-zinc-500">{dayAvail.length}</td>
+                  <td className="px-3 py-2 text-right" style={{ color: 'var(--text-muted)' }}>{dayAvail.length}</td>
                 </tr>
               )
             })}

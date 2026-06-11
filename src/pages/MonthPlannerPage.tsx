@@ -387,7 +387,7 @@ export function MonthPlannerPage() {
                 value={maxHours}
                 onChange={(e) => setMaxHours(Number(e.target.value))}
                 className="w-16 rounded-lg px-2 py-1 text-zinc-200 outline-none"
-                style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)' }}
+                style={{ background: 'var(--surface-input)', border: '1px solid var(--border-input)' }}
               />
             </label>
           </Card>
@@ -413,14 +413,14 @@ export function MonthPlannerPage() {
                 'relative flex min-h-[600px] gap-0 overflow-hidden rounded-xl',
                 assigning && 'pointer-events-none opacity-90'
               )}
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+              style={{ background: 'var(--surface-card)', border: '1px solid var(--border)' }}
             >
               {assigning && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)' }}>
+                <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.3)' }}>
                   <LoadingSpinner />
                 </div>
               )}
-              <div className="w-56 shrink-0 lg:w-64" style={{ borderRight: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="w-56 shrink-0 lg:w-64" style={{ borderRight: '1px solid var(--border)' }}>
                 <EmployeePool
                   employees={employees}
                   shifts={shifts}
@@ -450,7 +450,7 @@ export function MonthPlannerPage() {
               {activeDragName && (
                 <div
                   className="cursor-grabbing rounded-xl px-4 py-2 text-sm font-medium text-zinc-200"
-                  style={{ background: '#1e1e24', border: '1px solid rgba(37,99,235,0.5)', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}
+                  style={{ background: 'var(--surface-card)', border: '1px solid rgba(59,130,246,0.4)', boxShadow: 'var(--shadow-card-md)' }}
                 >
                   {activeDragName}
                 </div>

@@ -32,10 +32,8 @@ export function MonthCalendar({
           {WEEKDAYS.map((d) => (
             <div
               key={d}
-              className={cn(
-                'py-1 text-center font-medium text-zinc-600',
-                large ? 'text-sm' : 'text-xs'
-              )}
+              className={cn('py-1 text-center font-medium', large ? 'text-sm' : 'text-xs')}
+              style={{ color: 'var(--text-muted)' }}
             >
               {d}
             </div>
@@ -63,19 +61,26 @@ export function MonthCalendar({
                     : 'min-h-[68px] p-1.5 text-xs sm:min-h-[84px] sm:p-2',
                   inMonth
                     ? selected
-                      ? 'bg-brand-600/15 ring-1 ring-brand-500/50'
-                      : 'hover:bg-white/5'
-                    : 'opacity-20',
+                      ? 'bg-brand-500/15 ring-1 ring-brand-500/40'
+                      : 'hover:bg-brand-500/5'
+                    : 'opacity-30',
                   !onSelectDate && inMonth && 'cursor-default'
                 )}
-                style={inMonth && !selected ? { border: '1px solid rgba(255,255,255,0.06)' } : {}}
+                style={
+                  inMonth && !selected
+                    ? { border: '1px solid var(--border)' }
+                    : inMonth && selected
+                    ? { border: '1px solid transparent' }
+                    : {}
+                }
               >
                 <span
                   className={cn(
                     'mb-1 flex items-center justify-center rounded-full font-semibold',
                     large ? 'h-8 w-8 text-sm sm:h-9 sm:w-9' : 'h-6 w-6 text-xs',
-                    selected ? 'bg-brand-600 text-white' : inMonth ? 'text-zinc-200' : 'text-zinc-700'
+                    selected ? 'bg-brand-600 text-white' : ''
                   )}
+                  style={!selected ? { color: inMonth ? 'var(--text-primary)' : 'var(--text-disabled)' } : {}}
                 >
                   {format(day, 'd')}
                 </span>

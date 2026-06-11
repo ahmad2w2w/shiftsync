@@ -1,19 +1,20 @@
 import { cn } from '../../lib/utils'
 
-const variants: Record<string, string> = {
-  pending:   'bg-amber-500/15  text-amber-400  ring-1 ring-amber-500/30',
-  approved:  'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30',
-  rejected:  'bg-red-500/15    text-red-400    ring-1 ring-red-500/30',
-  scheduled: 'bg-brand-500/15  text-brand-400  ring-1 ring-brand-500/30',
-  completed: 'bg-zinc-500/15   text-zinc-400   ring-1 ring-white/10',
-  cancelled: 'bg-red-500/15    text-red-400    ring-1 ring-red-500/30',
-  admin:     'bg-brand-500/15  text-brand-400  ring-1 ring-brand-500/30',
-  employee:  'bg-zinc-500/15   text-zinc-400   ring-1 ring-white/10',
-  active:    'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30',
-  default:   'bg-zinc-500/15   text-zinc-400   ring-1 ring-white/10',
-  free:      'bg-zinc-500/15   text-zinc-400   ring-1 ring-white/10',
-  pro:       'bg-brand-500/15  text-brand-400  ring-1 ring-brand-500/30',
-  business:  'bg-amber-500/15  text-amber-400  ring-1 ring-amber-500/30',
+const variantVars: Record<string, { bg: string; text: string; ring: string }> = {
+  pending:   { bg: 'var(--badge-pending-bg)',   text: 'var(--badge-pending-text)',   ring: 'var(--badge-pending-ring)' },
+  approved:  { bg: 'var(--badge-approved-bg)',  text: 'var(--badge-approved-text)',  ring: 'var(--badge-approved-ring)' },
+  rejected:  { bg: 'var(--badge-rejected-bg)',  text: 'var(--badge-rejected-text)',  ring: 'var(--badge-rejected-ring)' },
+  cancelled: { bg: 'var(--badge-rejected-bg)',  text: 'var(--badge-rejected-text)',  ring: 'var(--badge-rejected-ring)' },
+  scheduled: { bg: 'var(--badge-scheduled-bg)', text: 'var(--badge-scheduled-text)', ring: 'var(--badge-scheduled-ring)' },
+  active:    { bg: 'var(--badge-approved-bg)',  text: 'var(--badge-approved-text)',  ring: 'var(--badge-approved-ring)' },
+  completed: { bg: 'var(--badge-default-bg)',   text: 'var(--badge-default-text)',   ring: 'var(--badge-default-ring)' },
+  default:   { bg: 'var(--badge-default-bg)',   text: 'var(--badge-default-text)',   ring: 'var(--badge-default-ring)' },
+  free:      { bg: 'var(--badge-default-bg)',   text: 'var(--badge-default-text)',   ring: 'var(--badge-default-ring)' },
+  employee:  { bg: 'var(--badge-default-bg)',   text: 'var(--badge-default-text)',   ring: 'var(--badge-default-ring)' },
+  admin:     { bg: 'var(--badge-scheduled-bg)', text: 'var(--badge-scheduled-text)', ring: 'var(--badge-scheduled-ring)' },
+  pro:       { bg: 'var(--badge-scheduled-bg)', text: 'var(--badge-scheduled-text)', ring: 'var(--badge-scheduled-ring)' },
+  business:  { bg: 'var(--badge-gold-bg)',      text: 'var(--badge-gold-text)',      ring: 'var(--badge-gold-ring)' },
+  leave:     { bg: 'var(--badge-purple-bg)',    text: 'var(--badge-purple-text)',    ring: 'var(--badge-purple-ring)' },
 }
 
 export function Badge({
@@ -25,13 +26,15 @@ export function Badge({
   children: React.ReactNode
   className?: string
 }) {
+  const v = variantVars[variant] ?? variantVars.default
   return (
     <span
-      className={cn(
-        'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
-        variants[variant] ?? variants.default,
-        className
-      )}
+      className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium', className)}
+      style={{
+        background: v.bg,
+        color: v.text,
+        boxShadow: `0 0 0 1px ${v.ring}`,
+      }}
     >
       {children}
     </span>

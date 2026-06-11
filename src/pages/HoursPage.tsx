@@ -56,7 +56,8 @@ export function HoursPage() {
           <select
             value={range}
             onChange={(e) => setRange(e.target.value as 'week' | 'month')}
-            className="rounded-xl border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 focus:border-brand-500/70 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+            className="rounded-xl border px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 transition-all"
+            style={{ background: 'var(--surface-input)', color: 'var(--text-primary)', borderColor: 'var(--border-input)' }}
           >
             <option value="week">Week</option>
             <option value="month">Maand</option>

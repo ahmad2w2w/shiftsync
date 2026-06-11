@@ -80,7 +80,7 @@ const faqs = [
 
 export function PricingPage() {
   return (
-    <div className="min-h-screen" style={{ background: '#09090b' }}>
+    <div className="dark min-h-screen" style={{ background: '#09090b' }}>
       {/* Navbar */}
       <header
         className="sticky top-0 z-40 backdrop-blur-md"

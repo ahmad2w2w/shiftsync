@@ -108,7 +108,7 @@ const testimonials = [
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen" style={{ background: '#09090b' }}>
+    <div className="dark min-h-screen" style={{ background: '#09090b' }}>
 
       {/* ── NAVBAR ── */}
       <header className="fixed inset-x-0 top-0 z-50 backdrop-blur-md" style={{ background: 'rgba(9,9,11,0.92)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
@@ -171,7 +171,8 @@ export function LandingPage() {
             </Link>
             <a
               href="#features"
-              className="flex items-center gap-2 rounded-2xl border border-white/15 px-8 py-3.5 text-base font-medium text-white hover:bg-white/8 transition-colors"
+              className="flex items-center gap-2 rounded-2xl px-8 py-3.5 text-base font-medium text-white/80 hover:text-white hover:bg-white/8 transition-colors"
+              style={{ border: '1px solid rgba(255,255,255,0.2)' }}
             >
               Bekijk functies
             </a>

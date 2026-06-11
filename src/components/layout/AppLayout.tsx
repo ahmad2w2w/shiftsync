@@ -38,6 +38,7 @@ const managerNav = [
   { to: '/app/medewerkers',     label: 'Medewerkers',      icon: Users },
   { to: '/app/rooster',         label: 'Rooster',          icon: Calendar },
   { to: '/app/maandplanner',    label: 'Maandplanner',     icon: BarChart3 },
+  { to: '/app/beschikbaarheid', label: 'Beschikbaarheid',  icon: CalendarCheck },
   { to: '/app/klok',            label: 'Klokregistratie',  icon: Clock },
   { to: '/app/uren',            label: 'Urenoverzicht',    icon: Timer },
   { to: '/app/verlof',          label: 'Verlofaanvragen',  icon: Palmtree },

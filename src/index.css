@@ -1,58 +1,71 @@
 @import "tailwindcss";
 
 @theme {
-  /* Navy — primaire kleur voor de app-interface */
-  --color-navy-50: #f0f4f8;
-  --color-navy-100: #d9e2ec;
-  --color-navy-200: #bcccdc;
-  --color-navy-300: #9fb3c8;
-  --color-navy-400: #829ab1;
-  --color-navy-500: #627d98;
-  --color-navy-600: #486581;
-  --color-navy-700: #334e68;
-  --color-navy-800: #243b53;
-  --color-navy-900: #102a43;
-  --color-navy-950: #0a1929;
+  /* Zinc — donkere achtergronden en tekst */
+  --color-navy-50:  #18181b;
+  --color-navy-100: #27272a;
+  --color-navy-200: #3f3f46;
+  --color-navy-300: #52525b;
+  --color-navy-400: #71717a;
+  --color-navy-500: #a1a1aa;
+  --color-navy-600: #d4d4d8;
+  --color-navy-700: #e4e4e7;
+  --color-navy-800: #f4f4f5;
+  --color-navy-900: #fafafa;
+  --color-navy-950: #ffffff;
 
-  /* Indigo — accent kleur voor ShiftSync branding */
-  --color-brand-50: #eef2ff;
-  --color-brand-100: #e0e7ff;
-  --color-brand-200: #c7d2fe;
-  --color-brand-300: #a5b4fc;
-  --color-brand-400: #818cf8;
-  --color-brand-500: #6366f1;
-  --color-brand-600: #4f46e5;
-  --color-brand-700: #4338ca;
-  --color-brand-800: #3730a3;
-  --color-brand-900: #312e81;
-  --color-brand-950: #1e1b4b;
+  /* Blauw — accentkleur */
+  --color-brand-50:  #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-200: #bfdbfe;
+  --color-brand-300: #93c5fd;
+  --color-brand-400: #60a5fa;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --color-brand-800: #1e40af;
+  --color-brand-900: #1e3a8a;
+  --color-brand-950: #172554;
 
   --font-sans: "DM Sans", system-ui, sans-serif;
+
+  /* Achtergrond tokens */
+  --color-page:    #09090b;
+  --color-surface: #111113;
+  --color-card:    #18181b;
+  --color-border:  rgba(255,255,255,0.08);
 }
 
 @layer base {
   body {
-    @apply bg-gray-50 text-navy-900 antialiased;
+    background-color: #09090b;
+    color: #fafafa;
     font-family: var(--font-sans);
-  }
-
-  * {
-    @apply border-gray-200;
+    -webkit-font-smoothing: antialiased;
   }
 }
 
 @layer utilities {
   .gradient-brand {
-    background: linear-gradient(135deg, #4f46e5 0%, #334e68 100%);
+    background: linear-gradient(135deg, #2563eb 0%, #09090b 100%);
   }
 
   .gradient-hero {
-    background: linear-gradient(160deg, #0a1929 0%, #1e3a5f 50%, #312e81 100%);
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(37,99,235,0.18) 0%, transparent 70%),
+                linear-gradient(180deg, #09090b 0%, #0a0f1e 100%);
   }
 
   .glass {
     backdrop-filter: blur(12px);
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .card-shadow {
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 2px 8px rgba(0,0,0,0.4);
+  }
+
+  .card-shadow-md {
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 4px 16px rgba(0,0,0,0.5);
   }
 }

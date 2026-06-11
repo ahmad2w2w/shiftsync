@@ -31,31 +31,33 @@ export function ProfilePage() {
   if (!profile) return null
 
   return (
-    <div className="max-w-lg space-y-6">
+    <div className="max-w-lg space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-navy-900">Profiel</h1>
-        <p className="text-sm text-gray-500">Je accountgegevens</p>
+        <h1 className="text-xl font-bold text-zinc-100">Profiel</h1>
+        <p className="text-sm text-zinc-500">Je accountgegevens</p>
       </div>
 
       <Card>
-        <CardHeader title={profile.full_name} />
-        <dl className="space-y-3 text-sm">
-          <div className="flex justify-between">
-            <dt className="text-gray-500">E-mail</dt>
-            <dd className="font-medium">{profile.email}</dd>
+        <div className="flex items-center gap-4 mb-5">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-500/15 text-xl font-bold text-brand-400">
+            {profile.full_name?.[0]?.toUpperCase() ?? '?'}
           </div>
+          <div>
+            <p className="font-semibold text-zinc-100">{profile.full_name}</p>
+            <Badge variant={profile.role} className="mt-1">
+              {isAdmin ? 'Manager' : 'Medewerker'}
+            </Badge>
+          </div>
+        </div>
+        <dl className="space-y-3 text-sm border-t border-white/8 pt-4">
           <div className="flex justify-between">
-            <dt className="text-gray-500">Rol</dt>
-            <dd>
-              <Badge variant={profile.role}>
-                {isAdmin ? 'Manager' : 'Medewerker'}
-              </Badge>
-            </dd>
+            <dt className="text-zinc-500">E-mail</dt>
+            <dd className="font-medium text-zinc-200">{profile.email}</dd>
           </div>
           {!isAdmin && (
             <div className="flex justify-between">
-              <dt className="text-gray-500">Uurloon</dt>
-              <dd className="font-medium">€ {Number(profile.hourly_rate).toFixed(2)}</dd>
+              <dt className="text-zinc-500">Uurloon</dt>
+              <dd className="font-medium text-zinc-200">€ {Number(profile.hourly_rate).toFixed(2)}</dd>
             </div>
           )}
         </dl>
@@ -72,7 +74,7 @@ export function ProfilePage() {
           />
           <Button type="submit" loading={saving}>Opslaan</Button>
           {message && (
-            <p className="text-sm text-emerald-600">{message}</p>
+            <p className="text-sm text-emerald-400">{message}</p>
           )}
         </form>
       </Card>

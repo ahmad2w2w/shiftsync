@@ -2,12 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useOrganization } from '../context/OrganizationContext'
-import {
-  getAllUsers,
-  updateUser,
-  deleteUser,
-  createEmployeeAccount,
-} from '../services/users'
+import { getAllUsers, updateUser, deleteUser, createEmployeeAccount } from '../services/users'
 import type { User, UserRole } from '../types/database'
 import { Card, CardHeader } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
@@ -75,9 +70,6 @@ export function EmployeesPage() {
           hourly_rate: parseFloat(form.hourly_rate),
           organization_id: organization!.id,
         })
-        setError(
-          'Medewerker aangemaakt. Log opnieuw in als manager (signUp wisselt sessie).'
-        )
       }
       resetForm()
       load()
@@ -107,11 +99,11 @@ export function EmployeesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-navy-900">Medewerkers</h1>
-          <p className="text-sm text-gray-500">Team beheren en rollen instellen</p>
+          <h1 className="text-xl font-bold text-zinc-100">Medewerkers</h1>
+          <p className="text-sm text-zinc-500">Team beheren en rollen instellen</p>
         </div>
         <Button onClick={() => { resetForm(); setShowForm(true) }}>
           Medewerker toevoegen
@@ -165,13 +157,13 @@ export function EmployeesPage() {
             />
             <div className="flex gap-2 sm:col-span-2">
               <Button type="submit" loading={submitting}>Opslaan</Button>
-              <Button type="button" variant="secondary" onClick={resetForm}>
-                Annuleren
-              </Button>
+              <Button type="button" variant="secondary" onClick={resetForm}>Annuleren</Button>
             </div>
           </form>
           {error && (
-            <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">{error}</p>
+            <p className="mt-3 rounded-xl px-4 py-3 text-sm text-amber-400" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)' }}>
+              {error}
+            </p>
           )}
         </Card>
       )}
@@ -183,35 +175,39 @@ export function EmployeesPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b text-left text-gray-500">
-                  <th className="pb-2 pr-4">Naam</th>
-                  <th className="pb-2 pr-4">E-mail</th>
-                  <th className="pb-2 pr-4">Rol</th>
-                  <th className="pb-2 pr-4">Uurloon</th>
-                  <th className="pb-2">Acties</th>
+                <tr className="border-b border-white/8 text-left">
+                  <th className="pb-3 pr-4 text-xs font-semibold uppercase tracking-wide text-zinc-600">Naam</th>
+                  <th className="pb-3 pr-4 text-xs font-semibold uppercase tracking-wide text-zinc-600">E-mail</th>
+                  <th className="pb-3 pr-4 text-xs font-semibold uppercase tracking-wide text-zinc-600">Rol</th>
+                  <th className="pb-3 pr-4 text-xs font-semibold uppercase tracking-wide text-zinc-600">Uurloon</th>
+                  <th className="pb-3 text-xs font-semibold uppercase tracking-wide text-zinc-600">Acties</th>
                 </tr>
               </thead>
               <tbody>
-                {users.map((u) => (
-                  <tr key={u.id} className="border-b border-gray-50">
-                    <td className="py-3 pr-4 font-medium">{u.full_name}</td>
-                    <td className="py-3 pr-4">{u.email}</td>
-                    <td className="py-3 pr-4">
-                      <Badge variant={u.role}>{u.role === 'admin' ? 'Manager' : 'Medewerker'}</Badge>
-                    </td>
-                    <td className="py-3 pr-4">€ {Number(u.hourly_rate).toFixed(2)}</td>
-                    <td className="py-3">
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="secondary" onClick={() => startEdit(u)}>
-                          Bewerken
-                        </Button>
-                        <Button size="sm" variant="danger" onClick={() => handleDelete(u.id)}>
-                          Verwijderen
-                        </Button>
-                      </div>
+                {users.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-8 text-center text-sm text-zinc-600">
+                      Nog geen medewerkers toegevoegd
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  users.map((u) => (
+                    <tr key={u.id} className="border-b border-white/5 last:border-0">
+                      <td className="py-3 pr-4 font-medium text-zinc-200">{u.full_name}</td>
+                      <td className="py-3 pr-4 text-zinc-400">{u.email}</td>
+                      <td className="py-3 pr-4">
+                        <Badge variant={u.role}>{u.role === 'admin' ? 'Manager' : 'Medewerker'}</Badge>
+                      </td>
+                      <td className="py-3 pr-4 text-zinc-300">€ {Number(u.hourly_rate).toFixed(2)}</td>
+                      <td className="py-3">
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="secondary" onClick={() => startEdit(u)}>Bewerken</Button>
+                          <Button size="sm" variant="danger" onClick={() => handleDelete(u.id)}>Verwijderen</Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

@@ -54,20 +54,12 @@ export function BillingPage() {
     setLoading(targetPlan)
     try {
       const { data, error: fnError } = await supabase.functions.invoke('create-checkout', {
-        body: {
-          plan: targetPlan,
-          organizationId: organization?.id,
-          returnUrl: window.location.origin + '/app/abonnement',
-        },
+        body: { plan: targetPlan, organizationId: organization?.id, returnUrl: window.location.origin + '/app/abonnement' },
       })
       if (fnError) throw fnError
       if (data?.url) window.location.href = data.url
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Kon geen betaalsessie starten. Controleer of de Stripe Edge Function is gedeployed.'
-      )
+      setError(err instanceof Error ? err.message : 'Kon geen betaalsessie starten. Controleer of de Stripe Edge Function is gedeployed.')
     } finally {
       setLoading(null)
     }
@@ -78,11 +70,7 @@ export function BillingPage() {
     setError('')
     try {
       const { data, error: fnError } = await supabase.functions.invoke('create-checkout', {
-        body: {
-          portal: true,
-          organizationId: organization?.id,
-          returnUrl: window.location.origin + '/app/abonnement',
-        },
+        body: { portal: true, organizationId: organization?.id, returnUrl: window.location.origin + '/app/abonnement' },
       })
       if (fnError) throw fnError
       if (data?.url) window.location.href = data.url
@@ -93,15 +81,11 @@ export function BillingPage() {
     }
   }
 
-  const refresh = async () => {
-    await refreshOrganization()
-  }
-
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-navy-900">Abonnement</h1>
-        <p className="mt-1 text-sm text-gray-500">Beheer je plan en factuurgegevens.</p>
+        <h1 className="text-xl font-bold text-zinc-100">Abonnement</h1>
+        <p className="mt-1 text-sm text-zinc-500">Beheer je plan en factuurgegevens.</p>
       </div>
 
       {/* Current plan */}
@@ -109,39 +93,26 @@ export function BillingPage() {
         <CardHeader title="Huidig abonnement" />
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-100">
-              <Zap className="h-6 w-6 text-brand-600" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500/15">
+              <Zap className="h-6 w-6 text-brand-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <p className="text-lg font-bold text-navy-900">
-                  {PLAN_LIMITS[plan].label}
-                </p>
+                <p className="text-lg font-bold text-zinc-100">{PLAN_LIMITS[plan].label}</p>
                 <Badge variant={plan === 'free' ? 'default' : 'active'}>
                   {plan === 'free' ? 'Gratis' : 'Actief'}
                 </Badge>
               </div>
-              <p className="text-sm text-gray-500">
-                {plan === 'free'
-                  ? 'Tot 5 medewerkers'
-                  : plan === 'pro'
-                  ? 'Tot 25 medewerkers'
-                  : 'Onbeperkt medewerkers'}
+              <p className="text-sm text-zinc-500">
+                {plan === 'free' ? 'Tot 5 medewerkers' : plan === 'pro' ? 'Tot 25 medewerkers' : 'Onbeperkt medewerkers'}
               </p>
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={refresh}>
-              Verversen
-            </Button>
+            <Button variant="secondary" size="sm" onClick={refreshOrganization}>Verversen</Button>
             {plan !== 'free' && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handlePortal}
-                loading={portalLoading}
-              >
-                <ExternalLink className="mr-1.5 h-4 w-4" />
+              <Button variant="secondary" size="sm" onClick={handlePortal} loading={portalLoading}>
+                <ExternalLink className="h-4 w-4" />
                 Facturen & betaalgegevens
               </Button>
             )}
@@ -150,30 +121,29 @@ export function BillingPage() {
       </Card>
 
       {error && (
-        <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-xl px-4 py-3 text-sm text-red-400" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
           <strong>Fout:</strong> {error}
         </div>
       )}
 
       {/* Plan selection */}
       <div>
-        <h2 className="text-lg font-semibold text-navy-900 mb-4">Kies een plan</h2>
-        <div className="grid gap-6 sm:grid-cols-3">
+        <h2 className="mb-4 text-base font-semibold text-zinc-100">Kies een plan</h2>
+        <div className="grid gap-4 sm:grid-cols-3">
           {plans.map((p) => {
             const isCurrent = p.id === plan
             return (
               <div
                 key={p.id}
-                className={`rounded-2xl p-6 border-2 transition-all ${
+                className="relative flex flex-col rounded-2xl p-6 transition-all"
+                style={
                   isCurrent
-                    ? 'border-brand-500 bg-brand-50'
-                    : p.highlighted
-                    ? 'border-navy-200 bg-white hover:border-brand-300'
-                    : 'border-gray-200 bg-white hover:border-gray-300'
-                }`}
+                    ? { background: 'rgba(37,99,235,0.1)', border: '2px solid rgba(37,99,235,0.4)' }
+                    : { background: '#18181b', border: '1px solid rgba(255,255,255,0.08)' }
+                }
               >
                 {p.highlighted && !isCurrent && (
-                  <div className="mb-3 inline-flex items-center gap-1 rounded-full bg-brand-100 px-2.5 py-1 text-xs font-semibold text-brand-700">
+                  <div className="mb-3 inline-flex items-center gap-1 rounded-full bg-brand-500/15 px-2.5 py-1 text-xs font-semibold text-brand-400">
                     <Star className="h-3 w-3" />
                     Populair
                   </div>
@@ -184,33 +154,28 @@ export function BillingPage() {
                     Huidig plan
                   </div>
                 )}
-                <h3 className="font-bold text-navy-900">{p.name}</h3>
+                <h3 className="font-bold text-zinc-100">{p.name}</h3>
                 <div className="mt-2 flex items-end gap-1">
-                  <span className="text-3xl font-bold text-navy-900">{p.price}</span>
-                  <span className="mb-0.5 text-sm text-gray-500">{p.period}</span>
+                  <span className="text-3xl font-bold text-zinc-100">{p.price}</span>
+                  <span className="mb-0.5 text-sm text-zinc-500">{p.period}</span>
                 </div>
-                <ul className="mt-4 space-y-2">
+                <ul className="mt-4 flex-1 space-y-2">
                   {p.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-sm text-gray-600">
-                      <CheckCircle className="h-4 w-4 shrink-0 text-brand-600" />
+                    <li key={f} className="flex items-center gap-2 text-sm text-zinc-400">
+                      <CheckCircle className="h-4 w-4 shrink-0 text-brand-500" />
                       {f}
                     </li>
                   ))}
                 </ul>
-                <div className="mt-6">
+                <div className="mt-5">
                   {isCurrent ? (
-                    <div className="flex w-full items-center justify-center rounded-xl border-2 border-brand-300 py-2.5 text-sm font-medium text-brand-700">
+                    <div className="flex w-full items-center justify-center rounded-xl py-2.5 text-sm font-medium text-brand-400" style={{ border: '1px solid rgba(37,99,235,0.3)' }}>
                       <CheckCircle className="mr-2 h-4 w-4" />
                       Actief
                     </div>
                   ) : (
-                    <Button
-                      onClick={() => handleUpgrade(p.id)}
-                      loading={loading === p.id}
-                      className="w-full"
-                      variant={p.highlighted ? 'primary' : 'secondary'}
-                    >
-                      <CreditCard className="mr-2 h-4 w-4" />
+                    <Button onClick={() => handleUpgrade(p.id)} loading={loading === p.id} className="w-full" variant={p.highlighted ? 'primary' : 'secondary'}>
+                      <CreditCard className="h-4 w-4" />
                       {p.id === 'free' ? 'Downgraden' : 'Upgraden'}
                     </Button>
                   )}
@@ -221,13 +186,13 @@ export function BillingPage() {
         </div>
       </div>
 
-      {/* Info */}
       <Card>
-        <p className="text-sm text-gray-500 leading-relaxed">
-          Betalingen worden veilig verwerkt via <strong>Stripe</strong>. Je kunt je abonnement
-          op elk moment wijzigen of opzeggen. Bij een upgrade ga je direct over naar het nieuwe plan.
-          Bij een downgrade wordt dit verwerkt aan het einde van je huidige factuurperiode.
-          Voor vragen: <a href="mailto:support@shiftsync.nl" className="text-brand-600 hover:underline">support@shiftsync.nl</a>
+        <p className="text-sm leading-relaxed text-zinc-500">
+          Betalingen worden veilig verwerkt via <span className="text-zinc-300 font-medium">Stripe</span>. Je kunt je abonnement op elk moment wijzigen of opzeggen.
+          Voor vragen:{' '}
+          <a href="mailto:support@shiftsync.nl" className="text-brand-400 hover:text-brand-300 transition-colors">
+            support@shiftsync.nl
+          </a>
         </p>
       </Card>
     </div>

@@ -59,37 +59,27 @@ export function ManagerDashboard() {
   }
 
   const stats = [
-    { label: 'Medewerkers', value: employeeCount, icon: Users, to: '/app/medewerkers' },
-    { label: 'Verlof in behandeling', value: pendingLeave, icon: Palmtree, to: '/app/verlof' },
-    { label: 'Nu ingeklokt', value: activeClocks.length, icon: Clock, to: '/app/klok' },
+    { label: 'Medewerkers', value: employeeCount, icon: Users, to: '/app/medewerkers', color: 'bg-brand-500/15 text-brand-400' },
+    { label: 'Verlof in behandeling', value: pendingLeave, icon: Palmtree, to: '/app/verlof', color: 'bg-amber-500/15 text-amber-400' },
+    { label: 'Nu ingeklokt', value: activeClocks.length, icon: Clock, to: '/app/klok', color: 'bg-emerald-500/15 text-emerald-400' },
   ]
 
   if (loading) return <LoadingSpinner />
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-navy-900">Dashboard</h1>
-          <p className="text-sm text-gray-500">{organization?.name}</p>
+          <h1 className="text-xl font-bold text-zinc-100">Dashboard</h1>
+          <p className="text-sm text-zinc-500">{organization?.name}</p>
         </div>
         {hasFeature('export') ? (
           <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleExportPDF}
-              loading={exporting}
-            >
+            <Button variant="secondary" size="sm" onClick={handleExportPDF} loading={exporting}>
               <FileText className="h-4 w-4" />
               PDF
             </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleExportExcel}
-              loading={exporting}
-            >
+            <Button variant="secondary" size="sm" onClick={handleExportExcel} loading={exporting}>
               <FileSpreadsheet className="h-4 w-4" />
               Excel
             </Button>
@@ -105,16 +95,16 @@ export function ManagerDashboard() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        {stats.map(({ label, value, icon: Icon, to }) => (
+        {stats.map(({ label, value, icon: Icon, to, color }) => (
           <Link key={label} to={to}>
-            <Card className="transition-shadow hover:shadow-md">
+            <Card className="transition-all hover:card-shadow-md hover:-translate-y-0.5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">{label}</p>
-                  <p className="text-3xl font-bold text-navy-900">{value}</p>
+                  <p className="text-xs font-medium text-zinc-500">{label}</p>
+                  <p className="mt-0.5 text-3xl font-bold text-zinc-100">{value}</p>
                 </div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-navy-100">
-                  <Icon className="h-6 w-6 text-navy-800" />
+                <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${color}`}>
+                  <Icon className="h-5 w-5" />
                 </div>
               </div>
             </Card>
@@ -126,22 +116,22 @@ export function ManagerDashboard() {
         <CardHeader
           title="Nu ingeklokt"
           action={
-            <Link to="/app/klok" className="flex items-center text-sm text-brand-600 hover:underline">
-              Alles bekijken <ChevronRight className="ml-0.5 h-4 w-4" />
+            <Link to="/app/klok" className="flex items-center gap-1 text-sm text-brand-400 hover:text-brand-300 transition-colors">
+              Alles bekijken <ChevronRight className="h-4 w-4" />
             </Link>
           }
         />
         {activeClocks.length === 0 ? (
-          <p className="text-sm text-gray-400">Niemand is momenteel ingeklokt</p>
+          <p className="text-sm text-zinc-600">Niemand is momenteel ingeklokt</p>
         ) : (
-          <ul className="divide-y">
+          <ul className="divide-y divide-white/6">
             {activeClocks.map((c) => (
               <li key={c.id} className="flex items-center justify-between py-3 text-sm">
-                <span className="font-medium text-navy-900">
+                <span className="font-medium text-zinc-200">
                   {(c.user as { full_name?: string })?.full_name ?? 'Medewerker'}
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-500">sinds {formatDateTime(c.clock_in)}</span>
+                  <span className="text-zinc-500">sinds {formatDateTime(c.clock_in)}</span>
                   <Badge variant="active">Actief</Badge>
                 </div>
               </li>
@@ -151,32 +141,19 @@ export function ManagerDashboard() {
       </Card>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Link to="/app/rooster">
-          <Card className="group transition-shadow hover:shadow-md">
-            <p className="font-semibold text-navy-900 group-hover:text-brand-700">Rooster beheren</p>
-            <p className="mt-1 text-sm text-gray-500">Diensten plannen per week</p>
-          </Card>
-        </Link>
-        <Link to="/app/medewerkers">
-          <Card className="group transition-shadow hover:shadow-md">
-            <p className="font-semibold text-navy-900 group-hover:text-brand-700">Medewerkers</p>
-            <p className="mt-1 text-sm text-gray-500">Team beheren en rollen instellen</p>
-          </Card>
-        </Link>
-        <Link to="/app/maandplanner">
-          <Card className="group transition-shadow hover:shadow-md">
-            <p className="font-semibold text-navy-900 group-hover:text-brand-700">Maandplanner</p>
-            <p className="mt-1 text-sm text-gray-500">Automatisch rooster genereren</p>
-          </Card>
-        </Link>
-        <Link to="/app/verlof">
-          <Card className="group transition-shadow hover:shadow-md">
-            <p className="font-semibold text-navy-900 group-hover:text-brand-700">Verlofaanvragen</p>
-            <p className="mt-1 text-sm text-gray-500">
-              {pendingLeave > 0 ? `${pendingLeave} openstaand` : 'Alles behandeld'}
-            </p>
-          </Card>
-        </Link>
+        {[
+          { to: '/app/rooster', title: 'Rooster beheren', desc: 'Diensten plannen per week' },
+          { to: '/app/medewerkers', title: 'Medewerkers', desc: 'Team beheren en rollen instellen' },
+          { to: '/app/maandplanner', title: 'Maandplanner', desc: 'Automatisch rooster genereren' },
+          { to: '/app/verlof', title: 'Verlofaanvragen', desc: pendingLeave > 0 ? `${pendingLeave} openstaand` : 'Alles behandeld' },
+        ].map(({ to, title, desc }) => (
+          <Link key={to} to={to}>
+            <Card className="group transition-all hover:card-shadow-md hover:border-white/15 hover:-translate-y-0.5">
+              <p className="font-semibold text-zinc-200 group-hover:text-brand-400 transition-colors">{title}</p>
+              <p className="mt-1 text-sm text-zinc-500">{desc}</p>
+            </Card>
+          </Link>
+        ))}
       </div>
     </div>
   )

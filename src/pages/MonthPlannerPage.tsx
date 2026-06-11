@@ -273,7 +273,7 @@ export function MonthPlannerPage() {
     { id: 'availability', label: 'Beschikbaarheid', icon: Users },
   ]
 
-  if (!isAdmin) return <Navigate to="/rooster" replace />
+  if (!isAdmin) return <Navigate to="/app/rooster" replace />
   if (loading) return <LoadingSpinner className="min-h-[60vh]" />
 
   return (

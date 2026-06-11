@@ -87,11 +87,11 @@ export const SHIFT_POSITIONS = DEFAULT_SHIFT_POSITIONS
 export const DEFAULT_SHIFT_POSITION = 'Bediening'
 
 export const POSITION_STYLES: Record<string, string> = {
-  Bediening: 'bg-blue-50 text-blue-900 border-blue-200',
-  Keuken: 'bg-orange-50 text-orange-900 border-orange-200',
-  Bezorging: 'bg-amber-50 text-amber-900 border-amber-200',
-  Kassa: 'bg-emerald-50 text-emerald-900 border-emerald-200',
-  Manager: 'bg-purple-50 text-purple-900 border-purple-200',
+  Bediening: 'bg-brand-500/15 text-brand-400 border-brand-500/20',
+  Keuken:    'bg-orange-500/15 text-orange-400 border-orange-500/20',
+  Bezorging: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
+  Kassa:     'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+  Manager:   'bg-violet-500/15 text-violet-400 border-violet-500/20',
 }
 
 export const cn = (...classes: (string | false | undefined | null)[]) =>

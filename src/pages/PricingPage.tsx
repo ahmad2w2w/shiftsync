@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { CheckCircle, Zap, ArrowLeft, Star } from 'lucide-react'
+import { CheckCircle, Zap, ArrowLeft, Star, X } from 'lucide-react'
 
 const plans = [
   {
@@ -80,93 +80,99 @@ const faqs = [
 
 export function PricingPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen" style={{ background: '#09090b' }}>
       {/* Navbar */}
-      <header className="border-b border-gray-100 bg-white/90 backdrop-blur-sm sticky top-0 z-40">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <Link to="/" className="flex items-center gap-2 text-navy-900">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600">
+      <header
+        className="sticky top-0 z-40 backdrop-blur-md"
+        style={{ background: 'rgba(9,9,11,0.92)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}
+      >
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
+          <Link to="/" className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-600 shadow-md shadow-brand-600/30">
               <Zap className="h-4 w-4 text-white" />
             </div>
-            <span className="text-lg font-bold">ShiftSync</span>
+            <span className="text-base font-bold text-white">ShiftSync</span>
           </Link>
           <div className="flex items-center gap-3">
-            <Link to="/login" className="text-sm text-gray-500 hover:text-navy-900">Inloggen</Link>
-            <Link to="/register" className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
+            <Link to="/login" className="text-sm text-zinc-500 hover:text-white transition-colors">Inloggen</Link>
+            <Link
+              to="/register"
+              className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-500 transition-colors"
+            >
               Gratis starten
             </Link>
           </div>
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <Link to="/" className="mb-8 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-navy-900">
+      <div className="mx-auto max-w-7xl px-5 py-16">
+        <Link to="/" className="mb-10 inline-flex items-center gap-1.5 text-sm text-zinc-600 hover:text-white transition-colors">
           <ArrowLeft className="h-4 w-4" />
           Terug naar home
         </Link>
 
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold text-navy-900">Transparante prijzen</h1>
-          <p className="mt-4 text-lg text-gray-500">Begin gratis. Betaal alleen als je groeit.</p>
+        <div className="mb-16 text-center">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-brand-500">Prijzen</p>
+          <h1 className="text-4xl font-bold tracking-tight text-white">Transparante prijzen</h1>
+          <p className="mt-4 text-lg text-zinc-500">Begin gratis. Betaal alleen als je groeit.</p>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-3">
+        {/* Plans */}
+        <div className="grid gap-6 lg:grid-cols-3">
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`rounded-2xl p-8 ${
+              className="relative flex flex-col rounded-2xl p-7"
+              style={
                 plan.highlighted
-                  ? 'bg-navy-900 ring-2 ring-brand-500 shadow-2xl'
-                  : 'border border-gray-200 bg-white shadow-sm'
-              }`}
+                  ? { background: '#0f1825', border: '2px solid rgba(37,99,235,0.5)', boxShadow: '0 0 40px rgba(37,99,235,0.12)' }
+                  : { background: '#111113', border: '1px solid rgba(255,255,255,0.08)' }
+              }
             >
               {plan.highlighted && (
-                <div className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-3 py-1 text-xs font-semibold text-white">
-                  <Star className="h-3 w-3 fill-white" />
-                  Meest populair
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-3 py-1 text-xs font-bold text-white shadow-lg">
+                    <Star className="h-3 w-3 fill-white" />
+                    Meest populair
+                  </span>
                 </div>
               )}
-              <h2 className={`text-2xl font-bold ${plan.highlighted ? 'text-white' : 'text-navy-900'}`}>
-                {plan.name}
-              </h2>
-              <p className={`mt-1 text-sm ${plan.highlighted ? 'text-navy-300' : 'text-gray-500'}`}>
-                {plan.desc}
-              </p>
+
+              <h2 className="text-xl font-bold text-white">{plan.name}</h2>
+              <p className="mt-1 text-sm text-zinc-500">{plan.desc}</p>
+
               <div className="mt-6 flex items-end gap-1">
-                <span className={`text-5xl font-bold ${plan.highlighted ? 'text-white' : 'text-navy-900'}`}>
-                  {plan.price}
-                </span>
-                <span className={`mb-1.5 ${plan.highlighted ? 'text-navy-300' : 'text-gray-500'}`}>
-                  {plan.period}
-                </span>
+                <span className="text-5xl font-bold tracking-tight text-white">{plan.price}</span>
+                <span className="mb-1.5 text-sm text-zinc-500">{plan.period}</span>
               </div>
 
               <Link
                 to={plan.href}
-                className={`mt-8 flex w-full items-center justify-center rounded-xl py-3.5 text-sm font-semibold transition-colors ${
+                className={`mt-7 flex w-full items-center justify-center rounded-xl py-3 text-sm font-semibold transition-all ${
                   plan.highlighted
-                    ? 'bg-brand-600 text-white hover:bg-brand-700'
-                    : 'border-2 border-navy-200 text-navy-900 hover:border-brand-500 hover:text-brand-700'
+                    ? 'bg-brand-600 text-white hover:bg-brand-500 shadow-md shadow-brand-600/25'
+                    : 'text-zinc-300 hover:bg-white/6'
                 }`}
+                style={plan.highlighted ? {} : { border: '1px solid rgba(255,255,255,0.1)' }}
               >
                 {plan.cta}
               </Link>
 
-              <div className="mt-8">
-                <p className={`mb-4 text-xs font-semibold uppercase tracking-wide ${plan.highlighted ? 'text-navy-300' : 'text-gray-400'}`}>
+              <div className="mt-7 flex-1">
+                <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-zinc-600">
                   Inbegrepen
                 </p>
                 <ul className="space-y-3">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2.5 text-sm">
-                      <CheckCircle className={`mt-0.5 h-4 w-4 shrink-0 ${plan.highlighted ? 'text-brand-400' : 'text-brand-600'}`} />
-                      <span className={plan.highlighted ? 'text-navy-200' : 'text-gray-700'}>{f}</span>
+                      <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-brand-500" />
+                      <span className="text-zinc-300">{f}</span>
                     </li>
                   ))}
                   {plan.notIncluded.map((f) => (
-                    <li key={f} className="flex items-start gap-2.5 text-sm opacity-40">
-                      <div className={`mt-0.5 h-4 w-4 shrink-0 rounded-full border-2 ${plan.highlighted ? 'border-navy-600' : 'border-gray-300'}`} />
-                      <span className={plan.highlighted ? 'text-navy-400' : 'text-gray-400'}>{f}</span>
+                    <li key={f} className="flex items-start gap-2.5 text-sm opacity-30">
+                      <X className="mt-0.5 h-4 w-4 shrink-0 text-zinc-500" />
+                      <span className="text-zinc-500">{f}</span>
                     </li>
                   ))}
                 </ul>
@@ -177,17 +183,30 @@ export function PricingPage() {
 
         {/* FAQ */}
         <div className="mt-24">
-          <h2 className="text-2xl font-bold text-navy-900 text-center mb-12">
+          <h2 className="mb-12 text-center text-2xl font-bold text-white">
             Veelgestelde vragen
           </h2>
-          <div className="mx-auto max-w-3xl grid gap-6 sm:grid-cols-2">
+          <div className="mx-auto max-w-3xl grid gap-4 sm:grid-cols-2">
             {faqs.map(({ q, a }) => (
-              <div key={q} className="rounded-xl border border-gray-100 bg-gray-50 p-6">
-                <h3 className="font-semibold text-navy-900 mb-2">{q}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{a}</p>
+              <div
+                key={q}
+                className="rounded-2xl p-6"
+                style={{ background: '#111113', border: '1px solid rgba(255,255,255,0.07)' }}
+              >
+                <h3 className="mb-2 font-semibold text-zinc-100">{q}</h3>
+                <p className="text-sm leading-relaxed text-zinc-500">{a}</p>
               </div>
             ))}
           </div>
+        </div>
+
+        {/* CTA */}
+        <div className="mt-20 text-center">
+          <p className="text-zinc-500">Nog vragen?{' '}
+            <a href="mailto:support@shiftsync.nl" className="text-brand-400 hover:text-brand-300 transition-colors">
+              Neem contact op
+            </a>
+          </p>
         </div>
       </div>
     </div>

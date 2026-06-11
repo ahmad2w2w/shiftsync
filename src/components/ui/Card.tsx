@@ -9,7 +9,7 @@ export function Card({
   return (
     <div
       className={cn(
-        'rounded-xl border border-gray-200 bg-white p-5 shadow-sm',
+        'rounded-2xl bg-zinc-900 p-5 card-shadow',
         className
       )}
       {...props}
@@ -29,12 +29,12 @@ export function CardHeader({
   action?: ReactNode
 }) {
   return (
-    <div className="mb-4 flex items-start justify-between gap-4">
+    <div className="mb-5 flex items-start justify-between gap-4">
       <div>
-        <h2 className="text-lg font-semibold text-navy-900">{title}</h2>
-        {subtitle && <p className="mt-0.5 text-sm text-gray-500">{subtitle}</p>}
+        <h2 className="text-base font-semibold text-zinc-100">{title}</h2>
+        {subtitle && <p className="mt-0.5 text-sm text-zinc-500">{subtitle}</p>}
       </div>
-      {action}
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   )
 }

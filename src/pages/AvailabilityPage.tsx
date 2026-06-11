@@ -13,13 +13,7 @@ import { Card, CardHeader } from '../components/ui/Card'
 import { MonthNavigator } from '../components/ui/MonthNavigator'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { MonthCalendar, formatDayHeader } from '../components/calendar/MonthCalendar'
-import {
-  getMonthRange,
-  addMonths,
-  subMonths,
-  isSameMonth,
-  cn,
-} from '../lib/utils'
+import { getMonthRange, addMonths, subMonths, isSameMonth, cn } from '../lib/utils'
 
 export function AvailabilityPage() {
   const { profile, isAdmin } = useAuth()
@@ -81,17 +75,15 @@ export function AvailabilityPage() {
   )
 
   if (isAdmin) {
-    const dayView = selectedDate
-      ? allEntries.filter((e) => e.date === selectedDate)
-      : []
+    const dayView = selectedDate ? allEntries.filter((e) => e.date === selectedDate) : []
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-navy-900">Beschikbaarheid</h1>
-            <p className="text-sm text-gray-500">
-              Per dag zien wie zich beschikbaar heeft gemeld (zonder tijden)
+            <h1 className="text-xl font-bold text-zinc-100">Beschikbaarheid</h1>
+            <p className="text-sm text-zinc-500">
+              Per dag zien wie zich beschikbaar heeft gemeld
             </p>
           </div>
           {nav}
@@ -116,25 +108,26 @@ export function AvailabilityPage() {
                 const count = allEntries.filter((e) => e.date === dateStr).length
                 if (count === 0) return null
                 return (
-                  <span className="text-[10px] font-medium text-emerald-700 sm:text-xs">
+                  <span className="text-[10px] font-medium text-emerald-400 sm:text-xs">
                     {count} pers.
                   </span>
                 )
               }}
             />
             {selectedDate && (
-              <div className="mt-6 border-t border-gray-200 pt-4">
-                <h3 className="mb-3 font-semibold text-navy-900">
+              <div className="mt-6 border-t border-white/8 pt-5">
+                <h3 className="mb-3 font-semibold text-zinc-100">
                   {formatDayHeader(selectedDate)}
                 </h3>
                 {dayView.length === 0 ? (
-                  <p className="text-sm text-gray-500">Niemand beschikbaar op deze dag.</p>
+                  <p className="text-sm text-zinc-500">Niemand beschikbaar op deze dag.</p>
                 ) : (
                   <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     {dayView.map((e) => (
                       <li
                         key={e.id}
-                        className="flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-900"
+                        className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-emerald-400"
+                        style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)' }}
                       >
                         <Check className="h-4 w-4 shrink-0" />
                         {e.users?.full_name ?? 'Medewerker'}
@@ -142,7 +135,7 @@ export function AvailabilityPage() {
                     ))}
                   </ul>
                 )}
-                <p className="mt-3 text-xs text-gray-400">
+                <p className="mt-3 text-xs text-zinc-600">
                   Tijden stel je in onder Rooster → kies dezelfde dag.
                 </p>
               </div>
@@ -157,11 +150,11 @@ export function AvailabilityPage() {
   const daysInMonth = getMonthRange(monthAnchor).days.length
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-navy-900">Beschikbaarheid</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className="text-xl font-bold text-zinc-100">Beschikbaarheid</h1>
+          <p className="text-sm text-zinc-500">
             Geef per dag aan of je kunt werken — je manager plant de tijden in
           </p>
         </div>
@@ -191,7 +184,7 @@ export function AvailabilityPage() {
                 <span
                   className={cn(
                     'text-[10px] font-medium sm:text-xs',
-                    toggling === dateStr ? 'text-gray-400' : 'text-emerald-700'
+                    toggling === dateStr ? 'text-zinc-500' : 'text-emerald-400'
                   )}
                 >
                   {toggling === dateStr ? '...' : 'Beschikbaar'}
@@ -199,7 +192,7 @@ export function AvailabilityPage() {
               )
             }}
           />
-          <p className="mt-4 text-xs text-gray-500">
+          <p className="mt-4 text-xs text-zinc-600">
             Je hoeft geen start- of eindtijd in te vullen. De manager bepaalt wanneer je dienst
             begint op basis van het rooster.
           </p>

@@ -44,11 +44,11 @@ export function HoursPage() {
   const total = sumHours(records)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-navy-900">Urenoverzicht</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className="text-xl font-bold text-zinc-100">Urenoverzicht</h1>
+          <p className="text-sm text-zinc-500">
             Gewerkte uren per {range === 'week' ? 'week' : 'maand'}
           </p>
         </div>
@@ -56,7 +56,7 @@ export function HoursPage() {
           <select
             value={range}
             onChange={(e) => setRange(e.target.value as 'week' | 'month')}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            className="rounded-xl border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 focus:border-brand-500/70 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
           >
             <option value="week">Week</option>
             <option value="month">Maand</option>
@@ -81,10 +81,15 @@ export function HoursPage() {
         />
       )}
 
-      <Card className="bg-navy-900 text-white">
-        <p className="text-sm text-navy-200">Totaal gewerkte uren</p>
-        <p className="text-4xl font-bold">{total.toFixed(2)}</p>
-      </Card>
+      {/* Totaal uren card */}
+      <div
+        className="rounded-2xl p-6"
+        style={{ background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(37,99,235,0.25)' }}
+      >
+        <p className="text-sm font-medium text-brand-400">Totaal gewerkte uren</p>
+        <p className="mt-1 text-5xl font-bold text-white">{total.toFixed(2)}</p>
+        <p className="mt-1 text-xs text-zinc-500">uur in geselecteerde periode</p>
+      </div>
 
       {loading ? (
         <LoadingSpinner />
@@ -94,27 +99,27 @@ export function HoursPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b text-left text-gray-500">
-                  <th className="pb-2 pr-4">Ingeklokt</th>
-                  <th className="pb-2 pr-4">Uitgeklokt</th>
-                  <th className="pb-2">Uren</th>
+                <tr className="border-b border-white/8 text-left">
+                  <th className="pb-3 pr-4 text-xs font-semibold uppercase tracking-wide text-zinc-600">Ingeklokt</th>
+                  <th className="pb-3 pr-4 text-xs font-semibold uppercase tracking-wide text-zinc-600">Uitgeklokt</th>
+                  <th className="pb-3 text-xs font-semibold uppercase tracking-wide text-zinc-600">Uren</th>
                 </tr>
               </thead>
               <tbody>
                 {records.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="py-8 text-center text-gray-400">
+                    <td colSpan={3} className="py-8 text-center text-sm text-zinc-600">
                       Geen registraties in deze periode
                     </td>
                   </tr>
                 ) : (
                   records.map((r) => (
-                    <tr key={r.id} className="border-b border-gray-50">
-                      <td className="py-3 pr-4">{formatDateTime(r.clock_in)}</td>
-                      <td className="py-3 pr-4">
+                    <tr key={r.id} className="border-b border-white/5 last:border-0">
+                      <td className="py-3 pr-4 text-zinc-400">{formatDateTime(r.clock_in)}</td>
+                      <td className="py-3 pr-4 text-zinc-400">
                         {r.clock_out ? formatDateTime(r.clock_out) : '—'}
                       </td>
-                      <td className="py-3 font-medium">{r.total_hours ?? '—'}</td>
+                      <td className="py-3 font-semibold text-zinc-200">{r.total_hours ?? '—'}</td>
                     </tr>
                   ))
                 )}

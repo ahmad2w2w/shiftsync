@@ -15,7 +15,7 @@ export function WeekNavigator({ weekAnchor, onPrev, onNext, onToday }: WeekNavig
       <Button variant="secondary" size="sm" onClick={onPrev} aria-label="Vorige week">
         <ChevronLeft className="h-4 w-4" />
       </Button>
-      <span className="min-w-[200px] text-center text-sm font-medium text-navy-900">
+      <span className="min-w-[200px] text-center text-sm font-medium text-zinc-200">
         {weekLabel(weekAnchor)}
       </span>
       <Button variant="secondary" size="sm" onClick={onNext} aria-label="Volgende week">

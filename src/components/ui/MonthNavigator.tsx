@@ -15,7 +15,7 @@ export function MonthNavigator({ monthAnchor, onPrev, onNext, onToday }: MonthNa
       <Button variant="secondary" size="sm" onClick={onPrev} aria-label="Vorige maand">
         <ChevronLeft className="h-4 w-4" />
       </Button>
-      <span className="min-w-[160px] text-center text-sm font-medium capitalize text-navy-900">
+      <span className="min-w-[160px] text-center text-sm font-medium capitalize text-zinc-200">
         {monthLabel(monthAnchor)}
       </span>
       <Button variant="secondary" size="sm" onClick={onNext} aria-label="Volgende maand">

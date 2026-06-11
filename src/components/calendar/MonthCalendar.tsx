@@ -10,7 +10,6 @@ interface MonthCalendarProps {
   onSelectDate?: (dateStr: string) => void
   renderDay?: (dateStr: string, inMonth: boolean) => React.ReactNode
   hasMarker?: (dateStr: string) => boolean
-  /** large = roosterpagina (volle breedte, grotere cellen) */
   size?: 'default' | 'large'
 }
 
@@ -28,12 +27,13 @@ export function MonthCalendar({
   return (
     <div className="w-full overflow-x-auto">
       <div className={cn('w-full', large ? 'min-w-[640px]' : 'min-w-[320px]')}>
+        {/* Weekday headers */}
         <div className={cn('mb-2 grid grid-cols-7', large ? 'gap-2' : 'gap-1')}>
           {WEEKDAYS.map((d) => (
             <div
               key={d}
               className={cn(
-                'py-1 text-center font-medium text-gray-400',
+                'py-1 text-center font-medium text-zinc-600',
                 large ? 'text-sm' : 'text-xs'
               )}
             >
@@ -41,6 +41,8 @@ export function MonthCalendar({
             </div>
           ))}
         </div>
+
+        {/* Day cells */}
         <div className={cn('grid grid-cols-7', large ? 'gap-2' : 'gap-1')}>
           {grid.map((day) => {
             const dateStr = format(day, 'yyyy-MM-dd')
@@ -55,29 +57,30 @@ export function MonthCalendar({
                 disabled={!inMonth || !onSelectDate}
                 onClick={() => onSelectDate?.(dateStr)}
                 className={cn(
-                  'flex flex-col rounded-lg border text-left transition-colors',
+                  'flex flex-col rounded-xl transition-all',
                   large
-                    ? 'min-h-[100px] p-2.5 text-sm sm:min-h-[120px] sm:p-3'
-                    : 'min-h-[72px] p-1.5 text-xs sm:min-h-[88px] sm:p-2',
-                  inMonth ? 'border-gray-100 bg-white' : 'border-transparent bg-transparent opacity-30',
-                  selected && inMonth && 'border-navy-600 bg-navy-50/40 shadow-sm',
-                  inMonth && onSelectDate && !selected && 'hover:border-gray-200 hover:bg-gray-50',
+                    ? 'min-h-[90px] p-2.5 text-sm sm:min-h-[110px] sm:p-3'
+                    : 'min-h-[68px] p-1.5 text-xs sm:min-h-[84px] sm:p-2',
+                  inMonth
+                    ? selected
+                      ? 'bg-brand-600/15 ring-1 ring-brand-500/50'
+                      : 'hover:bg-white/5'
+                    : 'opacity-20',
                   !onSelectDate && inMonth && 'cursor-default'
                 )}
+                style={inMonth && !selected ? { border: '1px solid rgba(255,255,255,0.06)' } : {}}
               >
                 <span
                   className={cn(
-                    'mb-1 flex items-center justify-center rounded-full font-medium',
+                    'mb-1 flex items-center justify-center rounded-full font-semibold',
                     large ? 'h-8 w-8 text-sm sm:h-9 sm:w-9' : 'h-6 w-6 text-xs',
-                    selected && 'bg-navy-900 text-white',
-                    !selected && inMonth && 'text-navy-800',
-                    !inMonth && 'text-gray-300'
+                    selected ? 'bg-brand-600 text-white' : inMonth ? 'text-zinc-200' : 'text-zinc-700'
                   )}
                 >
                   {format(day, 'd')}
                 </span>
                 {marker && inMonth && !selected && (
-                  <span className="mb-0.5 h-1 w-1 rounded-full bg-navy-400" />
+                  <span className="mb-0.5 h-1 w-1 rounded-full bg-brand-500" />
                 )}
                 {inMonth && renderDay?.(dateStr, inMonth)}
               </button>

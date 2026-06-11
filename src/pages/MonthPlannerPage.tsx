@@ -282,12 +282,12 @@ export function MonthPlannerPage() {
         <div>
           <Link
             to="/rooster"
-            className="mb-2 inline-flex items-center gap-1 text-sm text-navy-600 hover:underline"
+            className="mb-2 inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Terug naar rooster
           </Link>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-navy-900">
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-zinc-100">
             <Sparkles className="h-7 w-7" />
             Slimme Maandrooster Planner
           </h1>
@@ -304,7 +304,8 @@ export function MonthPlannerPage() {
       {toast && (
         <div
           role="status"
-          className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+          className="rounded-xl px-4 py-3 text-sm text-emerald-400"
+          style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)' }}
         >
           {toast}
         </div>
@@ -312,7 +313,8 @@ export function MonthPlannerPage() {
       {actionError && (
         <div
           role="alert"
-          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+          className="rounded-xl px-4 py-3 text-sm text-red-400"
+          style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}
         >
           {actionError}
         </div>
@@ -327,8 +329,8 @@ export function MonthPlannerPage() {
             className={cn(
               'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors',
               tab === id
-                ? 'bg-navy-900 text-white'
-                : 'bg-white text-navy-700 border border-gray-200 hover:bg-gray-50'
+                ? 'bg-brand-600 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200'
             )}
           >
             <Icon className="h-4 w-4" />
@@ -378,13 +380,14 @@ export function MonthPlannerPage() {
               <Send className="h-4 w-4" />
               Publiceer maandrooster
             </Button>
-            <label className="ml-auto flex items-center gap-2 text-sm text-gray-600">
+            <label className="ml-auto flex items-center gap-2 text-sm text-zinc-400">
               Max uren/medewerker:
               <input
                 type="number"
                 value={maxHours}
                 onChange={(e) => setMaxHours(Number(e.target.value))}
-                className="w-16 rounded border border-gray-200 px-2 py-1"
+                className="w-16 rounded-lg px-2 py-1 text-zinc-200 outline-none"
+                style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)' }}
               />
             </label>
           </Card>
@@ -407,16 +410,17 @@ export function MonthPlannerPage() {
           >
             <div
               className={cn(
-                'relative flex min-h-[600px] gap-0 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm',
+                'relative flex min-h-[600px] gap-0 overflow-hidden rounded-xl',
                 assigning && 'pointer-events-none opacity-90'
               )}
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
             >
               {assigning && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/40">
+                <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)' }}>
                   <LoadingSpinner />
                 </div>
               )}
-              <div className="w-56 shrink-0 border-r border-gray-200 bg-gray-50/80 lg:w-64">
+              <div className="w-56 shrink-0 lg:w-64" style={{ borderRight: '1px solid rgba(255,255,255,0.08)' }}>
                 <EmployeePool
                   employees={employees}
                   shifts={shifts}
@@ -444,7 +448,10 @@ export function MonthPlannerPage() {
             </div>
             <DragOverlay dropAnimation={null}>
               {activeDragName && (
-                <div className="cursor-grabbing rounded-lg border border-navy-300 bg-white px-4 py-2 shadow-lg">
+                <div
+                  className="cursor-grabbing rounded-xl px-4 py-2 text-sm font-medium text-zinc-200"
+                  style={{ background: '#1e1e24', border: '1px solid rgba(37,99,235,0.5)', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}
+                >
                   {activeDragName}
                 </div>
               )}

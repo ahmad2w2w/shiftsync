@@ -2,10 +2,9 @@ import { useState } from 'react'
 import { format } from 'date-fns'
 import { nl } from 'date-fns/locale'
 import type { Shift } from '../../types/database'
-import { getCalendarGrid, isSameMonth } from '../../lib/utils'
+import { getCalendarGrid, isSameMonth, cn } from '../../lib/utils'
 import { ShiftDayGroup } from './ShiftDayGroup'
 import { groupShiftsBySlot } from '../../lib/shiftGroups'
-import { cn } from '../../lib/utils'
 
 const WEEKDAYS = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo']
 
@@ -16,26 +15,19 @@ interface MonthPlannerGridProps {
   onSelectSlot: (id: string) => void
 }
 
-export function MonthPlannerGrid({
-  monthAnchor,
-  shifts,
-  selectedSlotId,
-  onSelectSlot,
-}: MonthPlannerGridProps) {
+export function MonthPlannerGrid({ monthAnchor, shifts, selectedSlotId, onSelectSlot }: MonthPlannerGridProps) {
   const grid = getCalendarGrid(monthAnchor)
   const [expandedGroupKey, setExpandedGroupKey] = useState<string | null>(null)
 
   return (
     <div className="overflow-x-auto">
       <div className="min-w-[900px]">
-        <div className="grid grid-cols-7 gap-1 border-b border-gray-200 pb-2">
+        <div className="grid grid-cols-7 gap-1 pb-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           {WEEKDAYS.map((d) => (
-            <div key={d} className="text-center text-xs font-semibold text-gray-500">
-              {d}
-            </div>
+            <div key={d} className="text-center text-xs font-semibold text-zinc-500">{d}</div>
           ))}
         </div>
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-1 pt-1">
           {grid.map((day) => {
             const dateStr = format(day, 'yyyy-MM-dd')
             const inMonth = isSameMonth(day, monthAnchor)
@@ -45,19 +37,21 @@ export function MonthPlannerGrid({
             return (
               <div
                 key={dateStr}
-                className={cn(
-                  'min-h-[100px] rounded-lg border p-1.5',
-                  inMonth ? 'border-gray-200 bg-white' : 'border-transparent bg-gray-50/40'
-                )}
+                className={cn('min-h-[100px] rounded-xl p-1.5')}
+                style={
+                  inMonth
+                    ? { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }
+                    : { background: 'transparent', border: '1px solid transparent' }
+                }
               >
                 {inMonth && (
                   <>
-                    <p className="mb-1 text-xs font-semibold text-navy-800">
+                    <p className="mb-1 text-xs font-semibold text-zinc-400">
                       {format(day, 'd', { locale: nl })}
                     </p>
                     <div className="space-y-1.5">
                       {groups.length === 0 ? (
-                        <p className="text-[10px] text-gray-300">—</p>
+                        <p className="text-[10px] text-zinc-700">—</p>
                       ) : (
                         groups.map((group) => {
                           const expandKey = `${dateStr}|${group.key}`
@@ -69,9 +63,7 @@ export function MonthPlannerGrid({
                               onSelectSlot={onSelectSlot}
                               expanded={expandedGroupKey === expandKey}
                               onToggleExpand={() =>
-                                setExpandedGroupKey((k) =>
-                                  k === expandKey ? null : expandKey
-                                )
+                                setExpandedGroupKey((k) => (k === expandKey ? null : expandKey))
                               }
                             />
                           )

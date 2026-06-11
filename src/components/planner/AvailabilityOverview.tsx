@@ -20,11 +20,11 @@ export function AvailabilityOverview({ monthAnchor, availability }: Availability
       />
       <div className="max-h-[600px] overflow-y-auto">
         <table className="w-full text-sm">
-          <thead className="sticky top-0 bg-gray-50">
-            <tr className="text-left text-gray-500">
-              <th className="px-3 py-2">Datum</th>
-              <th className="px-3 py-2">Medewerkers beschikbaar</th>
-              <th className="px-3 py-2 text-right">Aantal</th>
+          <thead className="sticky top-0" style={{ background: '#111113' }}>
+            <tr className="text-left text-zinc-500">
+              <th className="px-3 py-2 font-medium">Datum</th>
+              <th className="px-3 py-2 font-medium">Medewerkers beschikbaar</th>
+              <th className="px-3 py-2 font-medium text-right">Aantal</th>
             </tr>
           </thead>
           <tbody>
@@ -32,20 +32,18 @@ export function AvailabilityOverview({ monthAnchor, availability }: Availability
               const dateStr = format(day, 'yyyy-MM-dd')
               const dayAvail = availability.filter((a) => a.date === dateStr)
               return (
-                <tr key={dateStr} className="border-t border-gray-50">
-                  <td className="px-3 py-2 font-medium whitespace-nowrap">
+                <tr key={dateStr} style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                  <td className="px-3 py-2 font-medium text-zinc-300 whitespace-nowrap">
                     {format(day, 'EEE d MMM', { locale: nl })}
                   </td>
-                  <td className="px-3 py-2">
+                  <td className="px-3 py-2 text-zinc-400">
                     {dayAvail.length === 0 ? (
-                      <span className="text-gray-400">—</span>
+                      <span className="text-zinc-700">—</span>
                     ) : (
-                      <span className="text-navy-800">
-                        {dayAvail.map((a) => a.users?.full_name ?? '?').join(', ')}
-                      </span>
+                      dayAvail.map((a) => a.users?.full_name ?? '?').join(', ')
                     )}
                   </td>
-                  <td className="px-3 py-2 text-right text-gray-500">{dayAvail.length}</td>
+                  <td className="px-3 py-2 text-right text-zinc-500">{dayAvail.length}</td>
                 </tr>
               )
             })}

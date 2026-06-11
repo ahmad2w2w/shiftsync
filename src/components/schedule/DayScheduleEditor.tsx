@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Users } from 'lucide-react'
-import type { Shift } from '../../types/database'
-import type { Availability } from '../../types/database'
+import type { Shift, Availability } from '../../types/database'
 import { createShift, updateShift, deleteShift } from '../../services/shifts'
 import { useOrganization } from '../../context/OrganizationContext'
 import { Button } from '../ui/Button'
@@ -30,7 +29,6 @@ function buildAssignments(
 ): DayAssignment[] {
   const dayAvail = availability.filter((a) => a.date === date)
   const dayShifts = shifts.filter((s) => s.date === date && s.user_id)
-
   return dayAvail.map((a) => {
     const shift = dayShifts.find((s) => s.user_id === a.user_id)
     return {
@@ -52,12 +50,7 @@ interface DayScheduleEditorProps {
   onSaved: () => Promise<void>
 }
 
-export function DayScheduleEditor({
-  date,
-  availability,
-  shifts,
-  onSaved,
-}: DayScheduleEditorProps) {
+export function DayScheduleEditor({ date, availability, shifts, onSaved }: DayScheduleEditorProps) {
   const { organization } = useOrganization()
   const [rows, setRows] = useState<DayAssignment[]>([])
   const [saving, setSaving] = useState(false)
@@ -120,10 +113,13 @@ export function DayScheduleEditor({
 
   if (rows.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50/80 px-6 py-12 text-center">
-        <Users className="mb-3 h-10 w-10 text-gray-300" />
-        <p className="font-medium text-navy-900">Geen beschikbaarheid</p>
-        <p className="mt-1 max-w-sm text-sm text-gray-500">
+      <div
+        className="flex flex-col items-center justify-center rounded-2xl px-6 py-14 text-center"
+        style={{ border: '1px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)' }}
+      >
+        <Users className="mb-3 h-10 w-10 text-zinc-700" />
+        <p className="font-medium text-zinc-300">Geen beschikbaarheid</p>
+        <p className="mt-1 max-w-sm text-sm text-zinc-600">
           Op {formatDayHeader(date)} heeft nog niemand zich beschikbaar gemeld.
         </p>
       </div>
@@ -134,39 +130,18 @@ export function DayScheduleEditor({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-navy-900 capitalize">
-            {formatDayHeader(date)}
-          </h2>
-          <p className="text-sm text-gray-500">
+          <h2 className="text-base font-semibold capitalize text-zinc-100">{formatDayHeader(date)}</h2>
+          <p className="text-sm text-zinc-500">
             {selectedCount} van {rows.length} beschikbare medewerkers ingepland
           </p>
         </div>
         <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setRows((prev) => prev.map((r) => ({ ...r, selected: true })))}
-          >
+          <Button type="button" variant="ghost" size="sm" onClick={() => setRows((prev) => prev.map((r) => ({ ...r, selected: true })))}>
             Allen
           </Button>
           <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() =>
-              setRows((prev) =>
-                prev.map((r) =>
-                  r.selected
-                    ? {
-                        ...r,
-                        start_time: DEFAULT_SHIFT_START,
-                        end_time: DEFAULT_SHIFT_END,
-                      }
-                    : r
-                )
-              )
-            }
+            type="button" variant="ghost" size="sm"
+            onClick={() => setRows((prev) => prev.map((r) => r.selected ? { ...r, start_time: DEFAULT_SHIFT_START, end_time: DEFAULT_SHIFT_END } : r))}
           >
             {DEFAULT_SHIFT_START}–{DEFAULT_SHIFT_END}
           </Button>
@@ -177,48 +152,33 @@ export function DayScheduleEditor({
         {rows.map((row) => (
           <li
             key={row.user_id}
-            className={cn(
-              'rounded-xl border transition-colors',
+            className="rounded-2xl transition-all"
+            style={
               row.selected
-                ? 'border-navy-200 bg-white shadow-sm'
-                : 'border-gray-100 bg-gray-50/50'
-            )}
+                ? { background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.25)' }
+                : { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }
+            }
           >
             <label className="flex cursor-pointer items-center gap-3 px-4 py-3">
               <input
                 type="checkbox"
                 checked={row.selected}
                 onChange={(e) => updateRow(row.user_id, { selected: e.target.checked })}
-                className="h-4 w-4 rounded border-gray-300 text-navy-900"
+                className="h-4 w-4 rounded accent-brand-600"
               />
-              <span className="flex-1 font-medium text-navy-900">{row.user_name}</span>
+              <span className={cn('flex-1 font-medium', row.selected ? 'text-zinc-100' : 'text-zinc-400')}>
+                {row.user_name}
+              </span>
               {row.selected && (
-                <span className="text-xs text-navy-600">
-                  {row.start_time}–{row.end_time}
-                </span>
+                <span className="text-xs text-brand-400">{row.start_time}–{row.end_time}</span>
               )}
             </label>
 
             {row.selected && (
-              <div className="grid gap-3 border-t border-gray-100 px-4 pb-4 pt-3 sm:grid-cols-3">
-                <Input
-                  label="Start"
-                  type="time"
-                  value={row.start_time}
-                  onChange={(e) => updateRow(row.user_id, { start_time: e.target.value })}
-                />
-                <Input
-                  label="Eind"
-                  type="time"
-                  value={row.end_time}
-                  onChange={(e) => updateRow(row.user_id, { end_time: e.target.value })}
-                />
-                <Select
-                  label="Functie"
-                  value={row.position}
-                  onChange={(e) => updateRow(row.user_id, { position: e.target.value })}
-                  options={[...SHIFT_POSITIONS]}
-                />
+              <div className="grid gap-3 px-4 pb-4 pt-2 sm:grid-cols-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                <Input label="Start" type="time" value={row.start_time} onChange={(e) => updateRow(row.user_id, { start_time: e.target.value })} />
+                <Input label="Eind" type="time" value={row.end_time} onChange={(e) => updateRow(row.user_id, { end_time: e.target.value })} />
+                <Select label="Functie" value={row.position} onChange={(e) => updateRow(row.user_id, { position: e.target.value })} options={[...SHIFT_POSITIONS]} />
               </div>
             )}
           </li>
@@ -226,12 +186,12 @@ export function DayScheduleEditor({
       </ul>
 
       {error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+        <p className="rounded-xl px-4 py-3 text-sm text-red-400" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
           {error}
         </p>
       )}
       {success && (
-        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800" role="status">
+        <p className="rounded-xl px-4 py-3 text-sm text-emerald-400" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)' }}>
           Rooster opgeslagen voor deze dag.
         </p>
       )}

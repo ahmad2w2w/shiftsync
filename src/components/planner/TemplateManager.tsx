@@ -1,10 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import type { ShiftTemplate } from '../../types/database'
-import {
-  createShiftTemplate,
-  deleteShiftTemplate,
-} from '../../services/shiftTemplates'
+import { createShiftTemplate, deleteShiftTemplate } from '../../services/shiftTemplates'
 import { useOrganization } from '../../context/OrganizationContext'
 import { DAY_NAMES } from '../../lib/plannerEngine'
 import { SHIFT_POSITIONS } from '../../lib/utils'
@@ -55,13 +52,12 @@ export function TemplateManager({ templates, onChange }: TemplateManagerProps) {
     if (seen.has(k)) duplicateKeys.add(k)
     seen.add(k)
   }
-  const hasDuplicates = duplicateKeys.size > 0
 
   return (
     <Card>
       <CardHeader
         title="Dienst-templates"
-        subtitle="Elke regel = één blok (bv. 2× Keuken op vrijdag). Meerdere regels voor dezelfde functie+tijd tellen op."
+        subtitle="Elke regel = één blok (bv. 2× Keuken op vrijdag)."
         action={
           <Button size="sm" onClick={() => setShowForm(!showForm)}>
             <Plus className="h-4 w-4" />
@@ -70,71 +66,37 @@ export function TemplateManager({ templates, onChange }: TemplateManagerProps) {
         }
       />
 
-      {hasDuplicates && (
-        <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          Let op: je hebt meerdere templates met dezelfde dag, functie en tijden. Dat geeft extra
-          diensten in de planner. Verwijder dubbele regels of pas het aantal aan.
+      {duplicateKeys.size > 0 && (
+        <p className="mb-4 rounded-xl px-4 py-3 text-sm text-amber-400" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)' }}>
+          Let op: je hebt dubbele templates. Verwijder ze of pas het aantal aan.
         </p>
       )}
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="mb-6 grid gap-3 border-b border-gray-100 pb-6 sm:grid-cols-3">
-          <Select
-            label="Weekdag"
-            value={form.day_of_week}
-            onChange={(e) => setForm({ ...form, day_of_week: e.target.value })}
-            options={DAY_NAMES.map((d, i) => ({ value: String(i), label: d }))}
-          />
-          <Select
-            label="Functie"
-            value={form.position}
-            onChange={(e) => setForm({ ...form, position: e.target.value })}
-            options={[...SHIFT_POSITIONS]}
-          />
-          <Input
-            label="Aantal"
-            type="number"
-            min={1}
-            value={form.required_count}
-            onChange={(e) => setForm({ ...form, required_count: e.target.value })}
-          />
-          <Input
-            label="Start"
-            type="time"
-            value={form.start_time}
-            onChange={(e) => setForm({ ...form, start_time: e.target.value })}
-          />
-          <Input
-            label="Einde"
-            type="time"
-            value={form.end_time}
-            onChange={(e) => setForm({ ...form, end_time: e.target.value })}
-          />
-          <Input
-            label="Label (optioneel)"
-            value={form.label}
-            onChange={(e) => setForm({ ...form, label: e.target.value })}
-            placeholder="bv. Vrijdag"
-          />
+        <form onSubmit={handleSubmit} className="mb-6 grid gap-3 pb-6 sm:grid-cols-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          <Select label="Weekdag" value={form.day_of_week} onChange={(e) => setForm({ ...form, day_of_week: e.target.value })} options={DAY_NAMES.map((d, i) => ({ value: String(i), label: d }))} />
+          <Select label="Functie" value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} options={[...SHIFT_POSITIONS]} />
+          <Input label="Aantal" type="number" min={1} value={form.required_count} onChange={(e) => setForm({ ...form, required_count: e.target.value })} />
+          <Input label="Start" type="time" value={form.start_time} onChange={(e) => setForm({ ...form, start_time: e.target.value })} />
+          <Input label="Einde" type="time" value={form.end_time} onChange={(e) => setForm({ ...form, end_time: e.target.value })} />
+          <Input label="Label (optioneel)" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="bv. Vrijdag" />
           <div className="flex gap-2 sm:col-span-3">
             <Button type="submit">Opslaan</Button>
-            <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>
-              Annuleren
-            </Button>
+            <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>Annuleren</Button>
           </div>
         </form>
       )}
 
-      <div className="space-y-4">
+      <div className="space-y-5">
         {DAY_NAMES.map((dayName, dow) => {
           const items = byDay[dow]
           if (items.length === 0) return null
           const dayTotal = items.reduce((s, t) => s + t.required_count, 0)
           return (
             <div key={dow}>
-              <p className="mb-2 text-sm font-semibold text-navy-800">
+              <p className="mb-2 text-sm font-semibold text-zinc-200">
                 {dayName}
-                <span className="ml-2 font-normal text-gray-500">
+                <span className="ml-2 font-normal text-zinc-500">
                   → {dayTotal} dienst{dayTotal !== 1 ? 'en' : ''} per {dayName.toLowerCase()}
                 </span>
               </p>
@@ -142,16 +104,13 @@ export function TemplateManager({ templates, onChange }: TemplateManagerProps) {
                 {items.map((t) => (
                   <li
                     key={t.id}
-                    className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm"
+                    className="flex items-center justify-between rounded-xl px-4 py-3 text-sm"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
                   >
-                    <span>
-                      <strong>{t.required_count}×</strong> {t.position}{' '}
-                      <span className="text-gray-500">
-                        {t.start_time.slice(0, 5)}–{t.end_time.slice(0, 5)}
-                      </span>
-                      {t.label && (
-                        <span className="ml-2 text-xs text-gray-400">({t.label})</span>
-                      )}
+                    <span className="text-zinc-300">
+                      <strong className="text-zinc-100">{t.required_count}×</strong> {t.position}{' '}
+                      <span className="text-zinc-500">{t.start_time.slice(0, 5)}–{t.end_time.slice(0, 5)}</span>
+                      {t.label && <span className="ml-2 text-xs text-zinc-600">({t.label})</span>}
                     </span>
                     <button
                       type="button"
@@ -161,7 +120,7 @@ export function TemplateManager({ templates, onChange }: TemplateManagerProps) {
                           onChange()
                         }
                       }}
-                      className="text-red-500 hover:text-red-700"
+                      className="text-zinc-600 hover:text-red-400 transition-colors"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -171,6 +130,9 @@ export function TemplateManager({ templates, onChange }: TemplateManagerProps) {
             </div>
           )
         })}
+        {templates.length === 0 && (
+          <p className="py-4 text-center text-sm text-zinc-600">Nog geen templates aangemaakt.</p>
+        )}
       </div>
     </Card>
   )

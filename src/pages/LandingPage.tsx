@@ -3,7 +3,6 @@ import {
   Calendar,
   Clock,
   Users,
-  BarChart3,
   Zap,
   CheckCircle,
   ArrowRight,

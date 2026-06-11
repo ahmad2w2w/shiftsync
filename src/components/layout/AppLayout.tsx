@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom'
 import {
   LayoutDashboard,
   Calendar,
+  CalendarCheck,
   Clock,
   Users,
   Palmtree,
@@ -23,25 +24,24 @@ import { useTheme } from '../../context/ThemeContext'
 import { cn } from '../../lib/utils'
 
 const employeeNav = [
-  { to: '/app/dashboard',       label: 'Dashboard',       icon: LayoutDashboard },
-  { to: '/app/rooster',         label: 'Mijn rooster',    icon: Calendar },
-  { to: '/app/beschikbaarheid', label: 'Beschikbaarheid', icon: Calendar },
-  { to: '/app/klok',            label: 'In-/Uitklokken',  icon: Clock },
-  { to: '/app/uren',            label: 'Mijn uren',       icon: Timer },
-  { to: '/app/verlof',          label: 'Verlof',          icon: Palmtree },
-  { to: '/app/profiel',         label: 'Profiel',         icon: UserCircle },
+  { to: '/app/dashboard',       label: 'Dashboard',        icon: LayoutDashboard },
+  { to: '/app/rooster',         label: 'Mijn rooster',     icon: Calendar },
+  { to: '/app/beschikbaarheid', label: 'Beschikbaarheid',  icon: CalendarCheck },
+  { to: '/app/klok',            label: 'In-/Uitklokken',   icon: Clock },
+  { to: '/app/uren',            label: 'Mijn uren',        icon: Timer },
+  { to: '/app/verlof',          label: 'Verlof',           icon: Palmtree },
+  { to: '/app/profiel',         label: 'Profiel',          icon: UserCircle },
 ]
 
 const managerNav = [
-  { to: '/app/dashboard',       label: 'Dashboard',       icon: LayoutDashboard },
-  { to: '/app/medewerkers',     label: 'Medewerkers',     icon: Users },
-  { to: '/app/rooster',         label: 'Rooster',         icon: Calendar },
-  { to: '/app/maandplanner',    label: 'Maandplanner',    icon: BarChart3 },
-  { to: '/app/beschikbaarheid', label: 'Beschikbaarheid', icon: Calendar },
-  { to: '/app/klok',            label: 'Klokregistratie', icon: Clock },
-  { to: '/app/uren',            label: 'Urenoverzicht',   icon: Timer },
-  { to: '/app/verlof',          label: 'Verlofaanvragen', icon: Palmtree },
-  { to: '/app/profiel',         label: 'Profiel',         icon: UserCircle },
+  { to: '/app/dashboard',       label: 'Dashboard',        icon: LayoutDashboard },
+  { to: '/app/medewerkers',     label: 'Medewerkers',      icon: Users },
+  { to: '/app/rooster',         label: 'Rooster',          icon: Calendar },
+  { to: '/app/maandplanner',    label: 'Maandplanner',     icon: BarChart3 },
+  { to: '/app/klok',            label: 'Klokregistratie',  icon: Clock },
+  { to: '/app/uren',            label: 'Urenoverzicht',    icon: Timer },
+  { to: '/app/verlof',          label: 'Verlofaanvragen',  icon: Palmtree },
+  { to: '/app/profiel',         label: 'Profiel',          icon: UserCircle },
 ]
 
 export function AppLayout() {

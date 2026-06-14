@@ -126,8 +126,11 @@ export function ManagerDashboard() {
         return
       }
       const periodLabel = `week ${weekStart.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}`
-      if (kind === 'pdf') exportScheduleToPDF(shifts, organization.name, periodLabel)
-      else exportScheduleToExcel(shifts, organization.name, periodLabel)
+      if (kind === 'pdf') {
+        exportScheduleToPDF({ shifts, organizationName: organization.name, periodLabel, employees })
+      } else {
+        exportScheduleToExcel({ shifts, organizationName: organization.name, periodLabel, employees })
+      }
       toast.success(`Export naar ${kind === 'pdf' ? 'PDF' : 'Excel'} gestart`)
     } catch {
       toast.error('Export mislukt')

@@ -40,6 +40,7 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { DashboardSkeleton } from '../components/ui/Skeleton'
 import { Tabs } from '../components/ui/Tabs'
 import { Button } from '../components/ui/Button'
+import { ScheduleExportButton } from '../components/schedule/ScheduleExportButton'
 import { getMonthRange, addMonths, subMonths, monthLabel, formatDate, cn } from '../lib/utils'
 
 type ScheduleTab = 'month' | 'week' | 'ai'
@@ -232,6 +233,14 @@ export function SchedulePage() {
           <div className="flex flex-wrap items-center gap-2">
             {isAdmin && (
               <>
+                <ScheduleExportButton
+                  shifts={shifts}
+                  employees={employees}
+                  organizationName={organization?.name ?? 'ShiftSync'}
+                  periodLabel={monthLabel(monthAnchor)}
+                  periodStart={start}
+                  periodEnd={end}
+                />
                 <Button size="sm" variant="secondary" onClick={() => openAddShift(selectedDate ?? todayStr())}>
                   <Plus className="h-4 w-4" /> Nieuwe dienst
                 </Button>

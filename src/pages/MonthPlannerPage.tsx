@@ -53,6 +53,7 @@ import { AvailabilityOverview } from '../components/planner/AvailabilityOverview
 import { PlannerDetailPanel } from '../components/planner/PlannerDetailPanel'
 import { MobilePlannerList } from '../components/planner/MobilePlannerList'
 import { PageHeader } from '../components/ui/PageHeader'
+import { ScheduleExportButton } from '../components/schedule/ScheduleExportButton'
 import { getMonthRange, addMonths, subMonths, monthLabel, cn } from '../lib/utils'
 
 type Tab = 'planner' | 'templates' | 'availability'
@@ -306,6 +307,14 @@ export function MonthPlannerPage() {
         subtitle={`Slimme planning · ${monthLabel(monthAnchor)}`}
         action={
           <div className="flex flex-wrap items-center gap-2">
+            <ScheduleExportButton
+              shifts={shifts}
+              employees={employees}
+              organizationName={organization?.name ?? 'ShiftSync'}
+              periodLabel={monthLabel(monthAnchor)}
+              periodStart={start}
+              periodEnd={end}
+            />
             <Link to="/app/rooster">
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4" /> Rooster

@@ -273,9 +273,15 @@
   to   { transform: scaleY(1); transform-origin: bottom; }
 }
 
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(100%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
 .animate-fade-in { animation: fade-in 0.2s ease-out; }
 .animate-dialog-in { animation: dialog-in 0.18s ease-out; }
 .animate-slide-up { animation: slide-up 0.35s ease-out; }
+.animate-slide-in-right { animation: slide-in-right 0.28s cubic-bezier(0.16, 1, 0.3, 1); }
 .animate-bar-grow { animation: bar-grow 0.6s ease-out; }
 
 .hover-lift {

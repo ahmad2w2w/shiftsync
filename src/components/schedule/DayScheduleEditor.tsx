@@ -116,7 +116,7 @@ export function DayScheduleEditor({
         end_time: form.end_time,
         position: form.position,
         status: 'scheduled',
-        published: true,
+        published: false,
         template_id: null,
         slot_index: 0,
       })
@@ -133,7 +133,7 @@ export function DayScheduleEditor({
         end_time: form.end_time,
         position: form.position,
         user_id: form.user_id,
-        published: true,
+        published: false,
       })
       setEditId(null)
       setForm(emptyForm())
@@ -181,7 +181,7 @@ export function DayScheduleEditor({
         end_time: form.end_time,
         position: form.position,
         status: 'scheduled',
-        published: true,
+        published: false,
         template_id: null,
         slot_index: 0,
       })
@@ -209,7 +209,7 @@ export function DayScheduleEditor({
           end_time: DEFAULT_SHIFT_END,
           position: DEFAULT_SHIFT_POSITION,
           status: 'scheduled',
-          published: true,
+          published: false,
           template_id: null,
           slot_index: 0,
         })

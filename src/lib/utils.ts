@@ -88,6 +88,9 @@ export const shiftSwapStatusLabel: Record<string, string> = {
   cancelled: 'Geannuleerd',
 }
 
+export const DEFAULT_SHIFT_START = '16:00'
+export const DEFAULT_SHIFT_END = '21:00'
+
 export const DEFAULT_SHIFT_POSITIONS = [
   { value: 'Bediening', label: 'Bediening' },
   { value: 'Keuken', label: 'Keuken' },
@@ -105,6 +108,20 @@ export const POSITION_STYLES: Record<string, string> = {
   Bezorging: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
   Kassa:     'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
   Manager:   'bg-violet-500/15 text-violet-400 border-violet-500/20',
+}
+
+const POSITION_COLOR_MAP: Record<string, { bg: string; text: string; border: string; accent: string }> = {
+  Bediening: { bg: 'rgba(59,130,246,0.12)', text: '#2563EB', border: 'rgba(59,130,246,0.28)', accent: '#3B82F6' },
+  Keuken:    { bg: 'rgba(249,115,22,0.12)', text: '#EA580C', border: 'rgba(249,115,22,0.28)', accent: '#F97316' },
+  Bezorging: { bg: 'rgba(245,158,11,0.12)', text: '#D97706', border: 'rgba(245,158,11,0.28)', accent: '#F59E0B' },
+  Kassa:     { bg: 'rgba(16,185,129,0.12)', text: '#059669', border: 'rgba(16,185,129,0.28)', accent: '#10B981' },
+  Manager:   { bg: 'rgba(139,92,246,0.12)', text: '#7C3AED', border: 'rgba(139,92,246,0.28)', accent: '#8B5CF6' },
+}
+
+const DEFAULT_POSITION_COLOR = { bg: 'rgba(59,130,246,0.12)', text: '#2563EB', border: 'rgba(59,130,246,0.28)', accent: '#3B82F6' }
+
+export function getPositionColor(position: string) {
+  return POSITION_COLOR_MAP[position] ?? DEFAULT_POSITION_COLOR
 }
 
 export const cn = (...classes: (string | false | undefined | null)[]) =>

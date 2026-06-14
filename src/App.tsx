@@ -29,6 +29,11 @@ import { BillingPage } from './pages/BillingPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { SickLeavePage } from './pages/SickLeavePage'
 import { ShiftSwapPage } from './pages/ShiftSwapPage'
+import { PrivacyPage } from './pages/PrivacyPage'
+import { TermsPage } from './pages/TermsPage'
+import { NotFoundPage } from './pages/NotFoundPage'
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
+import { ResetPasswordPage } from './pages/ResetPasswordPage'
 
 export default function App() {
   return (
@@ -45,6 +50,10 @@ export default function App() {
               <Route path="/pricing" element={<PricingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/voorwaarden" element={<TermsPage />} />
+              <Route path="/wachtwoord-vergeten" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
 
               {/* Onboarding: requires auth, no org yet */}
               <Route element={<ProtectedRoute requireOrg={false} />}>
@@ -81,7 +90,7 @@ export default function App() {
               <Route path="/medewerkers" element={<Navigate to="/app/medewerkers" replace />} />
               <Route path="/profiel" element={<Navigate to="/app/profiel" replace />} />
 
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </BrowserRouter>
         </OrganizationProvider>

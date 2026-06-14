@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { PublicFooter } from '../components/layout/PublicFooter'
 import {
   Calendar,
   Clock,
@@ -52,6 +53,17 @@ const plans = [
     ],
     cta: 'Gratis starten',
     href: '/register',
+  },
+]
+
+const testimonials = [
+  {
+    quote: 'Eindelijk geen WhatsApp-groep meer voor roosters. Alles staat op één plek.',
+    role: 'Restaurantmanager, Amsterdam',
+  },
+  {
+    quote: 'Onze medewerkers klokken nu zelf in — dat scheelt elke week uren administratie.',
+    role: 'Winkelmanager, Utrecht',
   },
 ]
 
@@ -243,16 +255,16 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* TESTIMONIALS PLACEHOLDER */}
+      {/* TESTIMONIALS */}
       <section className="px-5 py-16" style={{ background: 'var(--surface-card)', borderTop: '1px solid var(--border)' }}>
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-sm font-semibold uppercase tracking-widest text-brand-600">Ervaringen</p>
-          <h2 className="mt-2 text-2xl font-bold" style={{ color: 'var(--color-navy)' }}>Vertrouwd door teams in Nederland</h2>
+          <h2 className="mt-2 text-2xl font-bold" style={{ color: 'var(--color-navy)' }}>Gebouwd voor teams in horeca &amp; retail</h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            {['"Eindelijk geen WhatsApp-groep meer voor roosters."', '"Onze medewerkers klokken nu zelf in — scheelt veel tijd."'].map((quote) => (
-              <div key={quote} className="rounded-2xl p-6 text-left" style={{ background: 'var(--surface-page)', border: '1px solid var(--border)' }}>
-                <p className="text-sm italic leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{quote}</p>
-                <p className="mt-3 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>— ShiftSync gebruiker</p>
+            {testimonials.map(({ quote, role }) => (
+              <div key={role} className="rounded-2xl p-6 text-left hover-lift" style={{ background: 'var(--surface-page)', border: '1px solid var(--border)' }}>
+                <p className="text-sm italic leading-relaxed" style={{ color: 'var(--text-secondary)' }}>&ldquo;{quote}&rdquo;</p>
+                <p className="mt-3 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{role}</p>
               </div>
             ))}
           </div>
@@ -285,24 +297,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="px-5 py-12" style={{ background: '#0F172A' }}>
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 sm:flex-row">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600"><Zap className="h-4 w-4 text-white" /></div>
-            <span className="font-bold text-white">ShiftSync</span>
-          </div>
-          <div className="flex flex-wrap justify-center gap-6 text-sm text-slate-400">
-            <Link to="/pricing" className="hover:text-white transition-colors">Prijzen</Link>
-            <Link to="/login" className="hover:text-white transition-colors">Inloggen</Link>
-            <Link to="/register" className="hover:text-white transition-colors">Registreren</Link>
-            <a href="mailto:support@shiftsync.nl" className="hover:text-white transition-colors">Support</a>
-          </div>
-        </div>
-        <p className="mx-auto mt-8 max-w-6xl border-t border-white/10 pt-8 text-center text-xs text-slate-600">
-          © {new Date().getFullYear()} ShiftSync. Alle rechten voorbehouden.
-        </p>
-      </footer>
+      <PublicFooter />
     </div>
   )
 }

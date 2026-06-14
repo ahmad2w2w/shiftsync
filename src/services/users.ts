@@ -49,7 +49,7 @@ export async function getAllUsers(): Promise<User[]> {
 
 export async function updateUser(
   id: string,
-  updates: Partial<Pick<User, 'full_name' | 'hourly_rate' | 'role' | 'primary_position'>>
+  updates: Partial<Pick<User, 'full_name' | 'hourly_rate' | 'role' | 'primary_position' | 'avatar_url'>>
 ): Promise<User> {
   const { data, error } = await supabase
     .from('users')
@@ -69,38 +69,35 @@ export async function deleteUser(id: string): Promise<void> {
 
 export async function createEmployeeAccount(params: {
   email: string
-  password: string
   full_name: string
   hourly_rate?: number
   organization_id: string
-}): Promise<User> {
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email: params.email,
-    password: params.password,
-    options: {
-      data: {
-        full_name: params.full_name,
-        role: 'employee',
-        organization_id: params.organization_id,
-      },
-    },
-  })
-
-  if (authError) throw authError
-  if (!authData.user) throw new Error('Gebruiker kon niet worden aangemaakt')
-
-  const { data, error } = await supabase
-    .from('users')
-    .update({
+}): Promise<void> {
+  const { data, error } = await supabase.functions.invoke('invite-employee', {
+    body: {
+      email: params.email,
       full_name: params.full_name,
       hourly_rate: params.hourly_rate ?? 0,
-      role: 'employee' as UserRole,
-      organization_id: params.organization_id,
-    })
-    .eq('id', authData.user.id)
-    .select()
-    .single()
-
+    },
+  })
   if (error) throw error
-  return data as User
+  if (data?.error) throw new Error(data.error)
+}
+
+export async function uploadAvatar(userId: string, file: File): Promise<string> {
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+  const path = `${userId}/avatar.${ext}`
+  const { error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(path, file, { upsert: true, contentType: file.type })
+  if (uploadError) throw uploadError
+  const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+  const url = `${data.publicUrl}?t=${Date.now()}`
+  await updateUser(userId, { avatar_url: url })
+  return url
+}
+
+export async function updatePassword(newPassword: string): Promise<void> {
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
+  if (error) throw error
 }

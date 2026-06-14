@@ -52,6 +52,7 @@ export interface User {
   role: UserRole
   hourly_rate: number
   primary_position?: string
+  avatar_url?: string | null
   created_at: string
 }
 

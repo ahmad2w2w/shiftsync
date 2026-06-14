@@ -120,11 +120,11 @@ export function SchedulePage() {
               <Sparkles className="h-5 w-5 text-white" />
             </div>
             <div>
-              <p className="font-semibold text-zinc-100">Maandplanner</p>
-              <p className="text-sm text-zinc-500">Volledige maand via templates en drag &amp; drop</p>
+              <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>Maandplanner</p>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Volledige maand via templates en drag &amp; drop</p>
             </div>
           </div>
-          <ChevronRight className="h-5 w-5 text-zinc-600 transition-transform group-hover:translate-x-0.5" />
+          <ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" style={{ color: 'var(--text-disabled)' }} />
         </Link>
       )}
 
@@ -140,8 +140,8 @@ export function SchedulePage() {
             className="rounded-xl px-4 py-2"
             style={{ background: 'var(--surface-card)', border: '1px solid var(--border)' }}
           >
-            <p className="text-xs text-zinc-500">{label}</p>
-            <p className={cn('font-semibold text-zinc-100', capitalize && 'capitalize')}>{value}</p>
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</p>
+            <p className={cn('font-semibold', capitalize && 'capitalize')} style={{ color: 'var(--text-primary)' }}>{value}</p>
           </div>
         ))}
       </div>

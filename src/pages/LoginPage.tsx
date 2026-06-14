@@ -1,9 +1,15 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
-import { Zap } from 'lucide-react'
+import { Zap, Calendar, Clock, Users } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
+
+const highlights = [
+  { icon: Calendar, text: 'Roosterplanning in minuten' },
+  { icon: Clock, text: 'Automatische urenregistratie' },
+  { icon: Users, text: 'Teambeheer op één plek' },
+]
 
 export function LoginPage() {
   const { session, signIn, loading, needsOnboarding } = useAuth()
@@ -33,7 +39,6 @@ export function LoginPage() {
 
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--surface-page)' }}>
-      {/* Left: branding panel — always dark */}
       <div
         className="hidden flex-col justify-between p-10 lg:flex lg:w-[420px] xl:w-[480px]"
         style={{ background: 'linear-gradient(160deg, #0F172A 0%, #1e3a8a 100%)' }}
@@ -45,23 +50,25 @@ export function LoginPage() {
           <span className="text-base font-bold text-white">ShiftSync</span>
         </div>
         <div>
-          <blockquote className="text-xl font-medium leading-relaxed text-white">
-            "ShiftSync heeft ons roosterproces compleet getransformeerd."
-          </blockquote>
-          <div className="mt-4 flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-500/20 text-sm font-bold text-brand-400">S</div>
-            <div>
-              <p className="text-sm font-semibold text-white">Sarah van den Berg</p>
-              <p className="text-xs text-white/50">Eigenaar, Bistro de Linde</p>
-            </div>
-          </div>
+          <h2 className="text-xl font-semibold leading-relaxed text-white">
+            Personeelsplanning zonder spreadsheet-stress
+          </h2>
+          <ul className="mt-6 space-y-4">
+            {highlights.map(({ icon: Icon, text }) => (
+              <li key={text} className="flex items-center gap-3 text-sm text-white/80">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10">
+                  <Icon className="h-4 w-4 text-brand-300" />
+                </div>
+                {text}
+              </li>
+            ))}
+          </ul>
         </div>
+        <p className="text-xs text-white/40">© {new Date().getFullYear()} ShiftSync</p>
       </div>
 
-      {/* Right: login form */}
       <div className="flex flex-1 flex-col items-center justify-center px-5 py-12">
         <div className="w-full max-w-sm">
-          {/* Mobile logo */}
           <div className="mb-8 flex items-center gap-2.5 lg:hidden">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500">
               <Zap className="h-5 w-5 text-white" />
@@ -84,9 +91,14 @@ export function LoginPage() {
               autoFocus
             />
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                Wachtwoord
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                  Wachtwoord
+                </label>
+                <Link to="/wachtwoord-vergeten" className="text-xs font-semibold text-brand-500 hover:text-brand-600">
+                  Vergeten?
+                </Link>
+              </div>
               <input
                 type="password"
                 value={password}
@@ -104,7 +116,7 @@ export function LoginPage() {
             </div>
 
             {error && (
-              <div className="rounded-xl px-4 py-3 text-sm text-red-500 dark:text-red-400" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+              <div className="rounded-xl px-4 py-3 text-sm text-red-500" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
                 {error}
               </div>
             )}

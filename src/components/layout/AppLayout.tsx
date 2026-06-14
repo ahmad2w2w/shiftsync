@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -66,7 +66,15 @@ export function AppLayout() {
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const mobileNavRef = useRef<HTMLElement>(null)
   const nav = isAdmin ? managerNav : employeeNavTyped
+
+  useEffect(() => {
+    if (mobileOpen && mobileNavRef.current) {
+      const first = mobileNavRef.current.querySelector<HTMLElement>('a, button')
+      first?.focus()
+    }
+  }, [mobileOpen])
 
   const handleSignOut = async () => {
     await signOut()
@@ -165,6 +173,9 @@ export function AppLayout() {
 
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--surface-page)' }}>
+      <a href="#main-content" className="skip-link">
+        Naar hoofdinhoud
+      </a>
       {/* Desktop sidebar — always dark */}
       <aside
         className="hidden w-60 shrink-0 flex-col lg:flex"
@@ -183,11 +194,13 @@ export function AppLayout() {
 
       {/* Mobile sidebar */}
       <aside
+        ref={mobileNavRef}
         className={cn(
           'fixed inset-y-0 left-0 z-50 flex w-60 flex-col transition-transform duration-200 lg:hidden',
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}
         style={{ background: 'var(--sidebar-bg)', borderRight: '1px solid rgba(255,255,255,0.06)' }}
+        aria-hidden={!mobileOpen}
       >
         <div className="flex items-center justify-between px-4 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <div className="flex items-center gap-2.5">
@@ -196,7 +209,12 @@ export function AppLayout() {
             </div>
             <span className="font-bold text-white text-sm">ShiftSync</span>
           </div>
-          <button onClick={() => setMobileOpen(false)} className="rounded-lg p-1 text-white/40 hover:text-white/80">
+          <button
+            type="button"
+            onClick={() => setMobileOpen(false)}
+            className="rounded-lg p-1 text-white/40 hover:text-white/80"
+            aria-label="Menu sluiten"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -216,9 +234,12 @@ export function AppLayout() {
           }}
         >
           <button
+            type="button"
             className="rounded-xl p-2 transition-colors hover:bg-black/5 dark:hover:bg-white/5 lg:hidden"
             style={{ color: 'var(--text-muted)' }}
             onClick={() => setMobileOpen(true)}
+            aria-label="Menu openen"
+            aria-expanded={mobileOpen}
           >
             <Menu className="h-4 w-4" />
           </button>
@@ -255,7 +276,7 @@ export function AppLayout() {
           </div>
         </header>
 
-        <main className="flex-1 p-4 lg:p-6">
+        <main id="main-content" className="flex-1 p-4 lg:p-6 print-page">
           <Outlet />
         </main>
       </div>

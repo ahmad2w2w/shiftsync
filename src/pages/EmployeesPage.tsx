@@ -16,7 +16,7 @@ import { PageHeader } from '../components/ui/PageHeader'
 import { EmptyState } from '../components/ui/EmptyState'
 import { DashboardSkeleton } from '../components/ui/Skeleton'
 import { Table, TableHead, TableHeaderCell, TableBody, TableRow, TableCell } from '../components/ui/Table'
-import { Users } from 'lucide-react'
+import { Users, Mail, UserPlus } from 'lucide-react'
 
 export function EmployeesPage() {
   const { profile, isAdmin } = useAuth()
@@ -30,7 +30,6 @@ export function EmployeesPage() {
   const [form, setForm] = useState({
     full_name: '',
     email: '',
-    password: '',
     hourly_rate: '0',
     role: 'employee' as UserRole,
   })
@@ -54,7 +53,7 @@ export function EmployeesPage() {
   if (!isAdmin) return <Navigate to="/app/dashboard" replace />
 
   const resetForm = () => {
-    setForm({ full_name: '', email: '', password: '', hourly_rate: '0', role: 'employee' })
+    setForm({ full_name: '', email: '', hourly_rate: '0', role: 'employee' })
     setEditing(null)
     setShowForm(false)
     setError('')
@@ -77,12 +76,11 @@ export function EmployeesPage() {
       } else {
         await createEmployeeAccount({
           email: form.email,
-          password: form.password,
           full_name: form.full_name,
           hourly_rate: parseFloat(form.hourly_rate),
           organization_id: organization!.id,
         })
-        toast.success('Medewerker toegevoegd')
+        toast.success(`Uitnodiging verstuurd naar ${form.email}`)
       }
       resetForm()
       load()
@@ -98,7 +96,6 @@ export function EmployeesPage() {
     setForm({
       full_name: user.full_name,
       email: user.email,
-      password: '',
       hourly_rate: String(user.hourly_rate),
       role: user.role,
     })
@@ -129,14 +126,17 @@ export function EmployeesPage() {
         subtitle={`Team beheren · ${memberCount} teamleden · €${memberCount * PRICE_PER_EMPLOYEE}/maand`}
         action={
           <Button onClick={() => { resetForm(); setShowForm(true) }}>
-            Medewerker toevoegen
+            <UserPlus className="h-4 w-4" /> Uitnodigen
           </Button>
         }
       />
 
       {showForm && (
         <Card>
-          <CardHeader title={editing ? 'Medewerker bewerken' : 'Nieuwe medewerker'} />
+          <CardHeader
+            title={editing ? 'Medewerker bewerken' : 'Medewerker uitnodigen'}
+            subtitle={!editing ? 'We sturen een e-mail met een link om het account te activeren en een wachtwoord in te stellen.' : undefined}
+          />
           <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
             <Input
               label="Naam"
@@ -145,23 +145,14 @@ export function EmployeesPage() {
               required
             />
             {!editing && (
-              <>
-                <Input
-                  label="E-mail"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  required
-                />
-                <Input
-                  label="Tijdelijk wachtwoord"
-                  type="password"
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  required
-                  minLength={6}
-                />
-              </>
+              <Input
+                label="E-mail"
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                required
+                hint="Medewerker ontvangt een uitnodigingsmail"
+              />
             )}
             <Input
               label="Uurloon (€)"
@@ -180,7 +171,10 @@ export function EmployeesPage() {
               ]}
             />
             <div className="flex gap-2 sm:col-span-2">
-              <Button type="submit" loading={submitting}>Opslaan</Button>
+              <Button type="submit" loading={submitting}>
+                {!editing && <Mail className="h-4 w-4" />}
+                {editing ? 'Opslaan' : 'Uitnodiging versturen'}
+              </Button>
               <Button type="button" variant="secondary" onClick={resetForm}>Annuleren</Button>
             </div>
           </form>
@@ -201,7 +195,7 @@ export function EmployeesPage() {
               icon={Users}
               title="Nog geen medewerkers"
               description="Voeg je eerste teamlid toe om te beginnen met roosterplanning."
-              action={<Button onClick={() => { resetForm(); setShowForm(true) }}>Medewerker toevoegen</Button>}
+              action={<Button onClick={() => { resetForm(); setShowForm(true) }}><UserPlus className="h-4 w-4" /> Uitnodigen</Button>}
             />
           ) : (
             <Table>

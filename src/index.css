@@ -236,3 +236,61 @@
   from { opacity: 0; transform: scale(0.96) translateY(8px); }
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bar-grow {
+  from { transform: scaleY(0); transform-origin: bottom; }
+  to   { transform: scaleY(1); transform-origin: bottom; }
+}
+
+.animate-fade-in { animation: fade-in 0.2s ease-out; }
+.animate-dialog-in { animation: dialog-in 0.18s ease-out; }
+.animate-slide-up { animation: slide-up 0.35s ease-out; }
+.animate-bar-grow { animation: bar-grow 0.6s ease-out; }
+
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hover-lift:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 200;
+  padding: 0.75rem 1rem;
+  background: var(--brand-strong);
+  color: #fff;
+  font-weight: 600;
+  border-radius: 0 0 0.5rem 0;
+}
+.skip-link:focus {
+  left: 0;
+}
+
+@media print {
+  aside,
+  header,
+  .no-print,
+  button,
+  nav {
+    display: none !important;
+  }
+  .print-page {
+    padding: 0 !important;
+  }
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  [style*="--surface-card"] {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+  }
+}

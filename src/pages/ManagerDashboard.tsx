@@ -19,6 +19,8 @@ import {
   ArrowLeftRight,
 } from 'lucide-react'
 import { format } from 'date-fns'
+import { SimpleBarChart } from '../components/charts/SimpleBarChart'
+import { ManagerOnboardingTour } from '../components/onboarding/ManagerOnboardingTour'
 import { getAllUsers } from '../services/users'
 import { getPendingLeaveCount } from '../services/leave'
 import { getActiveSickCount } from '../services/sick'
@@ -96,6 +98,17 @@ export function ManagerDashboard() {
     }, 0)
   }, [weekRecords, employees])
 
+  const hoursByDay = useMemo(() => {
+    const days = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo']
+    const totals = [0, 0, 0, 0, 0, 0, 0]
+    for (const r of weekRecords) {
+      const d = new Date(r.clock_in).getDay()
+      const idx = d === 0 ? 6 : d - 1
+      totals[idx] += r.total_hours ?? 0
+    }
+    return days.map((label, i) => ({ label, value: Math.round(totals[i] * 10) / 10 }))
+  }, [weekRecords])
+
   const runExport = async (kind: 'pdf' | 'excel') => {
     if (!organization) return
     setExporting(true)
@@ -166,6 +179,11 @@ export function ManagerDashboard() {
         <StatCard label="Loonkosten (indicatie)" value={`€${laborCost.toFixed(0)}`} icon={Euro} accent="warning" trend="Deze week" />
         <StatCard label="Diensten deze week" value={weekShifts.filter((s) => s.user_id).length} icon={Calendar} to="/app/rooster" accent="neutral" />
       </div>
+
+      <Card>
+        <CardHeader title="Uren deze week" subtitle="Geklokte uren per dag" />
+        <SimpleBarChart data={hoursByDay} />
+      </Card>
 
       {/* Quick actions */}
       <div>
@@ -256,6 +274,7 @@ export function ManagerDashboard() {
           )}
         </Card>
       </div>
+      <ManagerOnboardingTour />
     </div>
   )
 }

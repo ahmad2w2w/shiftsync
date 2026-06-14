@@ -24,7 +24,7 @@ export function Input({ label, error, hint, className, id, style, ...props }: In
         id={inputId}
         className={cn(
           'w-full rounded-xl px-3.5 py-2.5 text-sm transition-all duration-150',
-          'placeholder:text-[#94A3B8] dark:placeholder:text-zinc-600',
+          'placeholder:text-[var(--text-disabled)]',
           'focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500',
           error
             ? 'border border-red-500 focus:ring-red-500/20'

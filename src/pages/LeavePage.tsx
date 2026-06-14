@@ -137,13 +137,13 @@ export function LeavePage() {
               <Card key={r.id}>
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="min-w-0">
-                    {isAdmin && <p className="font-semibold text-zinc-100">{getName(r)}</p>}
-                    <p className="text-sm text-zinc-400">
+                    {isAdmin && <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{getName(r)}</p>}
+                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
                       {formatDate(r.start_date)} – {formatDate(r.end_date)}
                     </p>
-                    <p className="mt-1 text-sm text-zinc-300">{r.reason}</p>
+                    <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>{r.reason}</p>
                     {r.manager_note && (
-                      <p className="mt-2 text-xs italic text-zinc-600">Opmerking: {r.manager_note}</p>
+                      <p className="mt-2 text-xs italic" style={{ color: 'var(--text-disabled)' }}>Opmerking: {r.manager_note}</p>
                     )}
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-2">

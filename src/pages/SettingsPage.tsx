@@ -12,6 +12,7 @@ import {
 } from '../services/locations'
 import type { Location } from '../types/database'
 import { PageHeader } from '../components/ui/PageHeader'
+import { HelpTooltip } from '../components/ui/Tooltip'
 import { Card, CardHeader } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Input } from '../components/ui/Input'
@@ -222,18 +223,24 @@ export function SettingsPage() {
                 onChange={(e) => setGpsEnabled(e.target.checked)}
                 className="h-4 w-4 rounded border-gray-300"
               />
-              <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+              <span className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                 GPS-controle inschakelen
+                <HelpTooltip text="Medewerkers moeten binnen de ingestelde radius van de werkplek zijn om in en uit te klokken. Locatie wordt alleen op het moment van klokken opgevraagd." />
               </span>
             </label>
-            <Input
-              label="Standaard radius (meter)"
-              type="number"
-              min={25}
-              max={500}
-              value={gpsRadius}
-              onChange={(e) => setGpsRadius(e.target.value)}
-            />
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <Input
+                  label="Standaard radius (meter)"
+                  type="number"
+                  min={25}
+                  max={500}
+                  value={gpsRadius}
+                  onChange={(e) => setGpsRadius(e.target.value)}
+                />
+              </div>
+              <HelpTooltip text="Radius in meters rondom de ingestelde GPS-coördinaten van je werkplek. Typisch 50–150m voor horeca." className="mb-2.5" />
+            </div>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
               Medewerkers zien bij in- én uitklokken: &quot;Je moet binnen {gpsRadius || 100} meter van de locatie zijn.&quot;
             </p>

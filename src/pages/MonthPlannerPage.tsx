@@ -9,7 +9,6 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core'
 import {
-  Sparkles,
   Calendar,
   LayoutTemplate,
   Users,
@@ -49,6 +48,8 @@ import { MonthPlannerGrid } from '../components/planner/MonthPlannerGrid'
 import { TemplateManager } from '../components/planner/TemplateManager'
 import { AvailabilityOverview } from '../components/planner/AvailabilityOverview'
 import { PlannerDetailPanel } from '../components/planner/PlannerDetailPanel'
+import { MobilePlannerList } from '../components/planner/MobilePlannerList'
+import { PageHeader } from '../components/ui/PageHeader'
 import { getMonthRange, addMonths, subMonths, monthLabel, cn } from '../lib/utils'
 
 type Tab = 'planner' | 'templates' | 'availability'
@@ -287,28 +288,25 @@ export function MonthPlannerPage() {
 
   return (
     <div className="flex min-h-[calc(100vh-8rem)] flex-col gap-4">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <Link
-            to="/app/rooster"
-            className="mb-2 inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Terug naar rooster
-          </Link>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-zinc-100">
-            <Sparkles className="h-7 w-7" />
-            Slimme Maandrooster Planner
-          </h1>
-          <p className="text-sm capitalize" style={{ color: 'var(--text-muted)' }}>{monthLabel(monthAnchor)}</p>
-        </div>
-        <MonthNavigator
-          monthAnchor={monthAnchor}
-          onPrev={() => setMonthAnchor(subMonths(monthAnchor, 1))}
-          onNext={() => setMonthAnchor(addMonths(monthAnchor, 1))}
-          onToday={() => setMonthAnchor(new Date())}
-        />
-      </div>
+      <PageHeader
+        title="Maandplanner"
+        subtitle={`Slimme planning · ${monthLabel(monthAnchor)}`}
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            <Link to="/app/rooster">
+              <Button variant="ghost" size="sm">
+                <ArrowLeft className="h-4 w-4" /> Rooster
+              </Button>
+            </Link>
+            <MonthNavigator
+              monthAnchor={monthAnchor}
+              onPrev={() => setMonthAnchor(subMonths(monthAnchor, 1))}
+              onNext={() => setMonthAnchor(addMonths(monthAnchor, 1))}
+              onToday={() => setMonthAnchor(new Date())}
+            />
+          </div>
+        }
+      />
 
       {toast && (
         <div
@@ -339,8 +337,9 @@ export function MonthPlannerPage() {
               'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors',
               tab === id
                 ? 'bg-brand-600 text-white shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200'
+                : 'hover:opacity-80'
             )}
+            style={tab !== id ? { color: 'var(--text-muted)' } : undefined}
           >
             <Icon className="h-4 w-4" />
             {label}
@@ -389,17 +388,24 @@ export function MonthPlannerPage() {
               <Send className="h-4 w-4" />
               Publiceer maandrooster
             </Button>
-            <label className="ml-auto flex items-center gap-2 text-sm text-zinc-400">
+            <label className="ml-auto flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
               Max uren/medewerker:
               <input
                 type="number"
                 value={maxHours}
                 onChange={(e) => setMaxHours(Number(e.target.value))}
-                className="w-16 rounded-lg px-2 py-1 text-zinc-200 outline-none"
-                style={{ background: 'var(--surface-input)', border: '1px solid var(--border-input)' }}
+                className="w-16 rounded-lg px-2 py-1 outline-none"
+                style={{ background: 'var(--surface-input)', color: 'var(--text-primary)', border: '1px solid var(--border-input)' }}
               />
             </label>
           </Card>
+
+          <MobilePlannerList
+            shifts={shifts}
+            employees={employees}
+            onAssign={(shiftId, userId) => applyAssignment(shiftId, userId)}
+            assigning={!!assigning}
+          />
 
           <DndContext
             sensors={sensors}
@@ -419,7 +425,7 @@ export function MonthPlannerPage() {
           >
             <div
               className={cn(
-                'relative flex min-h-[600px] gap-0 overflow-hidden rounded-xl',
+                'relative hidden min-h-[600px] gap-0 overflow-hidden rounded-xl lg:flex',
                 assigning && 'pointer-events-none opacity-90'
               )}
               style={{ background: 'var(--surface-card)', border: '1px solid var(--border)' }}
@@ -458,8 +464,8 @@ export function MonthPlannerPage() {
             <DragOverlay dropAnimation={null}>
               {activeDragName && (
                 <div
-                  className="cursor-grabbing rounded-xl px-4 py-2 text-sm font-medium text-zinc-200"
-                  style={{ background: 'var(--surface-card)', border: '1px solid rgba(59,130,246,0.4)', boxShadow: 'var(--shadow-card-md)' }}
+                  className="cursor-grabbing rounded-xl px-4 py-2 text-sm font-medium"
+                  style={{ color: 'var(--text-primary)', background: 'var(--surface-card)', border: '1px solid rgba(59,130,246,0.4)', boxShadow: 'var(--shadow-card-md)' }}
                 >
                   {activeDragName}
                 </div>

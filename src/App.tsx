@@ -34,6 +34,8 @@ import { TermsPage } from './pages/TermsPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
+import { LinkExpiredPage } from './pages/LinkExpiredPage'
+import { AuthHashHandler } from './components/AuthHashHandler'
 
 export default function App() {
   return (
@@ -44,6 +46,7 @@ export default function App() {
       <AuthProvider>
         <OrganizationProvider>
           <BrowserRouter>
+            <AuthHashHandler />
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<LandingPage />} />
@@ -54,6 +57,7 @@ export default function App() {
               <Route path="/voorwaarden" element={<TermsPage />} />
               <Route path="/wachtwoord-vergeten" element={<ForgotPasswordPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/link-verlopen" element={<LinkExpiredPage />} />
 
               {/* Onboarding: requires auth, no org yet */}
               <Route element={<ProtectedRoute requireOrg={false} />}>

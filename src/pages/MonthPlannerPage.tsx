@@ -54,6 +54,7 @@ import { PlannerDetailPanel } from '../components/planner/PlannerDetailPanel'
 import { MobilePlannerList } from '../components/planner/MobilePlannerList'
 import { PageHeader } from '../components/ui/PageHeader'
 import { ScheduleExportButton } from '../components/schedule/ScheduleExportButton'
+import { ClearMonthScheduleButton } from '../components/schedule/ClearMonthScheduleButton'
 import { getMonthRange, addMonths, subMonths, monthLabel, cn } from '../lib/utils'
 
 type Tab = 'planner' | 'templates' | 'availability'
@@ -401,6 +402,12 @@ export function MonthPlannerPage() {
               <Send className="h-4 w-4" />
               Publiceer maandrooster
             </Button>
+            <ClearMonthScheduleButton
+              monthAnchor={monthAnchor}
+              shiftCount={shifts.length}
+              periodLabel={monthLabel(monthAnchor)}
+              onCleared={fetchPlannerData}
+            />
             <label className="ml-auto flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
               Max uren/medewerker:
               <input

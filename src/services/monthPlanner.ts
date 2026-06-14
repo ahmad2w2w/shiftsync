@@ -2,6 +2,7 @@ import { format, eachDayOfInterval, startOfMonth, endOfMonth } from 'date-fns'
 import { supabase } from '../lib/supabase'
 import type { Shift, ScheduleMonth } from '../types/database'
 import { getShiftTemplates } from './shiftTemplates'
+import { deleteShiftsForPeriod } from './shifts'
 
 export function monthKey(anchor: Date): string {
   return format(anchor, 'yyyy-MM')
@@ -213,6 +214,14 @@ export async function unpublishMonth(monthAnchor: Date): Promise<void> {
     .from('schedule_months')
     .delete()
     .eq('month_key', monthKey(monthAnchor))
+}
+
+/** Verwijdert alle diensten in een maand en reset publicatiestatus. */
+export async function clearMonthSchedule(monthAnchor: Date): Promise<void> {
+  const start = startOfMonth(monthAnchor)
+  const end = endOfMonth(monthAnchor)
+  await deleteShiftsForPeriod(start, end)
+  await supabase.from('schedule_months').delete().eq('month_key', monthKey(monthAnchor))
 }
 
 export function plannerStats(shifts: Shift[]) {

@@ -41,6 +41,7 @@ import { DashboardSkeleton } from '../components/ui/Skeleton'
 import { Tabs } from '../components/ui/Tabs'
 import { Button } from '../components/ui/Button'
 import { ScheduleExportButton } from '../components/schedule/ScheduleExportButton'
+import { ClearMonthScheduleButton } from '../components/schedule/ClearMonthScheduleButton'
 import { getMonthRange, addMonths, subMonths, monthLabel, formatDate, cn } from '../lib/utils'
 
 type ScheduleTab = 'month' | 'week' | 'ai'
@@ -247,6 +248,12 @@ export function SchedulePage() {
                 <Button size="sm" onClick={() => setPublishModalOpen(true)}>
                   <Send className="h-4 w-4" /> Publiceren
                 </Button>
+                <ClearMonthScheduleButton
+                  monthAnchor={monthAnchor}
+                  shiftCount={shifts.length}
+                  periodLabel={monthLabel(monthAnchor)}
+                  onCleared={reload}
+                />
               </>
             )}
             <MonthNavigator

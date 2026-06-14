@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase'
-import { parseEdgeFunctionError } from '../lib/edgeFunctions'
+import { invokeEdgeFunction } from '../lib/edgeFunctions'
 import type { User, UserRole } from '../types/database'
 import type { User as AuthUser } from '@supabase/supabase-js'
 
@@ -74,17 +74,11 @@ export async function createEmployeeAccount(params: {
   hourly_rate?: number
   organization_id: string
 }): Promise<void> {
-  const { data, error } = await supabase.functions.invoke('invite-employee', {
-    body: {
-      email: params.email,
-      full_name: params.full_name,
-      hourly_rate: params.hourly_rate ?? 0,
-    },
+  await invokeEdgeFunction('invite-employee', {
+    email: params.email,
+    full_name: params.full_name,
+    hourly_rate: params.hourly_rate ?? 0,
   })
-  if (error) {
-    throw new Error(await parseEdgeFunctionError(error, data))
-  }
-  if (data?.error) throw new Error(data.error)
 }
 
 export async function uploadAvatar(userId: string, file: File): Promise<string> {

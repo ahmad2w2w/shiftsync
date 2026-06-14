@@ -294,7 +294,15 @@ CREATE POLICY "availability_delete" ON public.availability FOR DELETE
 CREATE POLICY "shifts_select" ON public.shifts FOR SELECT
   USING (
     organization_id = public.current_org_id()
-    AND (public.is_admin() OR (user_id = auth.uid() AND published = true))
+    AND (
+      public.is_admin() OR (user_id = auth.uid() AND published = true)
+      OR EXISTS (
+        SELECT 1 FROM public.shift_swaps sw
+        WHERE sw.shift_id = shifts.id
+          AND sw.organization_id = public.current_org_id()
+          AND sw.status IN ('offered', 'accepted')
+      )
+    )
   );
 
 CREATE POLICY "shifts_insert" ON public.shifts FOR INSERT

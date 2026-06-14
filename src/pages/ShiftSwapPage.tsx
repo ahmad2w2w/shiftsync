@@ -76,8 +76,7 @@ export function ShiftSwapPage() {
     (s) =>
       s.status === 'offered' &&
       s.offered_by !== profile?.id &&
-      s.shift?.date &&
-      s.shift.date >= format(new Date(), 'yyyy-MM-dd')
+      (!s.shift?.date || s.shift.date >= format(new Date(), 'yyyy-MM-dd'))
   )
 
   const pendingApproval = swaps.filter((s) => s.status === 'accepted')
@@ -99,15 +98,20 @@ export function ShiftSwapPage() {
 
   const SwapCard = ({ swap, actions }: { swap: ShiftSwap; actions?: ReactNode }) => {
     const shift = swap.shift
-    if (!shift) return null
     return (
       <Card key={swap.id}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="font-semibold capitalize" style={{ color: 'var(--text-primary)' }}>
-              {formatDate(shift.date, 'EEE d MMM')} · {formatTime(shift.start_time)}–{formatTime(shift.end_time)}
-            </p>
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{shift.position}</p>
+            {shift ? (
+              <>
+                <p className="font-semibold capitalize" style={{ color: 'var(--text-primary)' }}>
+                  {formatDate(shift.date, 'EEE d MMM')} · {formatTime(shift.start_time)}–{formatTime(shift.end_time)}
+                </p>
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{shift.position}</p>
+              </>
+            ) : (
+              <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>Dienst (details laden…)</p>
+            )}
             <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
               Aangeboden door {userMap.get(swap.offered_by) ?? '—'}
               {swap.accepted_by && ` · Geaccepteerd door ${userMap.get(swap.accepted_by) ?? '—'}`}
@@ -250,6 +254,9 @@ export function ShiftSwapPage() {
       {/* Employee: marketplace */}
       {!isAdmin && tab === 'market' && (
         <div className="space-y-3">
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            Hier zie je diensten die collega's hebben aangeboden. Je eigen aanbod staat onder Mijn diensten.
+          </p>
           {marketplace.length === 0 ? (
             <Card>
               <EmptyState icon={Store} title="Geen open diensten" description="Er zijn momenteel geen diensten aangeboden door collega's." />
@@ -260,19 +267,21 @@ export function ShiftSwapPage() {
                 key={swap.id}
                 swap={swap}
                 actions={
-                  <Button
-                    size="sm"
-                    loading={busy === swap.id}
-                    onClick={() =>
-                      run(
-                        swap.id,
-                        () => acceptShiftSwap(swap.id, profile!.id).then(() => {}),
-                        'Dienst geaccepteerd — wacht op goedkeuring manager'
-                      )
-                    }
-                  >
-                    Accepteren
-                  </Button>
+                  swap.shift ? (
+                    <Button
+                      size="sm"
+                      loading={busy === swap.id}
+                      onClick={() =>
+                        run(
+                          swap.id,
+                          () => acceptShiftSwap(swap.id, profile!.id).then(() => {}),
+                          'Dienst geaccepteerd — wacht op goedkeuring manager'
+                        )
+                      }
+                    >
+                      Accepteren
+                    </Button>
+                  ) : undefined
                 }
               />
             ))

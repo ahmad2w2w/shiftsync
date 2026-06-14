@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Clock, LogIn, LogOut, Coffee, Play } from 'lucide-react'
+import { Clock, LogIn, LogOut, Coffee, Play, MapPin } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useOrganization } from '../context/OrganizationContext'
 import {
@@ -61,7 +61,7 @@ export function ClockPage() {
 
   useEffect(() => {
     if (profile) load()
-  }, [profile, isAdmin, organization?.id])
+  }, [profile, isAdmin, organization?.id, organization?.gps_enabled, organization?.gps_radius_meters])
 
   const handleClockIn = async () => {
     setError('')
@@ -231,10 +231,23 @@ export function ClockPage() {
               <p className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Klaar om te starten?</p>
               <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
                 {gpsRequired
-                  ? `GPS-controle actief — binnen ${organization?.gps_radius_meters ?? 100}m van ${location?.name ?? 'werkplek'}`
+                  ? location
+                    ? `GPS-controle actief — binnen ${location.radius_meters || organization?.gps_radius_meters || 100}m van ${location.name}`
+                    : 'GPS staat aan, maar er is nog geen werkplek ingesteld. Vraag je manager om Instellingen → Locaties.'
                   : 'Klok in wanneer je dienst begint'}
               </p>
-              <Button size="lg" loading={actionLoading} onClick={handleClockIn} className="mt-6 w-full max-w-xs">
+              {gpsRequired && !location && (
+                <p className="mx-auto mt-3 max-w-xs rounded-xl px-4 py-3 text-xs" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', color: '#B45309' }}>
+                  Inklokken met GPS is nog niet mogelijk tot je manager een locatie heeft toegevoegd.
+                </p>
+              )}
+              <Button
+                size="lg"
+                loading={actionLoading}
+                onClick={handleClockIn}
+                disabled={gpsRequired && !location}
+                className="mt-6 w-full max-w-xs"
+              >
                 <LogIn className="h-5 w-5" /> Inklokken
               </Button>
             </>
@@ -249,6 +262,14 @@ export function ClockPage() {
             </p>
           )}
         </div>
+        {gpsRequired && location && !active && (
+          <div className="flex items-center gap-3 border-t px-5 py-3" style={{ borderColor: 'var(--border)', background: 'var(--surface-subtle)' }}>
+            <MapPin className="h-4 w-4 shrink-0" style={{ color: '#10B981' }} />
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              Je locatie wordt gecontroleerd bij inklokken (max. {location.radius_meters}m van {location.name}).
+            </p>
+          </div>
+        )}
       </Card>
 
       <Card>

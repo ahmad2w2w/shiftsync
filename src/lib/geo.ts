@@ -31,7 +31,25 @@ export function getCurrentPosition(): Promise<GeolocationPosition> {
       reject(new Error('Geolocatie wordt niet ondersteund door je browser'))
       return
     }
-    navigator.geolocation.getCurrentPosition(resolve, reject, {
+    if (!window.isSecureContext) {
+      reject(new Error('GPS werkt alleen via HTTPS (of localhost). Open de app via een beveiligde verbinding.'))
+      return
+    }
+    navigator.geolocation.getCurrentPosition(resolve, (err) => {
+      switch (err.code) {
+        case err.PERMISSION_DENIED:
+          reject(new Error('Locatietoegang geweigerd. Sta GPS toe in je browser of telefoon.'))
+          break
+        case err.POSITION_UNAVAILABLE:
+          reject(new Error('GPS-locatie niet beschikbaar. Probeer het opnieuw buiten of met beter bereik.'))
+          break
+        case err.TIMEOUT:
+          reject(new Error('GPS duurde te lang. Probeer opnieuw.'))
+          break
+        default:
+          reject(new Error('Kon je locatie niet bepalen'))
+      }
+    }, {
       enableHighAccuracy: true,
       timeout: 15000,
       maximumAge: 0,

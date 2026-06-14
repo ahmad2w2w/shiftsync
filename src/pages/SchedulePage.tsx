@@ -236,11 +236,10 @@ export function SchedulePage() {
         </div>
       )}
 
-      {/* Split layout */}
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)] xl:grid-cols-[minmax(0,1.1fr)_minmax(380px,480px)]">
-        {/* Calendar */}
+      {/* Calendar + day panel — stacked so calendar uses full width */}
+      <div className="space-y-6">
         <div
-          className="rounded-2xl p-4 sm:p-6 lg:sticky lg:top-24 lg:self-start"
+          className="rounded-2xl p-4 sm:p-6"
           style={{ background: 'var(--surface-card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}
         >
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
@@ -258,9 +257,8 @@ export function SchedulePage() {
           />
         </div>
 
-        {/* Day panel */}
         <div
-          className={cn('rounded-2xl p-4 sm:p-6 transition-opacity lg:min-h-[480px]', refreshing && 'opacity-60')}
+          className={cn('rounded-2xl p-4 sm:p-6 transition-opacity', refreshing && 'opacity-60')}
           style={{ background: 'var(--surface-card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card-md)' }}
         >
           {!selectedDate ? (

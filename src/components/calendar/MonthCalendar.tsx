@@ -33,9 +33,9 @@ export function MonthCalendar({
   const large = size === 'large'
 
   return (
-    <div className="w-full overflow-x-auto">
-      <div className={cn('w-full', large ? 'min-w-[640px]' : 'min-w-[320px]')}>
-        <div className={cn('mb-3 grid grid-cols-7', large ? 'gap-2' : 'gap-1')}>
+    <div className="w-full">
+      <div className="w-full">
+        <div className={cn('mb-3 grid grid-cols-7', large ? 'gap-3' : 'gap-1.5')}>
           {WEEKDAYS.map((d) => (
             <div
               key={d}
@@ -47,7 +47,7 @@ export function MonthCalendar({
           ))}
         </div>
 
-        <div className={cn('grid grid-cols-7', large ? 'gap-2' : 'gap-1')}>
+        <div className={cn('grid grid-cols-7', large ? 'gap-3' : 'gap-1.5')}>
           {grid.map((day) => {
             const dateStr = format(day, 'yyyy-MM-dd')
             const inMonth = isSameMonth(day, monthAnchor)
@@ -74,8 +74,8 @@ export function MonthCalendar({
                 className={cn(
                   'relative flex flex-col rounded-2xl text-left transition-all duration-150',
                   large
-                    ? 'min-h-[96px] p-2.5 sm:min-h-[112px] sm:p-3'
-                    : 'min-h-[72px] p-1.5 sm:min-h-[84px] sm:p-2',
+                    ? 'min-h-[120px] p-3 sm:min-h-[136px] sm:p-4 md:min-h-[148px]'
+                    : 'min-h-[80px] p-2 sm:min-h-[92px]',
                   inMonth && onSelectDate && 'hover:-translate-y-0.5 hover:shadow-md',
                   inMonth
                     ? selected
@@ -95,7 +95,7 @@ export function MonthCalendar({
                   <span
                     className={cn(
                       'flex items-center justify-center rounded-full font-bold',
-                      large ? 'h-8 w-8 text-sm' : 'h-7 w-7 text-xs',
+                      large ? 'h-10 w-10 text-base sm:h-11 sm:w-11' : 'h-8 w-8 text-sm',
                       selected && 'bg-brand-600 text-white shadow-sm',
                       today && !selected && 'ring-2 ring-brand-500/30'
                     )}
@@ -105,7 +105,7 @@ export function MonthCalendar({
                   </span>
                   {meta && total > 0 && (
                     <span
-                      className="rounded-full px-1.5 py-0.5 text-[10px] font-bold"
+                      className="rounded-full px-2 py-0.5 text-xs font-bold"
                       style={{ background: 'rgba(59,130,246,0.15)', color: '#2563EB' }}
                     >
                       {total}
@@ -114,23 +114,23 @@ export function MonthCalendar({
                 </div>
 
                 {inMonth && meta && (
-                  <div className="mt-auto space-y-0.5 pt-1">
+                  <div className="mt-auto space-y-1 pt-2">
                     {meta.filled > 0 && (
-                      <div className="flex items-center gap-1 text-[10px] font-medium sm:text-xs" style={{ color: '#2563EB' }}>
-                        <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
-                        {meta.filled} ingepland
+                      <div className="flex items-center gap-1.5 text-xs font-medium sm:text-sm" style={{ color: '#2563EB' }}>
+                        <span className="h-2 w-2 shrink-0 rounded-full bg-brand-500" />
+                        <span className="truncate">{meta.filled} ingepland</span>
                       </div>
                     )}
                     {meta.open > 0 && (
-                      <div className="flex items-center gap-1 text-[10px] font-medium sm:text-xs" style={{ color: '#D97706' }}>
-                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                        {meta.open} open
+                      <div className="flex items-center gap-1.5 text-xs font-medium sm:text-sm" style={{ color: '#D97706' }}>
+                        <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />
+                        <span className="truncate">{meta.open} open</span>
                       </div>
                     )}
-                    {meta.available > 0 && meta.filled === 0 && meta.open === 0 && (
-                      <div className="flex items-center gap-1 text-[10px] sm:text-xs" style={{ color: '#059669' }}>
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                        {meta.available} beschikbaar
+                    {meta.available > 0 && (
+                      <div className="flex items-center gap-1.5 text-xs sm:text-sm" style={{ color: '#059669' }}>
+                        <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+                        <span className="truncate">{meta.available} beschikbaar</span>
                       </div>
                     )}
                   </div>

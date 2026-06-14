@@ -50,6 +50,7 @@ export function DayScheduleEditor({
   const confirm = useConfirm()
   const [busy, setBusy] = useState<string | null>(null)
   const [adding, setAdding] = useState<'open' | 'employee' | null>(null)
+  const [quickAddUserId, setQuickAddUserId] = useState<string | null>(null)
   const [editId, setEditId] = useState<string | null>(null)
   const [form, setForm] = useState<ShiftFormValues>(emptyForm())
 
@@ -75,6 +76,7 @@ export function DayScheduleEditor({
 
   useEffect(() => {
     setAdding(null)
+    setQuickAddUserId(null)
     setEditId(null)
     setForm(emptyForm())
   }, [date])
@@ -119,6 +121,7 @@ export function DayScheduleEditor({
         slot_index: 0,
       })
       setAdding(null)
+      setQuickAddUserId(null)
       setForm(emptyForm())
     }, form.user_id ? 'Dienst toegevoegd' : 'Open dienst aangemaakt')
   }
@@ -157,22 +160,34 @@ export function DayScheduleEditor({
     }, shift.published ? 'Naar concept gezet' : 'Dienst gepubliceerd')
   }
 
-  const quickAddEmployee = async (userId: string, name: string) => {
-    if (!organization) return
-    await run(`quick-${userId}`, async () => {
+  const startQuickAdd = (userId: string) => {
+    setQuickAddUserId(userId)
+    setAdding(null)
+    setEditId(null)
+    setForm({
+      ...emptyForm(),
+      user_id: userId,
+    })
+  }
+
+  const handleQuickAddConfirm = async () => {
+    if (!organization || !form.user_id) return
+    await run('create', async () => {
       await createShift({
         organization_id: organization.id,
-        user_id: userId,
+        user_id: form.user_id,
         date,
-        start_time: DEFAULT_SHIFT_START,
-        end_time: DEFAULT_SHIFT_END,
-        position: DEFAULT_SHIFT_POSITION,
+        start_time: form.start_time,
+        end_time: form.end_time,
+        position: form.position,
         status: 'scheduled',
         published: true,
         template_id: null,
         slot_index: 0,
       })
-    }, `${name} ingepland`)
+      setQuickAddUserId(null)
+      setForm(emptyForm())
+    }, 'Dienst ingepland')
   }
 
   const planAllAvailable = async () => {
@@ -426,27 +441,59 @@ export function DayScheduleEditor({
       {unscheduledAvailable.length > 0 && (
         <section className="space-y-3">
           <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider" style={{ color: '#10B981' }}>
-            <Plus className="h-4 w-4" /> Beschikbaar — snel toevoegen
+            <Plus className="h-4 w-4" /> Beschikbaar — kies medewerker
           </h3>
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            Klik op een naam om tijden en functie in te stellen voordat je inplant.
+          </p>
+
+          {quickAddUserId && (
+            <div
+              className="rounded-2xl p-4 animate-slide-up"
+              style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)' }}
+            >
+              <p className="mb-3 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                Dienst instellen voor{' '}
+                {employeeOptions.find((e) => e.id === quickAddUserId)?.full_name ??
+                  unscheduledAvailable.find((a) => a.user_id === quickAddUserId)?.users?.full_name ??
+                  'medewerker'}
+              </p>
+              <ShiftEditorForm
+                values={form}
+                onChange={(p) => setForm((f) => ({ ...f, ...p }))}
+                onSubmit={handleQuickAddConfirm}
+                onCancel={() => { setQuickAddUserId(null); setForm(emptyForm()) }}
+                submitLabel="Inplannen"
+                loading={busy === 'create'}
+                employees={employeeOptions}
+                showEmployee
+              />
+            </div>
+          )}
+
           <div className="flex flex-wrap gap-2">
-            {unscheduledAvailable.map((a) => (
-              <button
-                key={a.id}
-                type="button"
-                disabled={!!busy}
-                onClick={() => quickAddEmployee(a.user_id, a.users?.full_name ?? 'Medewerker')}
-                className={cn(
-                  'rounded-xl px-3 py-2 text-sm font-medium transition-all hover:-translate-y-0.5 hover:shadow-sm disabled:opacity-50'
-                )}
-                style={{
-                  background: 'rgba(16,185,129,0.1)',
-                  border: '1px solid rgba(16,185,129,0.25)',
-                  color: '#059669',
-                }}
-              >
-                + {a.users?.full_name ?? 'Medewerker'}
-              </button>
-            ))}
+            {unscheduledAvailable.map((a) => {
+              const active = quickAddUserId === a.user_id
+              return (
+                <button
+                  key={a.id}
+                  type="button"
+                  disabled={!!busy && !active}
+                  onClick={() => startQuickAdd(a.user_id)}
+                  className={cn(
+                    'rounded-xl px-4 py-2.5 text-sm font-medium transition-all hover:-translate-y-0.5 hover:shadow-sm disabled:opacity-50',
+                    active && 'ring-2 ring-emerald-500'
+                  )}
+                  style={{
+                    background: active ? 'rgba(16,185,129,0.18)' : 'rgba(16,185,129,0.1)',
+                    border: `1px solid ${active ? 'rgba(16,185,129,0.45)' : 'rgba(16,185,129,0.25)'}`,
+                    color: '#059669',
+                  }}
+                >
+                  {a.users?.full_name ?? 'Medewerker'}
+                </button>
+              )
+            })}
           </div>
         </section>
       )}

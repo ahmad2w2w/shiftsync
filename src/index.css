@@ -136,6 +136,33 @@
 }
 
 @layer utilities {
+  /* Marketing pages always use light theme, even if user saved dark mode in the app */
+  .marketing-light {
+    --brand:           #3B82F6;
+    --brand-strong:    #2563eb;
+    --surface-page:    #F1F5F9;
+    --surface-card:    #FFFFFF;
+    --surface-hover:   #F8FAFC;
+    --surface-subtle:  #F8FAFC;
+    --surface-input:   #FFFFFF;
+    --text-primary:    #0F172A;
+    --text-secondary:  #475569;
+    --text-muted:      #64748B;
+    --text-disabled:   #94A3B8;
+    --border:          #E2E8F0;
+    --border-strong:   #CBD5E1;
+    --border-input:    #CBD5E1;
+    --shadow-card:     0 1px 3px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);
+    --shadow-card-md:  0 4px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04);
+    background-color: #F1F5F9;
+    color: #0F172A;
+  }
+
+  .marketing-light .gradient-hero {
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(59,130,246,0.12) 0%, transparent 70%),
+                linear-gradient(180deg, #F1F5F9 0%, #EFF6FF 100%);
+  }
+
   .gradient-brand {
     background: linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%);
   }

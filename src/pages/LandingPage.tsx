@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useState } from 'react'
 import { PublicFooter } from '../components/layout/PublicFooter'
 import {
   Calendar,
@@ -15,6 +16,8 @@ import {
   Building2,
   Sparkles,
   ChevronDown,
+  Menu,
+  X,
 } from 'lucide-react'
 
 const features = [
@@ -75,6 +78,8 @@ const faqs = [
 ]
 
 export function LandingPage() {
+  const [mobileNav, setMobileNav] = useState(false)
+
   return (
     <div className="marketing-light min-h-screen">
 
@@ -92,10 +97,35 @@ export function LandingPage() {
             <a href="#pricing" className="text-sm font-medium transition-colors hover:text-brand-600" style={{ color: 'var(--text-secondary)' }}>Prijzen</a>
             <Link to="/login" className="text-sm font-medium transition-colors hover:text-brand-600" style={{ color: 'var(--text-secondary)' }}>Inloggen</Link>
           </nav>
-          <Link to="/register" className="flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-600/20 hover:bg-brand-700 transition-all">
-            Gratis starten <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="rounded-lg p-2 md:hidden"
+              style={{ color: 'var(--text-secondary)' }}
+              onClick={() => setMobileNav(!mobileNav)}
+              aria-label={mobileNav ? 'Menu sluiten' : 'Menu openen'}
+              aria-expanded={mobileNav}
+            >
+              {mobileNav ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+            <Link to="/register" className="hidden items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-600/20 hover:bg-brand-700 transition-all sm:flex">
+              Gratis starten <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
         </div>
+        {mobileNav && (
+          <nav className="border-t px-5 py-4 md:hidden" style={{ borderColor: 'var(--border)', background: 'rgba(255,255,255,0.95)' }}>
+            <div className="flex flex-col gap-3">
+              <a href="#features" onClick={() => setMobileNav(false)} className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Functies</a>
+              <a href="#demo" onClick={() => setMobileNav(false)} className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Product preview</a>
+              <a href="#pricing" onClick={() => setMobileNav(false)} className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Prijzen</a>
+              <Link to="/login" onClick={() => setMobileNav(false)} className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Inloggen</Link>
+              <Link to="/register" onClick={() => setMobileNav(false)} className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white">
+                Gratis starten <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </nav>
+        )}
       </header>
 
       {/* HERO */}
@@ -120,7 +150,7 @@ export function LandingPage() {
               Start gratis proefperiode <ArrowRight className="h-4 w-4" />
             </Link>
             <a href="#demo" className="flex w-full items-center justify-center gap-2 rounded-2xl px-8 py-4 text-base font-semibold transition-colors hover:bg-white sm:w-auto" style={{ color: 'var(--color-navy)', border: '1px solid var(--border-strong)', background: 'var(--surface-card)' }}>
-              Bekijk demo
+              Product preview
             </a>
           </div>
           <p className="mt-5 text-sm" style={{ color: 'var(--text-muted)' }}>Geen creditcard · Gratis tot 5 medewerkers · Opzegbaar per maand</p>
@@ -137,7 +167,7 @@ export function LandingPage() {
                 <div className="mb-5 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600"><Zap className="h-4 w-4 text-white" /></div>
-                    <div><p className="text-sm font-bold text-white">Command Center</p><p className="text-xs text-zinc-500">Manager dashboard</p></div>
+                    <div><p className="text-sm font-bold text-white">Overzicht</p><p className="text-xs text-zinc-500">Manager dashboard</p></div>
                   </div>
                   <span className="rounded-lg px-3 py-1 text-xs font-semibold text-emerald-400" style={{ background: 'rgba(16,185,129,0.12)' }}>6 ingeklokt</span>
                 </div>

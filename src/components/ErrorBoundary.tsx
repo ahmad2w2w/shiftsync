@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 
 interface Props {
   children: ReactNode
@@ -29,7 +30,7 @@ export class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) return this.props.fallback
       return (
         <div
-          className="flex min-h-screen flex-col items-center justify-center p-4 text-center"
+          className="flex min-h-[50vh] flex-col items-center justify-center p-4 text-center"
           style={{ background: 'var(--surface-page)' }}
         >
           <div
@@ -41,16 +42,25 @@ export class ErrorBoundary extends Component<Props, State> {
             </svg>
           </div>
           <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Er is iets misgegaan</h1>
-          <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+          <p className="mt-2 max-w-md text-sm" style={{ color: 'var(--text-muted)' }}>
             {this.state.error?.message ?? 'Er trad een onverwachte fout op.'}
           </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-6 rounded-lg px-6 py-2.5 text-sm font-medium text-white transition-colors hover:opacity-90"
-            style={{ background: 'var(--brand-strong)' }}
-          >
-            Pagina herladen
-          </button>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Link
+              to="/app/dashboard"
+              className="rounded-lg px-6 py-2.5 text-sm font-medium transition-colors hover:opacity-90"
+              style={{ background: 'var(--surface-card)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+            >
+              Terug naar dashboard
+            </Link>
+            <button
+              onClick={() => window.location.reload()}
+              className="rounded-lg px-6 py-2.5 text-sm font-medium text-white transition-colors hover:opacity-90"
+              style={{ background: 'var(--brand-strong)' }}
+            >
+              Pagina herladen
+            </button>
+          </div>
         </div>
       )
     }

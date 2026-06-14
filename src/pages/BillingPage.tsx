@@ -10,7 +10,7 @@ import { Badge } from '../components/ui/Badge'
 import { PageHeader } from '../components/ui/PageHeader'
 
 export function BillingPage() {
-  const { organization, isSubscribed, pricePerEmployee, refreshOrganization } = useOrganization()
+  const { organization, isSubscribed, isTrialActive, trialDaysLeft, pricePerEmployee, refreshOrganization } = useOrganization()
   const toast = useToast()
   const [employeeCount, setEmployeeCount] = useState(1)
   const [checkoutLoading, setCheckoutLoading] = useState(false)
@@ -82,12 +82,13 @@ export function BillingPage() {
             <div>
               <div className="flex items-center gap-2">
                 <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{PRODUCT.label}</p>
-                <Badge variant={isSubscribed ? 'active' : 'pending'}>
-                  {isSubscribed ? 'Actief' : 'Nog niet actief'}
+                <Badge variant={isSubscribed ? 'active' : isTrialActive ? 'scheduled' : 'pending'}>
+                  {isSubscribed ? 'Actief' : isTrialActive ? `Proefperiode (${trialDaysLeft}d)` : 'Proefperiode verlopen'}
                 </Badge>
               </div>
               <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
                 €{pricePerEmployee} per medewerker per maand
+                {!isSubscribed && isTrialActive && ` · Nog ${trialDaysLeft} dag${trialDaysLeft !== 1 ? 'en' : ''} gratis`}
               </p>
             </div>
           </div>

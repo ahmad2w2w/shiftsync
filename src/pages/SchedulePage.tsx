@@ -205,22 +205,21 @@ export function SchedulePage() {
         ) : (
           <div className="space-y-4">
             <div>
-              <h2 className="text-base font-semibold capitalize text-zinc-100">
+              <h2 className="text-base font-semibold capitalize" style={{ color: 'var(--text-primary)' }}>
                 {formatDayHeader(selectedDate)}
               </h2>
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
                 {assignedShifts.length === 0
                   ? 'Geen diensten op deze dag'
                   : `${assignedShifts.length} dienst${assignedShifts.length !== 1 ? 'en' : ''}`}
               </p>
             </div>
             {assignedShifts.length === 0 ? (
-              <div
-                className="rounded-xl px-6 py-12 text-center"
-                style={{ border: '1px dashed var(--border-strong)', background: 'var(--surface-subtle)' }}
-              >
-                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Je hebt op deze dag geen gepubliceerde diensten.</p>
-              </div>
+              <EmptyState
+                icon={CalendarDays}
+                title="Geen diensten"
+                description="Je hebt op deze dag geen gepubliceerde diensten."
+              />
             ) : (
               <ul className="space-y-3">
                 {assignedShifts
@@ -242,10 +241,10 @@ export function SchedulePage() {
           className="rounded-2xl p-4 sm:p-5"
           style={{ background: 'var(--surface-card)', border: '1px solid var(--border)' }}
         >
-          <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-zinc-600">
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
             Alle diensten in {monthLabel(monthAnchor)}
           </h2>
-          <ul className="divide-y divide-white/6">
+          <ul className="divide-y" style={{ borderColor: 'var(--border)' }}>
             {[...shifts]
               .filter((s) => s.user_id)
               .sort((a, b) => a.date.localeCompare(b.date) || a.start_time.localeCompare(b.start_time))
@@ -255,19 +254,19 @@ export function SchedulePage() {
                     type="button"
                     onClick={() => setSelectedDate(s.date)}
                     className={cn(
-                      'flex w-full items-center justify-between gap-4 py-3 text-left transition-colors hover:bg-white/4 rounded-xl px-2 -mx-2',
+                      'flex w-full items-center justify-between gap-4 py-3 text-left transition-colors rounded-xl px-2 -mx-2 hover:opacity-80',
                       selectedDate === s.date && 'bg-brand-500/8'
                     )}
                   >
                     <div>
-                      <p className="font-medium capitalize text-zinc-200">
+                      <p className="font-medium capitalize" style={{ color: 'var(--text-primary)' }}>
                         {formatDate(s.date, 'EEE d MMM')}
                       </p>
-                      <p className="text-sm text-zinc-500">
+                      <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
                         {s.position} · {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}
                       </p>
                     </div>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-zinc-700" />
+                    <ChevronRight className="h-4 w-4 shrink-0" style={{ color: 'var(--text-disabled)' }} />
                   </button>
                 </li>
               ))}

@@ -1,5 +1,5 @@
 import { cn } from '../../lib/utils'
-import type { ButtonHTMLAttributes } from 'react'
+import { forwardRef, type ButtonHTMLAttributes } from 'react'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
@@ -7,15 +7,18 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean
 }
 
-export function Button({
-  variant = 'primary',
-  size = 'md',
-  loading,
-  className,
-  children,
-  disabled,
-  ...props
-}: ButtonProps) {
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  {
+    variant = 'primary',
+    size = 'md',
+    loading,
+    className,
+    children,
+    disabled,
+    ...props
+  },
+  ref
+) {
   const variants = {
     primary:
       'bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700 shadow-sm shadow-brand-500/20',
@@ -40,6 +43,7 @@ export function Button({
 
   return (
     <button
+      ref={ref}
       className={cn(
         'inline-flex items-center justify-center gap-1.5 transition-all duration-150',
         'disabled:opacity-40 disabled:cursor-not-allowed',
@@ -58,4 +62,4 @@ export function Button({
       {children}
     </button>
   )
-}
+})

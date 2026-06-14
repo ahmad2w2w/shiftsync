@@ -22,9 +22,10 @@ import { Badge } from '../components/ui/Badge'
 import { PageHeader } from '../components/ui/PageHeader'
 import { EmptyState } from '../components/ui/EmptyState'
 import { DashboardSkeleton } from '../components/ui/Skeleton'
+import { LoadError } from '../components/ui/LoadError'
 import { formatDate, formatTime, shiftSwapStatusLabel, cn } from '../lib/utils'
 
-type Tab = 'mine' | 'market' | 'pending'
+type Tab = 'mine' | 'market' | 'pending' | 'history'
 
 export function ShiftSwapPage() {
   const { profile, isAdmin } = useAuth()
@@ -36,6 +37,7 @@ export function ShiftSwapPage() {
   const [swaps, setSwaps] = useState<ShiftSwap[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
 
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 })
@@ -44,15 +46,18 @@ export function ShiftSwapPage() {
   const load = async () => {
     if (!profile || !organization) return
     setLoading(true)
+    setLoadError(false)
     try {
       const [shifts, swapData, allUsers] = await Promise.all([
         isAdmin ? Promise.resolve([]) : getShiftsForPeriod(weekStart, weekEnd, { userId: profile.id, publishedOnly: true }),
-        getShiftSwaps(isAdmin ? { status: ['offered', 'accepted'] } : undefined),
+        getShiftSwaps(isAdmin ? undefined : undefined),
         getAllUsers(),
       ])
       setMyShifts(shifts)
       setSwaps(swapData)
       setUsers(allUsers)
+    } catch {
+      setLoadError(true)
     } finally {
       setLoading(false)
     }
@@ -80,6 +85,7 @@ export function ShiftSwapPage() {
   )
 
   const pendingApproval = swaps.filter((s) => s.status === 'accepted')
+  const historySwaps = swaps.filter((s) => ['approved', 'rejected', 'cancelled'].includes(s.status))
 
   const mySwaps = swaps.filter((s) => s.offered_by === profile?.id || s.accepted_by === profile?.id)
 
@@ -129,13 +135,17 @@ export function ShiftSwapPage() {
   }
 
   const tabs: { id: Tab; label: string; count?: number }[] = isAdmin
-    ? [{ id: 'pending', label: 'Goedkeuring', count: pendingApproval.length }]
+    ? [
+        { id: 'pending', label: 'Goedkeuring', count: pendingApproval.length },
+        { id: 'history', label: 'Historie', count: historySwaps.length },
+      ]
     : [
         { id: 'mine', label: 'Mijn diensten', count: myOfferableShifts.length },
         { id: 'market', label: 'Marktplaats', count: marketplace.length },
       ]
 
   if (loading) return <DashboardSkeleton />
+  if (loadError) return <LoadError onRetry={load} />
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -290,7 +300,7 @@ export function ShiftSwapPage() {
       )}
 
       {/* Manager: pending approval */}
-      {isAdmin && (
+      {isAdmin && tab === 'pending' && (
         <div className="space-y-3">
           {pendingApproval.length === 0 ? (
             <Card>
@@ -334,6 +344,18 @@ export function ShiftSwapPage() {
                 }
               />
             ))
+          )}
+        </div>
+      )}
+
+      {isAdmin && tab === 'history' && (
+        <div className="space-y-3">
+          {historySwaps.length === 0 ? (
+            <Card>
+              <EmptyState icon={ArrowLeftRight} title="Geen historie" description="Afgeronde ruilverzoeken verschijnen hier." />
+            </Card>
+          ) : (
+            historySwaps.map((swap) => <SwapCard key={swap.id} swap={swap} />)
           )}
         </div>
       )}

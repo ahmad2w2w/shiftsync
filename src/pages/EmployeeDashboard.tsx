@@ -13,6 +13,7 @@ import { Button } from '../components/ui/Button'
 import { PageHeader } from '../components/ui/PageHeader'
 import { EmptyState } from '../components/ui/EmptyState'
 import { DashboardSkeleton } from '../components/ui/Skeleton'
+import { LoadError } from '../components/ui/LoadError'
 import { getWeekRange, formatDate, formatTime, leaveStatusLabel } from '../lib/utils'
 
 export function EmployeeDashboard() {
@@ -23,6 +24,7 @@ export function EmployeeDashboard() {
   const [weekHours, setWeekHours] = useState(0)
   const [leave, setLeave] = useState<LeaveRequest[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
 
   useEffect(() => {
     if (!profile) return
@@ -39,6 +41,7 @@ export function EmployeeDashboard() {
         setWeekHours(sumHours(records))
         setLeave(l.filter((r) => r.status === 'pending').slice(0, 3))
       })
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false))
   }, [profile])
 
@@ -65,6 +68,9 @@ export function EmployeeDashboard() {
   }
 
   if (loading) return <DashboardSkeleton />
+  if (loadError) {
+    return <LoadError onRetry={() => window.location.reload()} />
+  }
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">

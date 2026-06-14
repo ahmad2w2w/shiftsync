@@ -24,6 +24,9 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import { useOrganization } from '../../context/OrganizationContext'
 import { useTheme } from '../../context/ThemeContext'
+import { ErrorBoundary } from '../ErrorBoundary'
+import { MobileBottomNav } from './MobileBottomNav'
+import { TrialBanner } from './TrialBanner'
 import { cn } from '../../lib/utils'
 
 const employeeNav = [
@@ -60,6 +63,24 @@ const managerNav: NavItem[] = [
   { to: '/app/profiel',         label: 'Profiel',          icon: UserCircle },
 ]
 
+function UserAvatar({ name, avatarUrl, size = 'md' }: { name?: string; avatarUrl?: string | null; size?: 'sm' | 'md' }) {
+  const dim = size === 'sm' ? 'h-7 w-7 text-xs' : 'h-8 w-8 text-sm'
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt=""
+        className={cn('shrink-0 rounded-full object-cover', dim)}
+      />
+    )
+  }
+  return (
+    <div className={cn('flex shrink-0 items-center justify-center rounded-full bg-brand-500/20 font-bold text-brand-400', dim)}>
+      {name?.[0]?.toUpperCase() ?? '?'}
+    </div>
+  )
+}
+
 export function AppLayout() {
   const { profile, isAdmin, signOut } = useAuth()
   const { organization, isSubscribed, pricePerEmployee } = useOrganization()
@@ -74,6 +95,41 @@ export function AppLayout() {
       const first = mobileNavRef.current.querySelector<HTMLElement>('a, button')
       first?.focus()
     }
+  }, [mobileOpen])
+
+  useEffect(() => {
+    if (!mobileOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileOpen(false)
+    }
+    document.addEventListener('keydown', onKey)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = ''
+    }
+  }, [mobileOpen])
+
+  useEffect(() => {
+    if (!mobileOpen || !mobileNavRef.current) return
+    const panel = mobileNavRef.current
+    const focusable = panel.querySelectorAll<HTMLElement>(
+      'a, button, [tabindex]:not([tabindex="-1"])'
+    )
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    const trap = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab' || focusable.length === 0) return
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last?.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first?.focus()
+      }
+    }
+    panel.addEventListener('keydown', trap)
+    return () => panel.removeEventListener('keydown', trap)
   }, [mobileOpen])
 
   const handleSignOut = async () => {
@@ -108,7 +164,6 @@ export function AppLayout() {
 
   const SidebarContent = () => (
     <>
-      {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-500 shadow-lg shadow-brand-500/30">
           <Zap className="h-4 w-4 text-white" />
@@ -119,12 +174,10 @@ export function AppLayout() {
         </div>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 px-3 py-3">
         <NavItems />
       </nav>
 
-      {/* Footer */}
       <div className="px-3 py-3 space-y-0.5" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
         {isAdmin && (
           <NavLink
@@ -149,11 +202,8 @@ export function AppLayout() {
           </NavLink>
         )}
 
-        {/* User row */}
         <div className="flex items-center gap-3 rounded-xl px-3 py-2.5">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-xs font-bold text-brand-400">
-            {profile?.full_name?.[0]?.toUpperCase() ?? '?'}
-          </div>
+          <UserAvatar name={profile?.full_name} avatarUrl={profile?.avatar_url} size="sm" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-white/80">{profile?.full_name}</p>
             <p className="text-xs text-white/40">{isAdmin ? 'Manager' : 'Medewerker'}</p>
@@ -176,7 +226,6 @@ export function AppLayout() {
       <a href="#main-content" className="skip-link">
         Naar hoofdinhoud
       </a>
-      {/* Desktop sidebar — always dark navy, independent of app light/dark theme */}
       <aside
         className="app-sidebar hidden w-60 shrink-0 flex-col lg:flex"
         style={{ background: 'var(--sidebar-bg)', borderRight: '1px solid rgba(255,255,255,0.06)' }}
@@ -184,15 +233,14 @@ export function AppLayout() {
         <SidebarContent />
       </aside>
 
-      {/* Mobile overlay */}
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={() => setMobileOpen(false)}
+          aria-hidden="true"
         />
       )}
 
-      {/* Mobile sidebar */}
       <aside
         ref={mobileNavRef}
         className={cn(
@@ -201,6 +249,9 @@ export function AppLayout() {
         )}
         style={{ background: 'var(--sidebar-bg)', borderRight: '1px solid rgba(255,255,255,0.06)' }}
         aria-hidden={!mobileOpen}
+        role="dialog"
+        aria-modal={mobileOpen}
+        aria-label="Navigatiemenu"
       >
         <div className="flex items-center justify-between px-4 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <div className="flex items-center gap-2.5">
@@ -223,9 +274,7 @@ export function AppLayout() {
         </div>
       </aside>
 
-      {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Top bar */}
         <header
           className="sticky top-0 z-30 flex items-center gap-3 px-4 py-3 lg:px-6 backdrop-blur-md"
           style={{
@@ -244,13 +293,18 @@ export function AppLayout() {
             <Menu className="h-4 w-4" />
           </button>
           <div className="flex flex-1 items-center justify-between min-w-0">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                {organization?.name}
-              </p>
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                {profile?.full_name}
-              </p>
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="hidden sm:block">
+                <UserAvatar name={profile?.full_name} avatarUrl={profile?.avatar_url} size="md" />
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  {organization?.name}
+                </p>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  {profile?.full_name}
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               {isAdmin && (
@@ -263,12 +317,12 @@ export function AppLayout() {
                   {planLabel}
                 </Link>
               )}
-              {/* Theme toggle */}
               <button
+                type="button"
                 onClick={toggleTheme}
                 className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/5"
                 style={{ color: 'var(--text-muted)', border: '1px solid var(--border)' }}
-                title={theme === 'dark' ? 'Licht thema' : 'Donker thema'}
+                aria-label={theme === 'dark' ? 'Schakel naar licht thema' : 'Schakel naar donker thema'}
               >
                 {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </button>
@@ -276,10 +330,16 @@ export function AppLayout() {
           </div>
         </header>
 
-        <main id="main-content" className="flex-1 p-4 lg:p-6 print-page">
-          <Outlet />
+        <TrialBanner />
+
+        <main id="main-content" className={cn('flex-1 p-4 lg:p-6 print-page', !isAdmin && 'pb-20 lg:pb-6')}>
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
+
+      {!isAdmin && <MobileBottomNav onOpenMenu={() => setMobileOpen(true)} />}
     </div>
   )
 }

@@ -15,6 +15,8 @@ const variantVars: Record<string, { bg: string; text: string; ring: string }> = 
   pro:       { bg: 'var(--badge-scheduled-bg)', text: 'var(--badge-scheduled-text)', ring: 'var(--badge-scheduled-ring)' },
   business:  { bg: 'var(--badge-gold-bg)',      text: 'var(--badge-gold-text)',      ring: 'var(--badge-gold-ring)' },
   leave:     { bg: 'var(--badge-purple-bg)',    text: 'var(--badge-purple-text)',    ring: 'var(--badge-purple-ring)' },
+  warning:  { bg: 'rgba(245,158,11,0.12)', text: '#D97706', ring: 'rgba(245,158,11,0.3)' },
+  sick:     { bg: 'rgba(245,158,11,0.12)', text: '#D97706', ring: 'rgba(245,158,11,0.3)' },
 }
 
 export function Badge({

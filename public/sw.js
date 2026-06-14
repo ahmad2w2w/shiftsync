@@ -1,5 +1,5 @@
-const CACHE = 'shiftsync-v1'
-const ASSETS = ['/', '/index.html', '/favicon.svg', '/manifest.webmanifest']
+const CACHE = 'shiftsync-v2'
+const ASSETS = ['/', '/index.html', '/offline.html', '/favicon.svg', '/manifest.webmanifest']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)))
@@ -27,7 +27,14 @@ self.addEventListener('fetch', (event) => {
           }
           return response
         })
-        .catch(() => cached)
+        .catch(async () => {
+          if (cached) return cached
+          if (event.request.mode === 'navigate') {
+            const offline = await caches.match('/offline.html')
+            if (offline) return offline
+          }
+          throw new Error('offline')
+        })
       return cached || fetchPromise
     })
   )

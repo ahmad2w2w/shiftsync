@@ -38,6 +38,7 @@ import { PageHeader } from '../components/ui/PageHeader'
 import { StatCard } from '../components/ui/StatCard'
 import { EmptyState } from '../components/ui/EmptyState'
 import { DashboardSkeleton } from '../components/ui/Skeleton'
+import { LoadError } from '../components/ui/LoadError'
 import { formatDateTime, getWeekRange } from '../lib/utils'
 
 export function ManagerDashboard() {
@@ -52,6 +53,7 @@ export function ManagerDashboard() {
   const [activeSick, setActiveSick] = useState(0)
   const [openSwaps, setOpenSwaps] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [exporting, setExporting] = useState(false)
 
   const today = format(new Date(), 'yyyy-MM-dd')
@@ -85,8 +87,12 @@ export function ManagerDashboard() {
         })
         setWeekRecords(weekRecs)
       })
+      .catch(() => {
+        setLoadError(true)
+        toast.error('Dashboard laden mislukt')
+      })
       .finally(() => setLoading(false))
-  }, [today, weekStart, weekEnd])
+  }, [today, weekStart, weekEnd, toast])
 
   const openShifts = useMemo(() => weekShifts.filter((s) => !s.user_id).length, [weekShifts])
   const weekHours = useMemo(() => sumHours(weekRecords), [weekRecords])
@@ -137,11 +143,22 @@ export function ManagerDashboard() {
   ]
 
   if (loading) return <DashboardSkeleton />
+  if (loadError) {
+    return (
+      <LoadError
+        onRetry={() => {
+          setLoadError(false)
+          setLoading(true)
+          window.location.reload()
+        }}
+      />
+    )
+  }
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
       <PageHeader
-        title="Command Center"
+        title="Overzicht"
         subtitle={`Welkom terug · ${organization?.name ?? ''}`}
         badge={
           <Badge variant={isSubscribed ? 'active' : 'pending'}>

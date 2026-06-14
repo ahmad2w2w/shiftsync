@@ -4,6 +4,7 @@ import { MapPin, Navigation, Trash2, Plus } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useOrganization } from '../context/OrganizationContext'
 import { useToast } from '../context/ToastContext'
+import { useConfirm } from '../context/ConfirmContext'
 import {
   getLocations,
   createLocation,
@@ -17,13 +18,18 @@ import { Card, CardHeader } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Input } from '../components/ui/Input'
 import { Button } from '../components/ui/Button'
+import { EmptyState } from '../components/ui/EmptyState'
+import { DashboardSkeleton } from '../components/ui/Skeleton'
+import { LoadError } from '../components/ui/LoadError'
 
 export function SettingsPage() {
   const { isAdmin } = useAuth()
   const { organization, refreshOrganization } = useOrganization()
   const toast = useToast()
+  const confirm = useConfirm()
   const [locations, setLocations] = useState<Location[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [saving, setSaving] = useState(false)
   const [gpsEnabled, setGpsEnabled] = useState(false)
   const [gpsRadius, setGpsRadius] = useState('100')
@@ -42,11 +48,14 @@ export function SettingsPage() {
   const load = async () => {
     if (!organization) return
     setLoading(true)
+    setLoadError(false)
     try {
       const locs = await getLocations(organization.id)
       setLocations(locs)
       setGpsEnabled(organization.gps_enabled ?? false)
       setGpsRadius(String(organization.gps_radius_meters ?? 100))
+    } catch {
+      setLoadError(true)
     } finally {
       setLoading(false)
     }
@@ -101,7 +110,14 @@ export function SettingsPage() {
     }
   }
 
-  const handleDeleteLocation = async (id: string) => {
+  const handleDeleteLocation = async (id: string, name: string) => {
+    const ok = await confirm({
+      title: 'Locatie verwijderen?',
+      message: `"${name}" wordt permanent verwijderd.`,
+      confirmLabel: 'Verwijderen',
+      danger: true,
+    })
+    if (!ok) return
     try {
       await deleteLocation(id)
       toast.success('Locatie verwijderd')
@@ -152,8 +168,10 @@ export function SettingsPage() {
           }
         />
 
-        {!canUseGps ? null : loading ? (
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Laden…</p>
+        {loadError ? (
+          <LoadError onRetry={load} />
+        ) : loading ? (
+          <DashboardSkeleton />
         ) : (
           <>
             {showForm && (
@@ -176,9 +194,12 @@ export function SettingsPage() {
             )}
 
             {locations.length === 0 ? (
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                Nog geen locaties. Voeg je werkplek toe om GPS-inklokken te activeren.
-              </p>
+              <EmptyState
+                icon={MapPin}
+                title="Nog geen locaties"
+                description="Voeg je werkplek toe om GPS-inklokken te activeren."
+                action={<Button size="sm" onClick={() => setShowForm(true)}>Locatie toevoegen</Button>}
+              />
             ) : (
               <ul className="space-y-2">
                 {locations.map((loc) => (
@@ -198,10 +219,19 @@ export function SettingsPage() {
                         </p>
                         <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
                           {loc.latitude}, {loc.longitude} · {loc.radius_meters}m radius
+                          {' · '}
+                          <a
+                            href={`https://maps.google.com/?q=${loc.latitude},${loc.longitude}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-brand-600 hover:underline"
+                          >
+                            Bekijk op kaart
+                          </a>
                         </p>
                       </div>
                     </div>
-                    <Button size="sm" variant="danger" onClick={() => handleDeleteLocation(loc.id)}>
+                    <Button size="sm" variant="danger" onClick={() => handleDeleteLocation(loc.id, loc.name)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </li>

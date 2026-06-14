@@ -13,6 +13,7 @@ import { WeekNavigator } from '../components/ui/WeekNavigator'
 import { MonthNavigator } from '../components/ui/MonthNavigator'
 import { PageHeader } from '../components/ui/PageHeader'
 import { DashboardSkeleton } from '../components/ui/Skeleton'
+import { LoadError } from '../components/ui/LoadError'
 import { Table, TableHead, TableHeaderCell, TableBody, TableRow, TableCell } from '../components/ui/Table'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Timer } from 'lucide-react'
@@ -29,12 +30,14 @@ export function HoursPage() {
   const [employees, setEmployees] = useState<User[]>([])
   const [selectedUser, setSelectedUser] = useState('')
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
 
   const targetUserId = isAdmin ? selectedUser || profile!.id : profile!.id
 
   const load = async () => {
     if (!targetUserId) return
     setLoading(true)
+    setLoadError(false)
     try {
       const data = await getClockRecords(targetUserId, range, anchor)
       setRecords(data)
@@ -44,6 +47,8 @@ export function HoursPage() {
         setEmployees(emps)
         if (!selectedUser && emps[0]) setSelectedUser(emps[0].id)
       }
+    } catch {
+      setLoadError(true)
     } finally {
       setLoading(false)
     }
@@ -100,15 +105,15 @@ export function HoursPage() {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
-          <select
+          <Select
+            label="Periode"
             value={range}
             onChange={(e) => setRange(e.target.value as 'week' | 'month')}
-            className="rounded-xl border px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 transition-all"
-            style={{ background: 'var(--surface-input)', color: 'var(--text-primary)', borderColor: 'var(--border-input)' }}
-          >
-            <option value="week">Week</option>
-            <option value="month">Maand</option>
-          </select>
+            options={[
+              { value: 'week', label: 'Week' },
+              { value: 'month', label: 'Maand' },
+            ]}
+          />
           {range === 'week' ? (
             <WeekNavigator
               weekAnchor={anchor}
@@ -148,7 +153,9 @@ export function HoursPage() {
         <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>uur in geselecteerde periode</p>
       </div>
 
-      {loading ? (
+      {loadError ? (
+        <LoadError onRetry={load} />
+      ) : loading ? (
         <DashboardSkeleton />
       ) : (
         <Card>

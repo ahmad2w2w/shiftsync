@@ -12,6 +12,7 @@ import { Badge } from '../components/ui/Badge'
 import { PageHeader } from '../components/ui/PageHeader'
 import { EmptyState } from '../components/ui/EmptyState'
 import { DashboardSkeleton } from '../components/ui/Skeleton'
+import { LoadError } from '../components/ui/LoadError'
 import { formatDate, sickStatusLabel } from '../lib/utils'
 
 export function SickLeavePage() {
@@ -20,6 +21,7 @@ export function SickLeavePage() {
   const toast = useToast()
   const [reports, setReports] = useState<SickReport[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [resolvingId, setResolvingId] = useState<string | null>(null)
@@ -27,9 +29,12 @@ export function SickLeavePage() {
 
   const load = async () => {
     setLoading(true)
+    setLoadError(false)
     try {
       const data = await getSickReports(isAdmin ? undefined : profile!.id)
       setReports(data)
+    } catch {
+      setLoadError(true)
     } finally {
       setLoading(false)
     }
@@ -117,7 +122,9 @@ export function SickLeavePage() {
         </Card>
       )}
 
-      {loading ? (
+      {loadError ? (
+        <LoadError onRetry={load} />
+      ) : loading ? (
         <DashboardSkeleton />
       ) : reports.length === 0 ? (
         <Card>
@@ -150,7 +157,7 @@ export function SickLeavePage() {
                   )}
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-2">
-                  <Badge variant={r.status === 'active' ? 'rejected' : 'approved'}>
+                  <Badge variant={r.status === 'active' ? 'sick' : 'approved'}>
                     {sickStatusLabel[r.status]}
                   </Badge>
                   {isAdmin && r.status === 'active' && (

@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 
@@ -17,6 +17,8 @@ const ConfirmContext = createContext<ConfirmFn>(async () => false)
 export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [options, setOptions] = useState<ConfirmOptions | null>(null)
   const resolver = useRef<((value: boolean) => void) | null>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const cancelRef = useRef<HTMLButtonElement>(null)
 
   const confirm = useCallback<ConfirmFn>((opts) => {
     setOptions(opts)
@@ -31,6 +33,42 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     setOptions(null)
   }
 
+  useEffect(() => {
+    if (!options) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close(false)
+    }
+    document.addEventListener('keydown', onKey)
+    document.body.style.overflow = 'hidden'
+    cancelRef.current?.focus()
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = ''
+    }
+  }, [options])
+
+  useEffect(() => {
+    if (!options || !dialogRef.current) return
+    const dialog = dialogRef.current
+    const focusable = dialog.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    const trap = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab' || focusable.length === 0) return
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last?.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first?.focus()
+      }
+    }
+    dialog.addEventListener('keydown', trap)
+    return () => dialog.removeEventListener('keydown', trap)
+  }, [options])
+
   return (
     <ConfirmContext.Provider value={confirm}>
       {children}
@@ -40,8 +78,13 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             style={{ animation: 'fade-in 0.15s ease-out' }}
             onClick={() => close(false)}
+            aria-hidden="true"
           />
           <div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-title"
             className="relative w-full max-w-md rounded-2xl p-6"
             style={{
               background: 'var(--surface-card)',
@@ -60,7 +103,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                 </span>
               )}
               <div className="min-w-0 flex-1">
-                <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+                <h2 id="confirm-title" className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
                   {options.title}
                 </h2>
                 {options.message && (
@@ -71,7 +114,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-2">
-              <Button variant="secondary" onClick={() => close(false)}>
+              <Button ref={cancelRef} variant="secondary" onClick={() => close(false)}>
                 {options.cancelLabel ?? 'Annuleren'}
               </Button>
               <Button variant={options.danger ? 'danger' : 'primary'} onClick={() => close(true)}>

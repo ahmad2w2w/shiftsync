@@ -23,6 +23,7 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { DashboardSkeleton } from '../components/ui/Skeleton'
 import { Table, TableHead, TableHeaderCell, TableBody, TableRow, TableCell } from '../components/ui/Table'
 import { formatDateTime } from '../lib/utils'
+import { InstallBanner } from '../components/InstallBanner'
 
 export function ClockPage() {
   const { profile, isAdmin } = useAuth()
@@ -181,6 +182,8 @@ export function ClockPage() {
   return (
     <div className="mx-auto max-w-lg space-y-6">
       <PageHeader title="In-/Uitklokken" subtitle="Registreer je gewerkte uren" />
+
+      {!isAdmin && <InstallBanner />}
 
       <Card className="overflow-hidden p-0">
         <div

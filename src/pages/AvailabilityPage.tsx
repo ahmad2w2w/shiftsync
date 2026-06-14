@@ -12,6 +12,7 @@ import type { Availability } from '../types/database'
 import { Card, CardHeader } from '../components/ui/Card'
 import { PageHeader } from '../components/ui/PageHeader'
 import { DashboardSkeleton } from '../components/ui/Skeleton'
+import { LoadError } from '../components/ui/LoadError'
 import { MonthNavigator } from '../components/ui/MonthNavigator'
 import { getMonthRange, addMonths, subMonths, isSameMonth } from '../lib/utils'
 import { format, eachWeekOfInterval, endOfWeek, eachDayOfInterval, isToday, isBefore, startOfDay } from 'date-fns'
@@ -31,13 +32,16 @@ export function AvailabilityPage() {
   const [entries, setEntries]           = useState<Availability[]>([])
   const [allEntries, setAllEntries]     = useState<(Availability & { users?: { full_name: string } })[]>([])
   const [loading, setLoading]           = useState(true)
+  const [loadError, setLoadError]       = useState(false)
   const [toggling, setToggling]         = useState<string | null>(null)
+  const [expandedDate, setExpandedDate] = useState<string | null>(null)
 
   const { start, end } = getMonthRange(monthAnchor)
   const userId = profile!.id
 
   const load = async () => {
     setLoading(true)
+    setLoadError(false)
     try {
       if (isAdmin) {
         const data = await getAllAvailabilityForPeriod(start, end)
@@ -46,6 +50,8 @@ export function AvailabilityPage() {
         const data = await getAvailabilityForPeriod(userId, start, end)
         setEntries(data)
       }
+    } catch {
+      setLoadError(true)
     } finally {
       setLoading(false)
     }
@@ -107,7 +113,11 @@ export function AvailabilityPage() {
           }
         />
 
-        {loading ? <DashboardSkeleton /> : (
+        {loadError ? (
+          <LoadError onRetry={load} />
+        ) : loading ? (
+          <DashboardSkeleton />
+        ) : (
           <Card>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[600px] text-sm">
@@ -148,22 +158,16 @@ export function AvailabilityPage() {
                                     {format(day, 'd')}
                                   </span>
                                   {people.length > 0 ? (
-                                    <div
-                                      className="group relative inline-flex cursor-default items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold"
+                                    <button
+                                      type="button"
+                                      onClick={() => setExpandedDate(expandedDate === dateStr ? null : dateStr)}
+                                      className="inline-flex cursor-pointer items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold transition-opacity hover:opacity-80"
                                       style={{ background: 'rgba(16,185,129,0.12)', color: '#10B981' }}
+                                      aria-expanded={expandedDate === dateStr}
                                     >
                                       <Check className="h-3 w-3" />
                                       {people.length}
-                                      {/* Tooltip */}
-                                      <div
-                                        className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 hidden w-max max-w-[160px] -translate-x-1/2 rounded-lg p-2 text-left text-xs group-hover:block"
-                                        style={{ background: 'var(--surface-card)', border: '1px solid var(--border)', color: 'var(--text-primary)', boxShadow: 'var(--shadow-card)' }}
-                                      >
-                                        {people.map((p) => (
-                                          <p key={p.id}>{p.users?.full_name ?? 'Medewerker'}</p>
-                                        ))}
-                                      </div>
-                                    </div>
+                                    </button>
                                   ) : (
                                     <span className="text-[10px]" style={{ color: 'var(--text-disabled)' }}>—</span>
                                   )}
@@ -178,9 +182,26 @@ export function AvailabilityPage() {
                 </tbody>
               </table>
             </div>
+            {expandedDate && (
+              <div
+                className="mt-4 rounded-xl p-3 text-sm"
+                style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
+              >
+                <p className="mb-2 font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  Beschikbaar op {format(new Date(expandedDate + 'T12:00:00'), 'd MMMM', { locale: nl })}
+                </p>
+                <ul className="space-y-1">
+                  {(countByDate.get(expandedDate) ?? []).map((p) => (
+                    <li key={p.id} style={{ color: 'var(--text-secondary)' }}>
+                      {p.users?.full_name ?? 'Medewerker'}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <p className="mt-4 flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-disabled)' }}>
               <Info className="h-3.5 w-3.5 shrink-0" />
-              Hover over een getal om de namen te zien. Plan diensten via Rooster.
+              Tik op een getal om namen te zien. Plan diensten via Rooster.
             </p>
           </Card>
         )}
@@ -219,7 +240,11 @@ export function AvailabilityPage() {
         </div>
       </div>
 
-      {loading ? <DashboardSkeleton /> : (
+      {loadError ? (
+        <LoadError onRetry={load} />
+      ) : loading ? (
+        <DashboardSkeleton />
+      ) : (
         <Card>
           <CardHeader
             title="Klik dagen aan of uit"

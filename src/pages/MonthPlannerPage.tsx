@@ -19,6 +19,7 @@ import {
 import { useAuth } from '../context/AuthContext'
 import { useOrganization } from '../context/OrganizationContext'
 import { useConfirm } from '../context/ConfirmContext'
+import { useToast } from '../context/ToastContext'
 import { getAllUsers } from '../services/users'
 import { getAllAvailabilityForPeriod } from '../services/availability'
 import { getLeaveRequests } from '../services/leave'
@@ -39,6 +40,8 @@ import { enrichShift, patchShiftInList } from '../lib/plannerShifts'
 import type { Shift, ShiftTemplate, User } from '../types/database'
 import type { Availability, LeaveRequest } from '../types/database'
 import { MonthNavigator } from '../components/ui/MonthNavigator'
+import { DashboardSkeleton } from '../components/ui/Skeleton'
+import { LoadError } from '../components/ui/LoadError'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
@@ -58,6 +61,7 @@ export function MonthPlannerPage() {
   const { profile, isAdmin } = useAuth()
   const { organization, hasFeature } = useOrganization()
   const confirm = useConfirm()
+  const toast = useToast()
   const [monthAnchor, setMonthAnchor] = useState(new Date())
   const [tab, setTab] = useState<Tab>('planner')
   const [shifts, setShifts] = useState<Shift[]>([])
@@ -70,9 +74,9 @@ export function MonthPlannerPage() {
   const [publishedAt, setPublishedAt] = useState<string | null>(null)
   const [maxHours, setMaxHours] = useState(160)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [busy, setBusy] = useState('')
   const [actionError, setActionError] = useState('')
-  const [toast, setToast] = useState<string | null>(null)
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null)
   const [employeeFilter, setEmployeeFilter] = useState('')
   const [activeDragName, setActiveDragName] = useState<string | null>(null)
@@ -104,10 +108,11 @@ export function MonthPlannerPage() {
     if (!isAdmin) return
     let cancelled = false
     setLoading(true)
+    setLoadError(false)
     setActionError('')
     fetchPlannerData()
       .catch(() => {
-        if (!cancelled) setActionError('Gegevens laden mislukt. Probeer opnieuw.')
+        if (!cancelled) setLoadError(true)
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -120,12 +125,6 @@ export function MonthPlannerPage() {
   useEffect(() => {
     setSelectedSlotId(null)
   }, [monthAnchor])
-
-  useEffect(() => {
-    if (!toast) return
-    const t = setTimeout(() => setToast(null), 4000)
-    return () => clearTimeout(t)
-  }, [toast])
 
   const suggestionsByShiftId = useMemo(() => {
     const map = new Map<string, ReturnType<typeof rankEmployeesForSlot>>()
@@ -208,7 +207,7 @@ export function MonthPlannerPage() {
       const count = await generateMonthFromTemplates(monthAnchor, organization!.id, true)
       await fetchPlannerData()
       setTab('planner')
-      setToast(`${count} diensten aangemaakt volgens templates.`)
+      toast.success(`${count} diensten aangemaakt volgens templates.`)
     } catch {
       setActionError('Genereren mislukt.')
     } finally {
@@ -221,7 +220,7 @@ export function MonthPlannerPage() {
     try {
       const removed = await removeDuplicateOpenShifts(start, end)
       await fetchPlannerData()
-      setToast(
+      toast.success(
         removed > 0
           ? `${removed} dubbele open diensten verwijderd.`
           : 'Geen dubbele open diensten gevonden.'
@@ -259,7 +258,7 @@ export function MonthPlannerPage() {
       }
 
       await fetchPlannerData()
-      setToast('Maandrooster gepubliceerd!')
+      toast.success('Maandrooster gepubliceerd!')
     } catch {
       setActionError('Publiceren mislukt.')
     } finally {
@@ -284,7 +283,21 @@ export function MonthPlannerPage() {
 
   if (!isAdmin) return <Navigate to="/app/rooster" replace />
 
-  if (loading) return <LoadingSpinner className="min-h-[60vh]" />
+  if (loading) return <DashboardSkeleton />
+
+  if (loadError) {
+    return (
+      <LoadError
+        onRetry={() => {
+          setLoading(true)
+          setLoadError(false)
+          fetchPlannerData()
+            .catch(() => setLoadError(true))
+            .finally(() => setLoading(false))
+        }}
+      />
+    )
+  }
 
   return (
     <div className="flex min-h-[calc(100vh-8rem)] flex-col gap-4">
@@ -308,15 +321,6 @@ export function MonthPlannerPage() {
         }
       />
 
-      {toast && (
-        <div
-          role="status"
-          className="rounded-xl px-4 py-3 text-sm text-emerald-400"
-          style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)' }}
-        >
-          {toast}
-        </div>
-      )}
       {actionError && (
         <div
           role="alert"
@@ -403,6 +407,7 @@ export function MonthPlannerPage() {
           <MobilePlannerList
             shifts={shifts}
             employees={employees}
+            suggestionsByShiftId={suggestionsByShiftId}
             onAssign={(shiftId, userId) => applyAssignment(shiftId, userId)}
             assigning={!!assigning}
           />

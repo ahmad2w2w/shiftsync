@@ -73,7 +73,7 @@ export function ProfilePage() {
       await refreshProfile()
       toast.success('Profielfoto bijgewerkt')
     } catch {
-      toast.error('Upload mislukt. Controleer of de avatars-bucket bestaat in Supabase.')
+      toast.error('Upload mislukt. Probeer een kleinere afbeelding (max. 2 MB).')
     } finally {
       setUploading(false)
     }

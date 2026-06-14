@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useOrganization } from '../context/OrganizationContext'
+import { useToast } from '../context/ToastContext'
 import { getLeaveRequests, createLeaveRequest, updateLeaveStatus } from '../services/leave'
 import { notifyLeaveDecision } from '../services/notifications'
 import type { LeaveRequest } from '../types/database'
@@ -11,14 +12,17 @@ import { Badge } from '../components/ui/Badge'
 import { PageHeader } from '../components/ui/PageHeader'
 import { EmptyState } from '../components/ui/EmptyState'
 import { DashboardSkeleton } from '../components/ui/Skeleton'
+import { LoadError } from '../components/ui/LoadError'
 import { Palmtree } from 'lucide-react'
 import { formatDate, leaveStatusLabel } from '../lib/utils'
 
 export function LeavePage() {
   const { profile, isAdmin } = useAuth()
   const { organization, hasFeature } = useOrganization()
+  const toast = useToast()
   const [requests, setRequests] = useState<LeaveRequest[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [form, setForm] = useState({ start_date: '', end_date: '', reason: '' })
   const [submitting, setSubmitting] = useState(false)
   const [showForm, setShowForm] = useState(false)
@@ -28,9 +32,12 @@ export function LeavePage() {
 
   const load = async () => {
     setLoading(true)
+    setLoadError(false)
     try {
       const data = await getLeaveRequests(isAdmin ? undefined : profile!.id)
       setRequests(data)
+    } catch {
+      setLoadError(true)
     } finally {
       setLoading(false)
     }
@@ -48,7 +55,10 @@ export function LeavePage() {
       await createLeaveRequest({ user_id: profile.id, organization_id: organization.id, ...form })
       setForm({ start_date: '', end_date: '', reason: '' })
       setShowForm(false)
+      toast.success('Verlofaanvraag ingediend')
       load()
+    } catch {
+      toast.error('Indienen mislukt. Probeer opnieuw.')
     } finally {
       setSubmitting(false)
     }
@@ -118,7 +128,9 @@ export function LeavePage() {
         </Card>
       )}
 
-      {loading ? (
+      {loadError ? (
+        <LoadError onRetry={load} />
+      ) : loading ? (
         <DashboardSkeleton />
       ) : requests.length === 0 ? (
         <Card>

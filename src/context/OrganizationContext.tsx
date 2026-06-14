@@ -12,13 +12,17 @@ import { useAuth } from './AuthContext'
 import type { Organization, OrgPlan } from '../types/database'
 import { normalizeOrgPlan, PRICE_PER_EMPLOYEE, PRODUCT } from '../types/database'
 
+export const TRIAL_DAYS = 14
+
 interface OrganizationContextValue {
   organization: Organization | null
   loading: boolean
   plan: OrgPlan
   isSubscribed: boolean
+  isTrialActive: boolean
+  trialDaysLeft: number
   pricePerEmployee: number
-  hasFeature: (_feature: 'planner' | 'export' | 'notifications' | 'gps') => boolean
+  hasFeature: (feature: 'planner' | 'export' | 'notifications' | 'gps') => boolean
   refreshOrganization: () => Promise<void>
 }
 
@@ -61,17 +65,32 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
   const plan: OrgPlan = normalizeOrgPlan(organization?.plan)
   const isSubscribed = plan === 'active' || !!organization?.stripe_subscription_id
 
+  const trialDaysLeft = useMemo(() => {
+    if (!organization?.created_at) return TRIAL_DAYS
+    const created = new Date(organization.created_at).getTime()
+    const elapsed = Math.floor((Date.now() - created) / (1000 * 60 * 60 * 24))
+    return Math.max(0, TRIAL_DAYS - elapsed)
+  }, [organization?.created_at])
+
+  const isTrialActive = !isSubscribed && trialDaysLeft > 0
+  const hasFullAccess = isSubscribed || isTrialActive
+
   const value = useMemo(
     () => ({
       organization,
       loading,
       plan,
       isSubscribed,
+      isTrialActive,
+      trialDaysLeft,
       pricePerEmployee: PRICE_PER_EMPLOYEE,
-      hasFeature: () => true,
+      hasFeature: (feature: 'planner' | 'export' | 'notifications' | 'gps') => {
+        if (hasFullAccess) return true
+        return feature === 'planner'
+      },
       refreshOrganization,
     }),
-    [organization, loading, plan, isSubscribed, refreshOrganization]
+    [organization, loading, plan, isSubscribed, isTrialActive, trialDaysLeft, hasFullAccess, refreshOrganization]
   )
 
   return (

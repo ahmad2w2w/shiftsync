@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { format, isSameMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from 'date-fns'
 import { nl } from 'date-fns/locale'
@@ -73,6 +73,11 @@ export function SchedulePage() {
   const [modalDate, setModalDate] = useState(todayStr())
 
   const { start, end } = useMemo(() => getMonthRange(monthAnchor), [monthAnchor])
+  const periodKey = useMemo(
+    () => `${format(start, 'yyyy-MM-dd')}_${format(end, 'yyyy-MM-dd')}`,
+    [start, end]
+  )
+  const initialLoad = useRef(true)
 
   const fetchData = useCallback(async () => {
     if (!profile) return
@@ -91,17 +96,27 @@ export function SchedulePage() {
       setEmployees(users)
       setLeave(leaveData)
     }
-  }, [profile, isAdmin, start, end])
+  }, [profile?.id, isAdmin, start, end])
 
   useEffect(() => {
     if (!profile) return
     let cancelled = false
-    setLoading(true)
+    if (initialLoad.current) {
+      setLoading(true)
+    } else {
+      setRefreshing(true)
+    }
     fetchData()
       .catch(() => { if (!cancelled) toast.error('Rooster laden mislukt. Probeer opnieuw.') })
-      .finally(() => { if (!cancelled) setLoading(false) })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false)
+          setRefreshing(false)
+          initialLoad.current = false
+        }
+      })
     return () => { cancelled = true }
-  }, [profile, fetchData, toast])
+  }, [profile?.id, isAdmin, periodKey, fetchData])
 
   useEffect(() => {
     if (!selectedDate) return
@@ -109,7 +124,7 @@ export function SchedulePage() {
     if (!isSameMonth(d, monthAnchor)) {
       setSelectedDate(format(start, 'yyyy-MM-dd'))
     }
-  }, [monthAnchor, selectedDate, start])
+  }, [monthAnchor, selectedDate, periodKey, start])
 
   const reload = useCallback(async () => {
     setRefreshing(true)

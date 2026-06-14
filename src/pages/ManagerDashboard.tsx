@@ -57,7 +57,8 @@ export function ManagerDashboard() {
   const [exporting, setExporting] = useState(false)
 
   const today = format(new Date(), 'yyyy-MM-dd')
-  const { start: weekStart, end: weekEnd } = getWeekRange(new Date())
+  const { start: weekStart, end: weekEnd } = useMemo(() => getWeekRange(new Date()), [])
+  const weekKey = format(weekStart, 'yyyy-MM-dd')
 
   useEffect(() => {
     const todayStart = new Date(today + 'T00:00:00')
@@ -92,7 +93,7 @@ export function ManagerDashboard() {
         toast.error('Dashboard laden mislukt')
       })
       .finally(() => setLoading(false))
-  }, [today, weekStart, weekEnd, toast])
+  }, [today, weekKey])
 
   const openShifts = useMemo(() => weekShifts.filter((s) => !s.user_id).length, [weekShifts])
   const weekHours = useMemo(() => sumHours(weekRecords), [weekRecords])

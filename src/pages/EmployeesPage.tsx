@@ -74,13 +74,13 @@ export function EmployeesPage() {
         })
         toast.success('Medewerker bijgewerkt')
       } else {
-        await createEmployeeAccount({
+        const message = await createEmployeeAccount({
           email: form.email,
           full_name: form.full_name,
           hourly_rate: parseFloat(form.hourly_rate),
           organization_id: organization!.id,
         })
-        toast.success(`Uitnodiging verstuurd naar ${form.email}`)
+        toast.success(message)
       }
       resetForm()
       load()

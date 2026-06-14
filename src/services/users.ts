@@ -73,12 +73,16 @@ export async function createEmployeeAccount(params: {
   full_name: string
   hourly_rate?: number
   organization_id: string
-}): Promise<void> {
-  await invokeEdgeFunction('invite-employee', {
-    email: params.email,
-    full_name: params.full_name,
-    hourly_rate: params.hourly_rate ?? 0,
-  })
+}): Promise<string> {
+  const result = await invokeEdgeFunction<{ success?: boolean; message?: string }>(
+    'invite-employee',
+    {
+      email: params.email,
+      full_name: params.full_name,
+      hourly_rate: params.hourly_rate ?? 0,
+    }
+  )
+  return result.message ?? 'Uitnodiging verstuurd'
 }
 
 export async function uploadAvatar(userId: string, file: File): Promise<string> {

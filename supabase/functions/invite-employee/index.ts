@@ -1,5 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +11,22 @@ function json(body: Record<string, unknown>, status = 200) {
     status,
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   })
+}
+
+async function findAuthUserByEmail(
+  admin: SupabaseClient,
+  email: string
+): Promise<{ id: string; email?: string } | null> {
+  let page = 1
+  while (page <= 10) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 })
+    if (error) throw error
+    const found = data.users.find((u) => u.email?.toLowerCase() === email)
+    if (found) return found
+    if (data.users.length < 200) break
+    page++
+  }
+  return null
 }
 
 serve(async (req: Request) => {
@@ -73,6 +89,34 @@ serve(async (req: Request) => {
     const redirectTo = `${siteUrl.replace(/\/$/, '')}/reset-password`
 
     const supabaseAdmin = createClient(supabaseUrl, serviceKey)
+    const orgId = profile.organization_id
+
+    async function linkUserToOrg(userId: string): Promise<string | null> {
+      await supabaseAdmin.auth.admin.updateUserById(userId, {
+        user_metadata: {
+          full_name,
+          role: 'employee',
+          organization_id: orgId,
+        },
+      })
+
+      const { error: upsertError } = await supabaseAdmin
+        .from('users')
+        .upsert(
+          {
+            id: userId,
+            email,
+            full_name,
+            role: 'employee',
+            organization_id: orgId,
+            hourly_rate,
+          },
+          { onConflict: 'id' }
+        )
+
+      if (upsertError) return upsertError.message
+      return null
+    }
 
     const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       email,
@@ -81,18 +125,58 @@ serve(async (req: Request) => {
         data: {
           full_name,
           role: 'employee',
-          organization_id: profile.organization_id,
+          organization_id: orgId,
         },
       }
     )
 
     if (inviteError) {
       const msg = inviteError.message ?? String(inviteError)
+
       if (/already|registered|exists/i.test(msg)) {
+        const existing = await findAuthUserByEmail(supabaseAdmin, email)
+        if (!existing) {
+          return json({
+            error: 'Dit e-mailadres is al geregistreerd. Gebruik een ander adres.',
+          }, 400)
+        }
+
+        if (existing.id === user.id) {
+          return json({ error: 'Je kunt jezelf niet als medewerker uitnodigen.' }, 400)
+        }
+
+        const { data: existingProfile } = await supabaseAdmin
+          .from('users')
+          .select('organization_id')
+          .eq('id', existing.id)
+          .maybeSingle()
+
+        if (existingProfile?.organization_id === orgId) {
+          return json({ error: 'Deze medewerker zit al in je team.' }, 400)
+        }
+
+        if (
+          existingProfile?.organization_id &&
+          existingProfile.organization_id !== orgId
+        ) {
+          return json({
+            error: 'Dit e-mailadres hoort al bij een ander bedrijf in ShiftSync.',
+          }, 400)
+        }
+
+        const linkErr = await linkUserToOrg(existing.id)
+        if (linkErr) {
+          return json({ error: `Koppelen mislukt: ${linkErr}` }, 500)
+        }
+
         return json({
-          error: 'Dit e-mailadres is al geregistreerd. Gebruik een ander adres of laat de medewerker inloggen.',
-        }, 400)
+          success: true,
+          email,
+          linked: true,
+          message: `${full_name} is gekoppeld aan je team. Laat hen inloggen op /login, of "Wachtwoord vergeten" gebruiken als ze nog geen wachtwoord hebben.`,
+        })
       }
+
       if (/redirect|url/i.test(msg)) {
         return json({
           error: `Redirect URL niet toegestaan. Voeg toe in Supabase Auth → URL Configuration: ${redirectTo}`,
@@ -106,28 +190,16 @@ serve(async (req: Request) => {
       return json({ error: 'Uitnodiging mislukt (geen gebruiker aangemaakt).' }, 500)
     }
 
-    const { error: upsertError } = await supabaseAdmin
-      .from('users')
-      .upsert(
-        {
-          id: userId,
-          email,
-          full_name,
-          role: 'employee',
-          organization_id: profile.organization_id,
-          hourly_rate,
-        },
-        { onConflict: 'id' }
-      )
-
-    if (upsertError) {
-      console.error('users upsert failed:', upsertError)
-      return json({
-        error: `Account aangemaakt maar profiel opslaan mislukt: ${upsertError.message}`,
-      }, 500)
+    const linkErr = await linkUserToOrg(userId)
+    if (linkErr) {
+      return json({ error: `Account aangemaakt maar koppelen mislukt: ${linkErr}` }, 500)
     }
 
-    return json({ success: true, email, redirectTo })
+    return json({
+      success: true,
+      email,
+      message: `Uitnodiging verstuurd naar ${email}.`,
+    })
   } catch (err) {
     console.error('invite-employee error:', err)
     return json({ error: err instanceof Error ? err.message : String(err) }, 500)

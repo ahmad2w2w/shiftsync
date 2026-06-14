@@ -39,7 +39,7 @@ import { DashboardSkeleton } from '../components/ui/Skeleton'
 import { formatDateTime, getWeekRange } from '../lib/utils'
 
 export function ManagerDashboard() {
-  const { organization, hasFeature, plan } = useOrganization()
+  const { organization, isSubscribed, pricePerEmployee } = useOrganization()
   const toast = useToast()
   const [employees, setEmployees] = useState<User[]>([])
   const [pendingLeave, setPendingLeave] = useState(0)
@@ -118,9 +118,9 @@ export function ManagerDashboard() {
 
   const quickActions = [
     { to: '/app/rooster', label: 'Nieuwe dienst', icon: CalendarPlus, desc: 'Plan een dienst in het rooster' },
-    { to: '/app/maandplanner', label: 'Rooster publiceren', icon: Send, desc: 'Publiceer de maandplanning', pro: true },
+    { to: '/app/maandplanner', label: 'Rooster publiceren', icon: Send, desc: 'Publiceer de maandplanning' },
     { to: '/app/medewerkers', label: 'Medewerker toevoegen', icon: UserPlus, desc: 'Breid je team uit' },
-    { to: '/app/maandplanner', label: 'AI rooster voorstellen', icon: Sparkles, desc: 'Slimme suggesties per dienst', pro: true },
+    { to: '/app/maandplanner', label: 'AI rooster voorstellen', icon: Sparkles, desc: 'Slimme suggesties per dienst' },
   ]
 
   if (loading) return <DashboardSkeleton />
@@ -131,25 +131,19 @@ export function ManagerDashboard() {
         title="Command Center"
         subtitle={`Welkom terug · ${organization?.name ?? ''}`}
         badge={
-          <Badge variant={plan === 'free' ? 'default' : 'pro'}>
-            {plan.charAt(0).toUpperCase() + plan.slice(1)}
+          <Badge variant={isSubscribed ? 'active' : 'pending'}>
+            {isSubscribed ? 'Actief' : `€${pricePerEmployee}/medew.`}
           </Badge>
         }
         action={
-          hasFeature('export') ? (
-            <div className="flex gap-2">
-              <Button variant="secondary" size="sm" onClick={() => runExport('pdf')} loading={exporting}>
-                <FileText className="h-4 w-4" /> PDF
-              </Button>
-              <Button variant="secondary" size="sm" onClick={() => runExport('excel')} loading={exporting}>
-                <FileSpreadsheet className="h-4 w-4" /> Excel
-              </Button>
-            </div>
-          ) : (
-            <Link to="/app/abonnement">
-              <Button variant="secondary" size="sm"><Sparkles className="h-4 w-4" /> Export (Pro)</Button>
-            </Link>
-          )
+          <div className="flex gap-2">
+            <Button variant="secondary" size="sm" onClick={() => runExport('pdf')} loading={exporting}>
+              <FileText className="h-4 w-4" /> PDF
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => runExport('excel')} loading={exporting}>
+              <FileSpreadsheet className="h-4 w-4" /> Excel
+            </Button>
+          </div>
         }
       />
 
@@ -177,7 +171,7 @@ export function ManagerDashboard() {
       <div>
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Snelle acties</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {quickActions.map(({ to, label, icon: Icon, desc, pro }) => (
+          {quickActions.map(({ to, label, icon: Icon, desc }) => (
             <Link key={label} to={to}>
               <div
                 className="group flex items-start gap-3 rounded-2xl p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
@@ -189,9 +183,6 @@ export function ManagerDashboard() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <p className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{label}</p>
-                    {pro && !hasFeature('planner') && (
-                      <span className="rounded-md px-1.5 py-0.5 text-[10px] font-bold text-amber-600" style={{ background: 'rgba(245,158,11,0.12)' }}>Pro</span>
-                    )}
                   </div>
                   <p className="mt-0.5 text-xs" style={{ color: 'var(--text-muted)' }}>{desc}</p>
                 </div>

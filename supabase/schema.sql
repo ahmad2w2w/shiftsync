@@ -8,10 +8,10 @@ CREATE TABLE IF NOT EXISTS public.organizations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   slug TEXT,
-  plan TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'pro', 'business')),
+  plan TEXT NOT NULL DEFAULT 'trial' CHECK (plan IN ('trial', 'active')),
   stripe_customer_id TEXT,
   stripe_subscription_id TEXT,
-  max_employees INT NOT NULL DEFAULT 5,
+  max_employees INT NOT NULL DEFAULT 9999,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

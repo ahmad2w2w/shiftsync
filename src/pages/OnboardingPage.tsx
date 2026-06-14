@@ -12,8 +12,6 @@ const steps = [
   { id: 2, label: 'Bevestiging' },
 ]
 
-const PLAN_LABELS: Record<string, string> = { pro: 'Pro', business: 'Business' }
-
 export function OnboardingPage() {
   const { profile, refreshProfile } = useAuth()
   const { refreshOrganization } = useOrganization()
@@ -22,13 +20,6 @@ export function OnboardingPage() {
   const [companyName, setCompanyName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-
-  const intendedPlan = typeof window !== 'undefined' ? sessionStorage.getItem('shiftsync-intended-plan') : null
-
-  const goToBilling = () => {
-    sessionStorage.removeItem('shiftsync-intended-plan')
-    navigate('/app/abonnement')
-  }
 
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault()
@@ -48,77 +39,43 @@ export function OnboardingPage() {
   }
 
   return (
-    <div
-      className="flex min-h-screen flex-col items-center justify-center p-4"
-      style={{ background: 'var(--surface-page)' }}
-    >
-      <div className="w-full max-w-lg">
-        {/* Logo */}
-        <div className="mb-10 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-500 shadow-lg shadow-brand-500/30">
-            <Zap className="h-6 w-6 text-white" />
-          </div>
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>ShiftSync</p>
+    <div className="flex min-h-screen flex-col items-center justify-center px-5 py-12" style={{ background: 'var(--surface-page)' }}>
+      <div className="mb-8 flex items-center gap-2.5">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500">
+          <Zap className="h-5 w-5 text-white" />
         </div>
+        <span className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>ShiftSync</span>
+      </div>
 
-        {/* Steps */}
-        <div className="mb-8 flex items-center justify-center gap-3">
-          {steps.map((s, i) => (
-            <div key={s.id} className="flex items-center gap-3">
-              <div
-                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-all"
-                style={
-                  step > s.id
-                    ? { background: '#3B82F6', color: 'white' }
-                    : step === s.id
-                    ? { background: 'var(--text-primary)', color: 'var(--surface-page)' }
-                    : { background: 'var(--border-strong)', color: 'var(--text-muted)' }
-                }
-              >
-                {step > s.id ? <Check className="h-4 w-4" /> : s.id}
-              </div>
-              <span
-                className="text-sm"
-                style={{ color: step === s.id ? 'var(--text-primary)' : 'var(--text-muted)' }}
-              >
-                {s.label}
-              </span>
-              {i < steps.length - 1 && (
-                <div
-                  className="h-px w-12"
-                  style={{ background: step > s.id ? '#3B82F6' : 'var(--border-strong)' }}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-
-        {step === 1 && (
+      <div className="mb-8 flex gap-2">
+        {steps.map((s) => (
           <div
-            className="rounded-2xl p-8"
-            style={{ background: 'var(--surface-card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}
+            key={s.id}
+            className="flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium"
+            style={{
+              background: step >= s.id ? 'rgba(59,130,246,0.12)' : 'var(--surface-subtle)',
+              color: step >= s.id ? 'var(--brand-strong)' : 'var(--text-muted)',
+              border: '1px solid var(--border)',
+            }}
           >
-            <div className="mb-6 flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/15">
-              <Building2 className="h-5 w-5 text-brand-500" />
+            {step > s.id ? <Check className="h-3 w-3" /> : s.id}
+            {s.label}
+          </div>
+        ))}
+      </div>
+
+      <div className="w-full max-w-md">
+        {step === 1 && (
+          <div className="rounded-2xl p-8" style={{ background: 'var(--surface-card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}>
+            <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl" style={{ background: 'var(--brand-muted)' }}>
+              <Building2 className="h-6 w-6" style={{ color: 'var(--brand-strong)' }} />
             </div>
-            <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-              Welkom, {profile?.full_name?.split(' ')[0]}!
-            </h1>
-            <p className="mt-2" style={{ color: 'var(--text-muted)' }}>
-              Geef je bedrijf of vestiging een naam om te beginnen.
-            </p>
-            <form onSubmit={handleCreate} className="mt-8 space-y-4">
-              <Input
-                label="Bedrijfsnaam"
-                type="text"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                placeholder="bijv. Restaurant de Linde"
-                required
-                autoFocus
-              />
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Welkom{profile?.full_name ? `, ${profile.full_name.split(' ')[0]}` : ''}!</h1>
+            <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>Hoe heet je bedrijf of team?</p>
+            <form onSubmit={handleCreate} className="mt-6 space-y-4">
+              <Input label="Bedrijfsnaam" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Bijv. Café De Horizon" required autoFocus />
               {error && (
-                <div className="rounded-xl px-4 py-3 text-sm text-red-500 dark:text-red-400" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                <div className="rounded-xl px-4 py-3 text-sm text-red-500" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
                   {error}
                 </div>
               )}
@@ -131,44 +88,27 @@ export function OnboardingPage() {
         )}
 
         {step === 2 && (
-          <div
-            className="rounded-2xl p-8 text-center"
-            style={{ background: 'var(--surface-card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}
-          >
+          <div className="rounded-2xl p-8 text-center" style={{ background: 'var(--surface-card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}>
             <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full" style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)' }}>
               <Check className="h-8 w-8 text-emerald-500" />
             </div>
             <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Je bent klaar!</h1>
             <p className="mt-3" style={{ color: 'var(--text-secondary)' }}>
               <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{companyName}</span> is aangemaakt.
-              Je kunt nu beginnen met het plannen van je team.
+              Voeg medewerkers toe en start met plannen.
             </p>
             <div className="mt-8 space-y-3">
-              {PLAN_LABELS[intendedPlan ?? ''] ? (
-                <>
-                  <Button onClick={goToBilling} className="w-full" size="lg">
-                    Ga verder naar {PLAN_LABELS[intendedPlan ?? '']}-abonnement
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                  <Button onClick={() => navigate('/app/medewerkers')} variant="secondary" className="w-full" size="lg">
-                    Eerst medewerkers toevoegen
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button onClick={() => navigate('/app/medewerkers')} className="w-full" size="lg">
-                    Medewerkers toevoegen
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                  <Button onClick={() => navigate('/app/dashboard')} variant="secondary" className="w-full" size="lg">
-                    Ga naar dashboard
-                  </Button>
-                </>
-              )}
+              <Button onClick={() => navigate('/app/medewerkers')} className="w-full" size="lg">
+                Medewerkers toevoegen
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+              <Button onClick={() => navigate('/app/abonnement')} variant="secondary" className="w-full" size="lg">
+                Abonnement instellen
+              </Button>
+              <Button onClick={() => navigate('/app/dashboard')} variant="ghost" className="w-full" size="lg">
+                Ga naar dashboard
+              </Button>
             </div>
-            <p className="mt-6 text-xs" style={{ color: 'var(--text-disabled)' }}>
-              Je kunt medewerkers ook later toevoegen via het menu.
-            </p>
           </div>
         )}
       </div>

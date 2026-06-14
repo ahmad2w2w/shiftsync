@@ -10,15 +10,15 @@ import {
 import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
 import type { Organization, OrgPlan } from '../types/database'
-import { PLAN_LIMITS } from '../types/database'
+import { normalizeOrgPlan, PRICE_PER_EMPLOYEE, PRODUCT } from '../types/database'
 
 interface OrganizationContextValue {
   organization: Organization | null
   loading: boolean
   plan: OrgPlan
-  maxEmployees: number
-  canAddEmployee: (currentCount: number) => boolean
-  hasFeature: (feature: 'planner' | 'export' | 'notifications' | 'gps') => boolean
+  isSubscribed: boolean
+  pricePerEmployee: number
+  hasFeature: (_feature: 'planner' | 'export' | 'notifications' | 'gps') => boolean
   refreshOrganization: () => Promise<void>
 }
 
@@ -58,24 +58,20 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     }
   }, [profile?.organization_id, loadOrganization])
 
-  const plan: OrgPlan = organization?.plan ?? 'free'
-  const maxEmployees = PLAN_LIMITS[plan].maxEmployees
+  const plan: OrgPlan = normalizeOrgPlan(organization?.plan)
+  const isSubscribed = plan === 'active' || !!organization?.stripe_subscription_id
 
   const value = useMemo(
     () => ({
       organization,
       loading,
       plan,
-      maxEmployees,
-      canAddEmployee: (count: number) => count < maxEmployees,
-      hasFeature: (feature: 'planner' | 'export' | 'notifications' | 'gps') => {
-        if (feature === 'planner' || feature === 'export') return plan !== 'free'
-        if (feature === 'notifications' || feature === 'gps') return plan === 'business'
-        return false
-      },
+      isSubscribed,
+      pricePerEmployee: PRICE_PER_EMPLOYEE,
+      hasFeature: () => true,
       refreshOrganization,
     }),
-    [organization, loading, plan, maxEmployees, refreshOrganization]
+    [organization, loading, plan, isSubscribed, refreshOrganization]
   )
 
   return (
@@ -90,3 +86,5 @@ export function useOrganization() {
   if (!ctx) throw new Error('useOrganization must be used within OrganizationProvider')
   return ctx
 }
+
+export { PRODUCT }

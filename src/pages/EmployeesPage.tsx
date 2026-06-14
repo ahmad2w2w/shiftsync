@@ -1,12 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Navigate, Link } from 'react-router-dom'
-import { Sparkles } from 'lucide-react'
+import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useOrganization } from '../context/OrganizationContext'
 import { useToast } from '../context/ToastContext'
 import { useConfirm } from '../context/ConfirmContext'
 import { getAllUsers, updateUser, deleteUser, createEmployeeAccount } from '../services/users'
 import type { User, UserRole } from '../types/database'
+import { PRICE_PER_EMPLOYEE } from '../types/database'
 import { Card, CardHeader } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
@@ -20,7 +20,7 @@ import { Users } from 'lucide-react'
 
 export function EmployeesPage() {
   const { profile, isAdmin } = useAuth()
-  const { organization, maxEmployees, plan } = useOrganization()
+  const { organization } = useOrganization()
   const toast = useToast()
   const confirm = useConfirm()
   const [users, setUsers] = useState<User[]>([])
@@ -61,14 +61,9 @@ export function EmployeesPage() {
   }
 
   const memberCount = users.length + 1 // include the current admin
-  const atLimit = memberCount >= maxEmployees
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!editing && atLimit) {
-      setError(`Je ${plan}-abonnement staat maximaal ${maxEmployees} teamleden toe. Upgrade om meer toe te voegen.`)
-      return
-    }
     setSubmitting(true)
     setError('')
     try {
@@ -131,33 +126,13 @@ export function EmployeesPage() {
     <div className="mx-auto max-w-6xl space-y-6">
       <PageHeader
         title="Medewerkers"
-        subtitle={`Team beheren en rollen instellen · ${memberCount} / ${maxEmployees} plekken gebruikt`}
+        subtitle={`Team beheren · ${memberCount} teamleden · €${memberCount * PRICE_PER_EMPLOYEE}/maand`}
         action={
-          atLimit ? (
-            <Link
-              to="/app/abonnement"
-              className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-brand-700"
-            >
-              <Sparkles className="h-4 w-4" />
-              Upgrade voor meer plekken
-            </Link>
-          ) : (
-            <Button onClick={() => { resetForm(); setShowForm(true) }}>
-              Medewerker toevoegen
-            </Button>
-          )
+          <Button onClick={() => { resetForm(); setShowForm(true) }}>
+            Medewerker toevoegen
+          </Button>
         }
       />
-
-      {atLimit && (
-        <div
-          className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm"
-          style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', color: '#B45309' }}
-        >
-          <Sparkles className="h-4 w-4 shrink-0" style={{ color: '#F59E0B' }} />
-          Je hebt de limiet van {maxEmployees} teamleden bereikt op je {plan}-abonnement. Upgrade om je team uit te breiden.
-        </div>
-      )}
 
       {showForm && (
         <Card>

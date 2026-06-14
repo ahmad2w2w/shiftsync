@@ -17,7 +17,6 @@ import {
   BarChart3,
   Sun,
   Moon,
-  Lock,
   Settings,
   Thermometer,
   ArrowLeftRight,
@@ -43,7 +42,6 @@ type NavItem = {
   to: string
   label: string
   icon: typeof LayoutDashboard
-  feature?: 'planner'
 }
 
 const employeeNavTyped: NavItem[] = employeeNav
@@ -52,7 +50,7 @@ const managerNav: NavItem[] = [
   { to: '/app/dashboard',       label: 'Dashboard',        icon: LayoutDashboard },
   { to: '/app/medewerkers',     label: 'Medewerkers',      icon: Users },
   { to: '/app/rooster',         label: 'Rooster',          icon: Calendar },
-  { to: '/app/maandplanner',    label: 'Maandplanner',     icon: BarChart3, feature: 'planner' },
+  { to: '/app/maandplanner',    label: 'Maandplanner',     icon: BarChart3 },
   { to: '/app/klok',            label: 'Klokregistratie',  icon: Clock },
   { to: '/app/uren',            label: 'Urenoverzicht',    icon: Timer },
   { to: '/app/verlof',          label: 'Verlofaanvragen',  icon: Palmtree },
@@ -64,7 +62,7 @@ const managerNav: NavItem[] = [
 
 export function AppLayout() {
   const { profile, isAdmin, signOut } = useAuth()
-  const { organization, plan, hasFeature } = useOrganization()
+  const { organization, isSubscribed, pricePerEmployee } = useOrganization()
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -75,17 +73,11 @@ export function AppLayout() {
     navigate('/login')
   }
 
-  const planColors: Record<string, string> = {
-    free:     'text-zinc-400',
-    pro:      'text-brand-400',
-    business: 'text-amber-400',
-  }
+  const planLabel = isSubscribed ? 'Actief' : `€${pricePerEmployee}/medew.`
 
   const NavItems = () => (
     <div className="space-y-0.5">
-      {nav.map(({ to, label, icon: Icon, feature }) => {
-        const locked = feature ? !hasFeature(feature) : false
-        return (
+      {nav.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
@@ -101,15 +93,8 @@ export function AppLayout() {
           >
             <Icon className="h-[17px] w-[17px] shrink-0" />
             <span className="flex-1">{label}</span>
-            {locked && (
-              <span className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold text-amber-400" style={{ background: 'rgba(245,158,11,0.15)' }}>
-                <Lock className="h-2.5 w-2.5" />
-                Pro
-              </span>
-            )}
           </NavLink>
-        )
-      })}
+        ))}
     </div>
   )
 
@@ -150,8 +135,8 @@ export function AppLayout() {
               <CreditCard className="h-[17px] w-[17px] shrink-0" />
               <span className="font-medium">Abonnement</span>
             </div>
-            <span className={cn('text-xs font-semibold', planColors[plan] ?? planColors.free)}>
-              {plan.charAt(0).toUpperCase() + plan.slice(1)}
+            <span className="text-xs font-semibold text-brand-400">
+              {planLabel}
             </span>
           </NavLink>
         )}
@@ -253,8 +238,8 @@ export function AppLayout() {
                   className="hidden sm:flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-80"
                   style={{ color: 'var(--text-muted)', border: '1px solid var(--border)' }}
                 >
-                  <span className={cn('h-1.5 w-1.5 rounded-full', plan === 'free' ? 'bg-[#94A3B8]' : 'bg-brand-500')} />
-                  {plan.charAt(0).toUpperCase() + plan.slice(1)} plan
+                  <span className={cn('h-1.5 w-1.5 rounded-full', isSubscribed ? 'bg-brand-500' : 'bg-[#94A3B8]')} />
+                  {planLabel}
                 </Link>
               )}
               {/* Theme toggle */}

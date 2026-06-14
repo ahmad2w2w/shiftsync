@@ -6,7 +6,6 @@ import {
   Zap,
   CheckCircle,
   ArrowRight,
-  Star,
   Palmtree,
   Bell,
   FileText,
@@ -39,15 +38,27 @@ const steps = [
 ]
 
 const plans = [
-  { name: 'Free', price: '€0', desc: 'Tot 5 medewerkers', features: ['Roosterplanning', 'Tijdregistratie', 'Verlofbeheer', 'Beschikbaarheid'], cta: 'Gratis starten', href: '/register', highlighted: false },
-  { name: 'Pro', price: '€29', desc: 'Tot 25 medewerkers', features: ['Maandplanner', 'PDF & Excel export', 'Slimme suggesties', 'Prioriteit support'], cta: '14 dagen gratis', href: '/register?plan=pro', highlighted: true },
-  { name: 'Business', price: '€79', desc: 'Onbeperkt', features: ['E-mailnotificaties', 'Geavanceerde rapporten', 'Persoonlijke onboarding', 'Alles van Pro'], cta: 'Contact opnemen', href: 'mailto:sales@shiftsync.nl', highlighted: false },
+  {
+    name: 'ShiftSync',
+    price: '€3',
+    desc: 'Per medewerker per maand',
+    features: [
+      'Roosterplanning & maandplanner',
+      'Tijdregistratie & GPS-inklokken',
+      'Verlof, ziek & diensten ruilen',
+      'PDF & Excel export',
+      'E-mailnotificaties',
+      'Onbeperkt medewerkers',
+    ],
+    cta: 'Gratis starten',
+    href: '/register',
+  },
 ]
 
 const faqs = [
   { q: 'Hoe snel kan ik starten?', a: 'Account aanmaken duurt 2 minuten. Daarna voeg je medewerkers toe en plan je je eerste rooster.' },
   { q: 'Werkt het op mobiel?', a: 'Ja. Medewerkers kunnen op hun telefoon rooster bekijken, inklokken, verlof aanvragen en beschikbaarheid invullen.' },
-  { q: 'Kan ik upgraden of downgraden?', a: 'Op elk moment. Upgrades gaan direct in, downgrades aan het einde van je factureringsperiode.' },
+  { q: 'Hoe werkt de prijs?', a: 'Je betaalt €3 per medewerker per maand. Alle functies zitten in één pakket — geen Pro of Business upsells.' },
   { q: 'Is mijn data veilig?', a: 'Ja. Elke organisatie heeft een eigen afgeschermde omgeving met versleutelde verbindingen.' },
 ]
 
@@ -206,28 +217,24 @@ export function LandingPage() {
         <div className="mx-auto max-w-6xl">
           <div className="mb-14 text-center">
             <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-brand-600">Prijzen</p>
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl" style={{ color: 'var(--color-navy)' }}>Transparant en eerlijk</h2>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl" style={{ color: 'var(--color-navy)' }}>Eén pakket, alles inbegrepen</h2>
+            <p className="mt-3 text-lg" style={{ color: 'var(--text-muted)' }}>€3 per medewerker per maand. Geen verborgen kosten.</p>
           </div>
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="mx-auto max-w-md">
             {plans.map((plan) => (
-              <div key={plan.name} className={`relative flex flex-col rounded-2xl p-7 ${plan.highlighted ? 'shadow-xl ring-2 ring-brand-500/30 lg:-mt-2 lg:pb-9 lg:pt-9' : ''}`} style={{ background: 'var(--surface-card)', border: plan.highlighted ? undefined : '1px solid var(--border)' }}>
-                {plan.highlighted && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-brand-600 px-3 py-1 text-xs font-bold text-white"><Star className="h-3 w-3 fill-white" /> Populair</span>
-                  </div>
-                )}
-                <h3 className="font-bold" style={{ color: 'var(--color-navy)' }}>{plan.name}</h3>
+              <div key={plan.name} className="relative flex flex-col rounded-2xl p-8 shadow-xl ring-2 ring-brand-500/30" style={{ background: 'var(--surface-card)' }}>
+                <h3 className="text-xl font-bold" style={{ color: 'var(--color-navy)' }}>{plan.name}</h3>
                 <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{plan.desc}</p>
-                <div className="mt-4 flex items-end gap-1">
-                  <span className="text-4xl font-bold" style={{ color: 'var(--color-navy)' }}>{plan.price}</span>
-                  <span className="mb-1 text-sm" style={{ color: 'var(--text-muted)' }}>/maand</span>
+                <div className="mt-6 flex items-end gap-1">
+                  <span className="text-5xl font-bold" style={{ color: 'var(--color-navy)' }}>{plan.price}</span>
+                  <span className="mb-1.5 text-sm" style={{ color: 'var(--text-muted)' }}>/ medewerker / maand</span>
                 </div>
-                <ul className="my-6 flex-1 space-y-2.5">
+                <ul className="my-8 space-y-2.5">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-center gap-2 text-sm"><CheckCircle className="h-4 w-4 shrink-0 text-brand-600" /><span style={{ color: 'var(--text-secondary)' }}>{f}</span></li>
                   ))}
                 </ul>
-                <Link to={plan.href} className={`flex w-full items-center justify-center rounded-xl py-3 text-sm font-semibold transition-all ${plan.highlighted ? 'bg-brand-600 text-white hover:bg-brand-700 shadow-md' : 'hover:bg-slate-50'}`} style={plan.highlighted ? {} : { color: 'var(--color-navy)', border: '1px solid var(--border-strong)' }}>
+                <Link to={plan.href} className="flex w-full items-center justify-center rounded-xl bg-brand-600 py-3.5 text-sm font-semibold text-white shadow-md hover:bg-brand-700 transition-all">
                   {plan.cta}
                 </Link>
               </div>
@@ -271,7 +278,7 @@ export function LandingPage() {
       <section className="gradient-hero px-5 py-20">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight" style={{ color: 'var(--color-navy)' }}>Klaar om slimmer te plannen?</h2>
-          <p className="mt-4 text-lg" style={{ color: 'var(--text-secondary)' }}>Start vandaag. Geen creditcard, geen verplichting.</p>
+          <p className="mt-4 text-lg" style={{ color: 'var(--text-secondary)' }}>€3 per medewerker. Alle functies inbegrepen.</p>
           <Link to="/register" className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-brand-600 px-8 py-4 text-base font-semibold text-white shadow-xl hover:bg-brand-700 transition-all hover:-translate-y-0.5">
             Start gratis proefperiode <ArrowRight className="h-4 w-4" />
           </Link>

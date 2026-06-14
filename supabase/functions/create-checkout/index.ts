@@ -6,10 +6,8 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
   apiVersion: '2024-06-20',
 })
 
-const PRICE_IDS: Record<string, string> = {
-  pro: Deno.env.get('STRIPE_PRICE_PRO') ?? '',
-  business: Deno.env.get('STRIPE_PRICE_BUSINESS') ?? '',
-}
+/** Per-seat price: €3 / medewerker / maand */
+const PRICE_ID = Deno.env.get('STRIPE_PRICE_PER_SEAT') ?? Deno.env.get('STRIPE_PRICE_SHIFT') ?? ''
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,17 +29,15 @@ serve(async (req: Request) => {
     const { data: { user } } = await supabaseClient.auth.getUser()
     if (!user) throw new Error('Niet ingelogd')
 
-    const { plan, organizationId, returnUrl, portal } = await req.json()
+    const { organizationId, returnUrl, portal, employeeCount = 1 } = await req.json()
 
     if (!organizationId) throw new Error('organizationId ontbreekt')
 
-    // Get or create Stripe customer
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Authorization: caller must be an admin of the target organization
     const { data: callerProfile } = await supabaseAdmin
       .from('users')
       .select('organization_id, role')
@@ -81,7 +77,6 @@ serve(async (req: Request) => {
         .eq('id', organizationId)
     }
 
-    // Customer portal
     if (portal) {
       const portalSession = await stripe.billingPortal.sessions.create({
         customer: customerId,
@@ -92,19 +87,19 @@ serve(async (req: Request) => {
       })
     }
 
-    // Checkout session
-    const priceId = PRICE_IDS[plan]
-    if (!priceId) throw new Error(`Geen Stripe Price ID gevonden voor plan: ${plan}`)
+    if (!PRICE_ID) throw new Error('STRIPE_PRICE_PER_SEAT is niet geconfigureerd')
+
+    const quantity = Math.max(1, Number(employeeCount) || 1)
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: [{ price: PRICE_ID, quantity }],
       success_url: `${returnUrl}?success=1`,
       cancel_url: `${returnUrl}?cancelled=1`,
-      metadata: { organization_id: organizationId, plan },
+      metadata: { organization_id: organizationId, plan: 'active' },
       subscription_data: {
-        metadata: { organization_id: organizationId, plan },
+        metadata: { organization_id: organizationId, plan: 'active' },
       },
     })
 

@@ -41,7 +41,6 @@ import type { Shift, ShiftTemplate, User } from '../types/database'
 import type { Availability, LeaveRequest } from '../types/database'
 import { MonthNavigator } from '../components/ui/MonthNavigator'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
-import { UpgradePrompt } from '../components/ui/UpgradePrompt'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
@@ -248,7 +247,7 @@ export function MonthPlannerPage() {
     try {
       await publishMonth(monthAnchor, profile!.id, organization!.id, maxHours)
 
-      // Notify assigned employees (Business plan only)
+      // Notify assigned employees
       if (hasFeature('notifications')) {
         const label = monthLabel(monthAnchor)
         const assignedIds = new Set(shifts.filter((s) => s.user_id).map((s) => s.user_id))
@@ -283,21 +282,7 @@ export function MonthPlannerPage() {
   ]
 
   if (!isAdmin) return <Navigate to="/app/rooster" replace />
-  if (!hasFeature('planner')) {
-    return (
-      <UpgradePrompt
-        title="Slimme Maandplanner"
-        description="Plan een volledige maand in minuten met templates, drag & drop en automatische suggesties op basis van beschikbaarheid."
-        benefits={[
-          'Genereer roosters uit weektemplates',
-          'Sleep medewerkers naar diensten',
-          'Slimme suggesties per dienst',
-          'Publiceer met één klik',
-        ]}
-        requiredPlan="Pro"
-      />
-    )
-  }
+
   if (loading) return <LoadingSpinner className="min-h-[60vh]" />
 
   return (

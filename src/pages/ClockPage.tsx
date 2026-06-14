@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Clock, LogIn, LogOut, MapPin, Coffee, Play } from 'lucide-react'
+import { Clock, LogIn, LogOut, Coffee, Play } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useOrganization } from '../context/OrganizationContext'
 import {
@@ -26,7 +26,7 @@ import { formatDateTime } from '../lib/utils'
 
 export function ClockPage() {
   const { profile, isAdmin } = useAuth()
-  const { organization, hasFeature, plan } = useOrganization()
+  const { organization } = useOrganization()
   const [active, setActive] = useState<ClockRecord | null>(null)
   const [records, setRecords] = useState<ClockRecord[]>([])
   const [location, setLocation] = useState<Location | null>(null)
@@ -34,12 +34,12 @@ export function ClockPage() {
   const [actionLoading, setActionLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const gpsRequired = hasFeature('gps') && organization?.gps_enabled
+  const gpsRequired = organization?.gps_enabled
 
   const load = async () => {
     setLoading(true)
     try {
-      if (organization && hasFeature('gps')) {
+      if (organization) {
         const loc = await getPrimaryLocation(organization.id)
         setLocation(loc)
       }
@@ -249,16 +249,6 @@ export function ClockPage() {
             </p>
           )}
         </div>
-
-        {plan !== 'business' && (
-          <div className="flex items-center gap-3 border-t px-5 py-4" style={{ borderColor: 'var(--border)', background: 'var(--surface-subtle)' }}>
-            <MapPin className="h-4 w-4 shrink-0" style={{ color: 'var(--text-muted)' }} />
-            <p className="flex-1 text-xs" style={{ color: 'var(--text-muted)' }}>
-              GPS-controle bij inklokken — beschikbaar op Business
-            </p>
-            <Badge variant="business">Business</Badge>
-          </div>
-        )}
       </Card>
 
       <Card>

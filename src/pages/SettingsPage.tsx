@@ -19,7 +19,7 @@ import { Button } from '../components/ui/Button'
 
 export function SettingsPage() {
   const { isAdmin } = useAuth()
-  const { organization, hasFeature, refreshOrganization } = useOrganization()
+  const { organization, refreshOrganization } = useOrganization()
   const toast = useToast()
   const [locations, setLocations] = useState<Location[]>([])
   const [loading, setLoading] = useState(true)
@@ -36,7 +36,7 @@ export function SettingsPage() {
     is_primary: true,
   })
 
-  const canUseGps = hasFeature('gps')
+  const canUseGps = true
 
   const load = async () => {
     if (!organization) return
@@ -145,21 +145,13 @@ export function SettingsPage() {
           title="Locaties & vestigingen"
           subtitle="Werkplekken voor GPS-controle bij inklokken"
           action={
-            canUseGps ? (
-              <Button size="sm" variant="secondary" onClick={() => setShowForm(!showForm)}>
-                <Plus className="h-4 w-4" /> Locatie
-              </Button>
-            ) : (
-              <Badge variant="business">Business</Badge>
-            )
+            <Button size="sm" variant="secondary" onClick={() => setShowForm(!showForm)}>
+              <Plus className="h-4 w-4" /> Locatie
+            </Button>
           }
         />
 
-        {!canUseGps ? (
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            Upgrade naar Business om locaties en GPS-inklokken in te stellen.
-          </p>
-        ) : loading ? (
+        {!canUseGps ? null : loading ? (
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Laden…</p>
         ) : (
           <>

@@ -11,7 +11,11 @@ import { Card, CardHeader } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { WeekNavigator } from '../components/ui/WeekNavigator'
 import { MonthNavigator } from '../components/ui/MonthNavigator'
-import { LoadingSpinner } from '../components/ui/LoadingSpinner'
+import { PageHeader } from '../components/ui/PageHeader'
+import { DashboardSkeleton } from '../components/ui/Skeleton'
+import { Table, TableHead, TableHeaderCell, TableBody, TableRow, TableCell } from '../components/ui/Table'
+import { EmptyState } from '../components/ui/EmptyState'
+import { Timer } from 'lucide-react'
 import { Select } from '../components/ui/Select'
 import { formatDateTime, addWeeks, subWeeks, addMonths, subMonths, weekLabel, monthLabel } from '../lib/utils'
 
@@ -76,14 +80,25 @@ export function HoursPage() {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-zinc-100">Urenoverzicht</h1>
-          <p className="text-sm text-zinc-500">
-            Gewerkte uren per {range === 'week' ? 'week' : 'maand'}
-          </p>
-        </div>
+    <div className="mx-auto max-w-6xl space-y-6">
+      <PageHeader
+        title="Urenoverzicht"
+        subtitle={`Gewerkte uren per ${range === 'week' ? 'week' : 'maand'}`}
+        action={
+          canExport ? (
+            <div className="flex gap-2">
+              <Button variant="secondary" size="sm" onClick={() => handleExport('pdf')}>
+                <FileText className="h-4 w-4" /> PDF
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => handleExport('excel')}>
+                <FileSpreadsheet className="h-4 w-4" /> Excel
+              </Button>
+            </div>
+          ) : undefined
+        }
+      />
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <select
             value={range}
@@ -112,31 +127,16 @@ export function HoursPage() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        {isAdmin && employees.length > 0 ? (
-          <div className="min-w-[220px]">
-            <Select
-              label="Medewerker"
-              value={selectedUser}
-              onChange={(e) => setSelectedUser(e.target.value)}
-              options={employees.map((e) => ({ value: e.id, label: e.full_name }))}
-            />
-          </div>
-        ) : <div />}
-
-        {canExport && (
-          <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={() => handleExport('pdf')}>
-              <FileText className="h-4 w-4" />
-              PDF
-            </Button>
-            <Button variant="secondary" size="sm" onClick={() => handleExport('excel')}>
-              <FileSpreadsheet className="h-4 w-4" />
-              Excel
-            </Button>
-          </div>
-        )}
-      </div>
+      {isAdmin && employees.length > 0 && (
+        <div className="max-w-xs">
+          <Select
+            label="Medewerker"
+            value={selectedUser}
+            onChange={(e) => setSelectedUser(e.target.value)}
+            options={employees.map((e) => ({ value: e.id, label: e.full_name }))}
+          />
+        </div>
+      )}
 
       {/* Totaal uren card */}
       <div
@@ -149,40 +149,36 @@ export function HoursPage() {
       </div>
 
       {loading ? (
-        <LoadingSpinner />
+        <DashboardSkeleton />
       ) : (
         <Card>
           <CardHeader title="Registraties" />
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-white/8 text-left">
-                  <th className="pb-3 pr-4 text-xs font-semibold uppercase tracking-wide text-zinc-600">Ingeklokt</th>
-                  <th className="pb-3 pr-4 text-xs font-semibold uppercase tracking-wide text-zinc-600">Uitgeklokt</th>
-                  <th className="pb-3 text-xs font-semibold uppercase tracking-wide text-zinc-600">Uren</th>
-                </tr>
-              </thead>
-              <tbody>
-                {records.length === 0 ? (
-                  <tr>
-                    <td colSpan={3} className="py-8 text-center text-sm text-zinc-600">
-                      Geen registraties in deze periode
-                    </td>
-                  </tr>
-                ) : (
-                  records.map((r) => (
-                    <tr key={r.id} className="border-b border-white/5 last:border-0">
-                      <td className="py-3 pr-4 text-zinc-400">{formatDateTime(r.clock_in)}</td>
-                      <td className="py-3 pr-4 text-zinc-400">
-                        {r.clock_out ? formatDateTime(r.clock_out) : '—'}
-                      </td>
-                      <td className="py-3 font-semibold text-zinc-200">{r.total_hours ?? '—'}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          {records.length === 0 ? (
+            <EmptyState
+              icon={Timer}
+              title="Geen registraties"
+              description="Er zijn geen klokregistraties in deze periode."
+            />
+          ) : (
+            <Table>
+              <TableHead>
+                <TableHeaderCell>Ingeklokt</TableHeaderCell>
+                <TableHeaderCell>Uitgeklokt</TableHeaderCell>
+                <TableHeaderCell>Uren</TableHeaderCell>
+              </TableHead>
+              <TableBody>
+                {records.map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell>{formatDateTime(r.clock_in)}</TableCell>
+                    <TableCell>{r.clock_out ? formatDateTime(r.clock_out) : '—'}</TableCell>
+                    <TableCell className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                      {r.total_hours ?? '—'}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </Card>
       )}
     </div>

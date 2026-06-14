@@ -7,6 +7,7 @@ export function Card({ className, children, style, ...props }: HTMLAttributes<HT
       className={cn('rounded-2xl p-5', className)}
       style={{
         background: 'var(--surface-card)',
+        border: '1px solid var(--border)',
         boxShadow: 'var(--shadow-card)',
         ...style,
       }}

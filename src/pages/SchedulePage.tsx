@@ -11,7 +11,9 @@ import { ScheduleShiftCard } from '../components/schedule/ScheduleShiftCard'
 import { MonthCalendar, formatDayHeader } from '../components/calendar/MonthCalendar'
 import type { Availability, Shift } from '../types/database'
 import { MonthNavigator } from '../components/ui/MonthNavigator'
-import { LoadingSpinner } from '../components/ui/LoadingSpinner'
+import { PageHeader } from '../components/ui/PageHeader'
+import { EmptyState } from '../components/ui/EmptyState'
+import { DashboardSkeleton } from '../components/ui/Skeleton'
 import { getMonthRange, addMonths, subMonths, monthLabel, formatDate, cn } from '../lib/utils'
 
 function todayStr() {
@@ -89,24 +91,22 @@ export function SchedulePage() {
     return map
   }, [availability])
 
-  if (loading) return <LoadingSpinner className="min-h-[50vh]" />
+  if (loading) return <DashboardSkeleton />
 
   return (
-    <div className="space-y-5">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-zinc-100">Rooster</h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            {isAdmin ? 'Plan diensten per dag op basis van beschikbaarheid' : 'Je gepubliceerde diensten'}
-          </p>
-        </div>
-        <MonthNavigator
-          monthAnchor={monthAnchor}
-          onPrev={() => setMonthAnchor(subMonths(monthAnchor, 1))}
-          onNext={() => setMonthAnchor(addMonths(monthAnchor, 1))}
-          onToday={() => { setMonthAnchor(new Date()); setSelectedDate(todayStr()) }}
-        />
-      </header>
+    <div className="mx-auto max-w-6xl space-y-6">
+      <PageHeader
+        title="Rooster"
+        subtitle={isAdmin ? 'Plan diensten per dag op basis van beschikbaarheid' : 'Je gepubliceerde diensten'}
+        action={
+          <MonthNavigator
+            monthAnchor={monthAnchor}
+            onPrev={() => setMonthAnchor(subMonths(monthAnchor, 1))}
+            onNext={() => setMonthAnchor(addMonths(monthAnchor, 1))}
+            onToday={() => { setMonthAnchor(new Date()); setSelectedDate(todayStr()) }}
+          />
+        }
+      />
 
       {/* Maandplanner banner */}
       {isAdmin && (
@@ -190,11 +190,11 @@ export function SchedulePage() {
         style={{ background: 'var(--surface-card)', border: '1px solid var(--border)' }}
       >
         {!selectedDate ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <CalendarDays className="mb-3 h-10 w-10 text-zinc-700" />
-            <p className="font-medium text-zinc-300">Kies een dag</p>
-            <p className="mt-1 text-sm text-zinc-600">Selecteer een datum in de kalender</p>
-          </div>
+          <EmptyState
+            icon={CalendarDays}
+            title="Kies een dag"
+            description="Selecteer een datum in de kalender om diensten te bekijken of te plannen."
+          />
         ) : isAdmin ? (
           <DayScheduleEditor
             date={selectedDate}

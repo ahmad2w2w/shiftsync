@@ -12,7 +12,11 @@ import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 import { Badge } from '../components/ui/Badge'
-import { LoadingSpinner } from '../components/ui/LoadingSpinner'
+import { PageHeader } from '../components/ui/PageHeader'
+import { EmptyState } from '../components/ui/EmptyState'
+import { DashboardSkeleton } from '../components/ui/Skeleton'
+import { Table, TableHead, TableHeaderCell, TableBody, TableRow, TableCell } from '../components/ui/Table'
+import { Users } from 'lucide-react'
 
 export function EmployeesPage() {
   const { profile, isAdmin } = useAuth()
@@ -124,28 +128,26 @@ export function EmployeesPage() {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-zinc-100">Medewerkers</h1>
-          <p className="text-sm text-zinc-500">
-            Team beheren en rollen instellen · {memberCount} / {maxEmployees} plekken gebruikt
-          </p>
-        </div>
-        {atLimit ? (
-          <Link
-            to="/app/abonnement"
-            className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-brand-700"
-          >
-            <Sparkles className="h-4 w-4" />
-            Upgrade voor meer plekken
-          </Link>
-        ) : (
-          <Button onClick={() => { resetForm(); setShowForm(true) }}>
-            Medewerker toevoegen
-          </Button>
-        )}
-      </div>
+    <div className="mx-auto max-w-6xl space-y-6">
+      <PageHeader
+        title="Medewerkers"
+        subtitle={`Team beheren en rollen instellen · ${memberCount} / ${maxEmployees} plekken gebruikt`}
+        action={
+          atLimit ? (
+            <Link
+              to="/app/abonnement"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-brand-700"
+            >
+              <Sparkles className="h-4 w-4" />
+              Upgrade voor meer plekken
+            </Link>
+          ) : (
+            <Button onClick={() => { resetForm(); setShowForm(true) }}>
+              Medewerker toevoegen
+            </Button>
+          )
+        }
+      />
 
       {atLimit && (
         <div
@@ -216,48 +218,45 @@ export function EmployeesPage() {
       )}
 
       {loading ? (
-        <LoadingSpinner />
+        <DashboardSkeleton />
       ) : (
-        <Card>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-white/8 text-left">
-                  <th className="pb-3 pr-4 text-xs font-semibold uppercase tracking-wide text-zinc-600">Naam</th>
-                  <th className="pb-3 pr-4 text-xs font-semibold uppercase tracking-wide text-zinc-600">E-mail</th>
-                  <th className="pb-3 pr-4 text-xs font-semibold uppercase tracking-wide text-zinc-600">Rol</th>
-                  <th className="pb-3 pr-4 text-xs font-semibold uppercase tracking-wide text-zinc-600">Uurloon</th>
-                  <th className="pb-3 text-xs font-semibold uppercase tracking-wide text-zinc-600">Acties</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="py-8 text-center text-sm text-zinc-600">
-                      Nog geen medewerkers toegevoegd
-                    </td>
-                  </tr>
-                ) : (
-                  users.map((u) => (
-                    <tr key={u.id} className="border-b border-white/5 last:border-0">
-                      <td className="py-3 pr-4 font-medium text-zinc-200">{u.full_name}</td>
-                      <td className="py-3 pr-4 text-zinc-400">{u.email}</td>
-                      <td className="py-3 pr-4">
-                        <Badge variant={u.role}>{u.role === 'admin' ? 'Manager' : 'Medewerker'}</Badge>
-                      </td>
-                      <td className="py-3 pr-4 text-zinc-300">€ {Number(u.hourly_rate).toFixed(2)}</td>
-                      <td className="py-3">
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="secondary" onClick={() => startEdit(u)}>Bewerken</Button>
-                          <Button size="sm" variant="danger" onClick={() => handleDelete(u)}>Verwijderen</Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+        <Card className="overflow-hidden p-0">
+          {users.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title="Nog geen medewerkers"
+              description="Voeg je eerste teamlid toe om te beginnen met roosterplanning."
+              action={<Button onClick={() => { resetForm(); setShowForm(true) }}>Medewerker toevoegen</Button>}
+            />
+          ) : (
+            <Table>
+              <TableHead>
+                <TableHeaderCell>Naam</TableHeaderCell>
+                <TableHeaderCell>E-mail</TableHeaderCell>
+                <TableHeaderCell>Rol</TableHeaderCell>
+                <TableHeaderCell>Uurloon</TableHeaderCell>
+                <TableHeaderCell>Acties</TableHeaderCell>
+              </TableHead>
+              <TableBody>
+                {users.map((u) => (
+                  <TableRow key={u.id}>
+                    <TableCell className="font-medium" style={{ color: 'var(--text-primary)' }}>{u.full_name}</TableCell>
+                    <TableCell>{u.email}</TableCell>
+                    <TableCell>
+                      <Badge variant={u.role}>{u.role === 'admin' ? 'Manager' : 'Medewerker'}</Badge>
+                    </TableCell>
+                    <TableCell>€ {Number(u.hourly_rate).toFixed(2)}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="secondary" onClick={() => startEdit(u)}>Bewerken</Button>
+                        <Button size="sm" variant="danger" onClick={() => handleDelete(u)}>Verwijderen</Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </Card>
       )}
     </div>

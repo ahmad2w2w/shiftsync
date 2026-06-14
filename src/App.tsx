@@ -26,6 +26,7 @@ import { LeavePage } from './pages/LeavePage'
 import { EmployeesPage } from './pages/EmployeesPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { BillingPage } from './pages/BillingPage'
+import { SettingsPage } from './pages/SettingsPage'
 
 export default function App() {
   return (
@@ -61,6 +62,7 @@ export default function App() {
                   <Route path="/app/medewerkers" element={<EmployeesPage />} />
                   <Route path="/app/profiel" element={<ProfilePage />} />
                   <Route path="/app/abonnement" element={<BillingPage />} />
+                  <Route path="/app/instellingen" element={<SettingsPage />} />
                 </Route>
               </Route>
 

@@ -5,6 +5,7 @@ import { Card, CardHeader } from '../components/ui/Card'
 import { Input } from '../components/ui/Input'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
+import { PageHeader } from '../components/ui/PageHeader'
 
 export function ProfilePage() {
   const { profile, refreshProfile, isAdmin } = useAuth()
@@ -31,11 +32,8 @@ export function ProfilePage() {
   if (!profile) return null
 
   return (
-    <div className="max-w-lg space-y-5">
-      <div>
-        <h1 className="text-xl font-bold text-zinc-100">Profiel</h1>
-        <p className="text-sm text-zinc-500">Je accountgegevens</p>
-      </div>
+    <div className="mx-auto max-w-lg space-y-6">
+      <PageHeader title="Profiel" subtitle="Je accountgegevens" />
 
       <Card>
         <div className="flex items-center gap-4 mb-5">

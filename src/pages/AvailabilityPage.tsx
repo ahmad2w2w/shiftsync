@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Check, X, CalendarCheck, ChevronLeft, ChevronRight, Info } from 'lucide-react'
+import { Check, X, CalendarCheck, Info } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useOrganization } from '../context/OrganizationContext'
 import {
@@ -10,7 +10,9 @@ import {
 } from '../services/availability'
 import type { Availability } from '../types/database'
 import { Card, CardHeader } from '../components/ui/Card'
-import { LoadingSpinner } from '../components/ui/LoadingSpinner'
+import { PageHeader } from '../components/ui/PageHeader'
+import { DashboardSkeleton } from '../components/ui/Skeleton'
+import { MonthNavigator } from '../components/ui/MonthNavigator'
 import { getMonthRange, addMonths, subMonths, isSameMonth } from '../lib/utils'
 import { format, eachWeekOfInterval, endOfWeek, eachDayOfInterval, isToday, isBefore, startOfDay } from 'date-fns'
 import { nl } from 'date-fns/locale'
@@ -91,36 +93,21 @@ export function AvailabilityPage() {
   // ── ADMIN VIEW ─────────────────────────────────────────────────────────────
   if (isAdmin) {
     return (
-      <div className="space-y-5">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Beschikbaarheid</h1>
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-              Overzicht wie beschikbaar is per dag
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setMonthAnchor(subMonths(monthAnchor, 1))}
-              className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:opacity-80"
-              style={{ background: 'var(--surface-card)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <span className="min-w-[110px] text-center text-sm font-semibold capitalize" style={{ color: 'var(--text-primary)' }}>
-              {format(monthAnchor, 'MMMM yyyy', { locale: nl })}
-            </span>
-            <button
-              onClick={() => setMonthAnchor(addMonths(monthAnchor, 1))}
-              className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:opacity-80"
-              style={{ background: 'var(--surface-card)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
+      <div className="mx-auto max-w-6xl space-y-6">
+        <PageHeader
+          title="Beschikbaarheid"
+          subtitle="Overzicht wie beschikbaar is per dag"
+          action={
+            <MonthNavigator
+              monthAnchor={monthAnchor}
+              onPrev={() => setMonthAnchor(subMonths(monthAnchor, 1))}
+              onNext={() => setMonthAnchor(addMonths(monthAnchor, 1))}
+              onToday={() => setMonthAnchor(new Date())}
+            />
+          }
+        />
 
-        {loading ? <LoadingSpinner /> : (
+        {loading ? <DashboardSkeleton /> : (
           <Card>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[600px] text-sm">
@@ -207,34 +194,19 @@ export function AvailabilityPage() {
   const percentage = daysInMonth > 0 ? Math.round((availableCount / daysInMonth) * 100) : 0
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Beschikbaarheid</h1>
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            Klik op een dag om aan te geven of je kunt werken
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setMonthAnchor(subMonths(monthAnchor, 1))}
-            className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:opacity-80"
-            style={{ background: 'var(--surface-card)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <span className="min-w-[110px] text-center text-sm font-semibold capitalize" style={{ color: 'var(--text-primary)' }}>
-            {format(monthAnchor, 'MMMM yyyy', { locale: nl })}
-          </span>
-          <button
-            onClick={() => setMonthAnchor(addMonths(monthAnchor, 1))}
-            className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:opacity-80"
-            style={{ background: 'var(--surface-card)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHeader
+        title="Beschikbaarheid"
+        subtitle="Klik op een dag om aan te geven of je kunt werken"
+        action={
+          <MonthNavigator
+            monthAnchor={monthAnchor}
+            onPrev={() => setMonthAnchor(subMonths(monthAnchor, 1))}
+            onNext={() => setMonthAnchor(addMonths(monthAnchor, 1))}
+            onToday={() => setMonthAnchor(new Date())}
+          />
+        }
+      />
 
       {/* Summary pill */}
       <div className="flex flex-wrap gap-3">
@@ -247,7 +219,7 @@ export function AvailabilityPage() {
         </div>
       </div>
 
-      {loading ? <LoadingSpinner /> : (
+      {loading ? <DashboardSkeleton /> : (
         <Card>
           <CardHeader
             title="Klik dagen aan of uit"

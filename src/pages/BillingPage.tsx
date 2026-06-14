@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 import { Card, CardHeader } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
+import { PageHeader } from '../components/ui/PageHeader'
 import { PLAN_LIMITS } from '../types/database'
 import type { OrgPlan } from '../types/database'
 
@@ -89,11 +90,11 @@ export function BillingPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-bold text-zinc-100">Abonnement</h1>
-        <p className="mt-1 text-sm text-zinc-500">Beheer je plan en factuurgegevens.</p>
-      </div>
+    <div className="mx-auto max-w-5xl space-y-6">
+      <PageHeader
+        title="Abonnement"
+        subtitle="Beheer je plan, facturen en premium functies"
+      />
 
       {/* Current plan */}
       <Card>

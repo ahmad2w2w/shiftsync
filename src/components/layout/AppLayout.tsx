@@ -18,6 +18,7 @@ import {
   Sun,
   Moon,
   Lock,
+  Settings,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useOrganization } from '../../context/OrganizationContext'
@@ -51,6 +52,7 @@ const managerNav: NavItem[] = [
   { to: '/app/klok',            label: 'Klokregistratie',  icon: Clock },
   { to: '/app/uren',            label: 'Urenoverzicht',    icon: Timer },
   { to: '/app/verlof',          label: 'Verlofaanvragen',  icon: Palmtree },
+  { to: '/app/instellingen',    label: 'Instellingen',     icon: Settings },
   { to: '/app/profiel',         label: 'Profiel',          icon: UserCircle },
 ]
 
@@ -84,10 +86,10 @@ export function AppLayout() {
             onClick={() => setMobileOpen(false)}
             className={({ isActive }) =>
               cn(
-                'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all',
+                'relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150',
                 isActive
-                  ? 'bg-brand-500/15 text-brand-400'
-                  : 'text-white/50 hover:bg-white/8 hover:text-white/90'
+                  ? 'bg-brand-500/15 text-white shadow-sm before:absolute before:left-0 before:top-1/2 before:h-6 before:w-1 before:-translate-y-1/2 before:rounded-r-full before:bg-brand-500'
+                  : 'text-white/55 hover:bg-white/8 hover:text-white/95'
               )
             }
           >
@@ -174,7 +176,7 @@ export function AppLayout() {
     <div className="flex min-h-screen" style={{ background: 'var(--surface-page)' }}>
       {/* Desktop sidebar — always dark */}
       <aside
-        className="hidden w-56 shrink-0 flex-col lg:flex"
+        className="hidden w-60 shrink-0 flex-col lg:flex"
         style={{ background: 'var(--sidebar-bg)', borderRight: '1px solid rgba(255,255,255,0.06)' }}
       >
         <SidebarContent />
@@ -191,7 +193,7 @@ export function AppLayout() {
       {/* Mobile sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-56 flex-col transition-transform duration-200 lg:hidden',
+          'fixed inset-y-0 left-0 z-50 flex w-60 flex-col transition-transform duration-200 lg:hidden',
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}
         style={{ background: 'var(--sidebar-bg)', borderRight: '1px solid rgba(255,255,255,0.06)' }}

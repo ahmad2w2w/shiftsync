@@ -8,7 +8,10 @@ import { Card, CardHeader } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Badge } from '../components/ui/Badge'
-import { LoadingSpinner } from '../components/ui/LoadingSpinner'
+import { PageHeader } from '../components/ui/PageHeader'
+import { EmptyState } from '../components/ui/EmptyState'
+import { DashboardSkeleton } from '../components/ui/Skeleton'
+import { Palmtree } from 'lucide-react'
 import { formatDate, leaveStatusLabel } from '../lib/utils'
 
 export function LeavePage() {
@@ -88,22 +91,18 @@ export function LeavePage() {
   const getName = (r: LeaveRequest) => (r.user as { full_name?: string })?.full_name ?? '—'
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-zinc-100">
-            {isAdmin ? 'Verlofaanvragen' : 'Verlof'}
-          </h1>
-          <p className="text-sm text-zinc-500">
-            {isAdmin ? 'Keur aanvragen goed of wijs ze af' : 'Dien verlof in en bekijk de status'}
-          </p>
-        </div>
-        {!isAdmin && (
-          <Button onClick={() => setShowForm(!showForm)} variant={showForm ? 'secondary' : 'primary'}>
-            {showForm ? 'Annuleren' : 'Verlof aanvragen'}
-          </Button>
-        )}
-      </div>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHeader
+        title={isAdmin ? 'Verlofaanvragen' : 'Verlof'}
+        subtitle={isAdmin ? 'Keur aanvragen goed of wijs ze af' : 'Dien verlof in en bekijk de status'}
+        action={
+          !isAdmin ? (
+            <Button onClick={() => setShowForm(!showForm)} variant={showForm ? 'secondary' : 'primary'}>
+              {showForm ? 'Annuleren' : 'Verlof aanvragen'}
+            </Button>
+          ) : undefined
+        }
+      />
 
       {!isAdmin && showForm && (
         <Card>
@@ -120,15 +119,21 @@ export function LeavePage() {
       )}
 
       {loading ? (
-        <LoadingSpinner />
+        <DashboardSkeleton />
+      ) : requests.length === 0 ? (
+        <Card>
+          <EmptyState
+            icon={Palmtree}
+            title="Geen verlofaanvragen"
+            description={isAdmin ? 'Er zijn momenteel geen openstaande verlofaanvragen.' : 'Je hebt nog geen verlof aangevraagd.'}
+            action={!isAdmin ? (
+              <Button onClick={() => setShowForm(true)}>Verlof aanvragen</Button>
+            ) : undefined}
+          />
+        </Card>
       ) : (
         <div className="space-y-3">
-          {requests.length === 0 ? (
-            <Card>
-              <p className="py-4 text-center text-sm text-zinc-600">Geen verlofaanvragen</p>
-            </Card>
-          ) : (
-            requests.map((r) => (
+          {requests.map((r) => (
               <Card key={r.id}>
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="min-w-0">
@@ -175,8 +180,7 @@ export function LeavePage() {
                   </div>
                 )}
               </Card>
-            ))
-          )}
+          ))}
         </div>
       )}
     </div>

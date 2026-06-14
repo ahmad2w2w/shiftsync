@@ -63,29 +63,33 @@ export function ClockPage() {
     if (profile) load()
   }, [profile, isAdmin, organization?.id, organization?.gps_enabled, organization?.gps_radius_meters])
 
+  const gpsCheck =
+    gpsRequired && location
+      ? { location, radiusMeters: organization!.gps_radius_meters ?? 100 }
+      : undefined
+
+  const getGpsCoords = async () => {
+    if (!gpsRequired) return undefined
+    if (!location) {
+      throw new Error('Geen werkplek geconfigureerd. Vraag je manager om een locatie in te stellen.')
+    }
+    const pos = await getCurrentPosition()
+    return { lat: pos.coords.latitude, lng: pos.coords.longitude }
+  }
+
   const handleClockIn = async () => {
     setError('')
     setActionLoading(true)
     try {
-      let lat: number | undefined
-      let lng: number | undefined
-
-      if (gpsRequired) {
-        if (!location) {
-          throw new Error('Geen werkplek geconfigureerd. Vraag je manager om een locatie in te stellen.')
-        }
-        const pos = await getCurrentPosition()
-        lat = pos.coords.latitude
-        lng = pos.coords.longitude
-        await clockIn(
-          profile!.id,
-          organization!.id,
-          { lat, lng, locationId: location.id },
-          { location, radiusMeters: organization!.gps_radius_meters ?? 100 }
-        )
-      } else {
-        await clockIn(profile!.id, organization!.id)
-      }
+      const coords = await getGpsCoords()
+      await clockIn(
+        profile!.id,
+        organization!.id,
+        coords
+          ? { lat: coords.lat, lng: coords.lng, locationId: location!.id }
+          : undefined,
+        gpsCheck
+      )
       await load()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Inklokken mislukt')
@@ -100,7 +104,8 @@ export function ClockPage() {
     setActionLoading(true)
     try {
       if (isOnBreak(active)) await endBreak(active.id)
-      await clockOut(active.id)
+      const coords = await getGpsCoords()
+      await clockOut(active.id, coords, gpsCheck)
       await load()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Uitklokken mislukt')
@@ -221,7 +226,13 @@ export function ClockPage() {
                     </>
                   )}
                 </Button>
-                <Button size="lg" variant="danger" loading={actionLoading} onClick={handleClockOut}>
+                <Button
+                  size="lg"
+                  variant="danger"
+                  loading={actionLoading}
+                  onClick={handleClockOut}
+                  disabled={gpsRequired && !location}
+                >
                   <LogOut className="h-5 w-5" /> Uitklokken
                 </Button>
               </div>
@@ -238,7 +249,7 @@ export function ClockPage() {
               </p>
               {gpsRequired && !location && (
                 <p className="mx-auto mt-3 max-w-xs rounded-xl px-4 py-3 text-xs" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', color: '#B45309' }}>
-                  Inklokken met GPS is nog niet mogelijk tot je manager een locatie heeft toegevoegd.
+                  In- en uitklokken met GPS is nog niet mogelijk tot je manager een locatie heeft toegevoegd.
                 </p>
               )}
               <Button
@@ -266,7 +277,7 @@ export function ClockPage() {
           <div className="flex items-center gap-3 border-t px-5 py-3" style={{ borderColor: 'var(--border)', background: 'var(--surface-subtle)' }}>
             <MapPin className="h-4 w-4 shrink-0" style={{ color: '#10B981' }} />
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              Je locatie wordt gecontroleerd bij inklokken (max. {location.radius_meters}m van {location.name}).
+              GPS-controle bij in- en uitklokken (max. {location.radius_meters}m van {location.name}).
             </p>
           </div>
         )}

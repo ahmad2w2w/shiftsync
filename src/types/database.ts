@@ -116,6 +116,8 @@ export interface ClockRecord {
   total_break_minutes?: number
   clock_in_lat?: number | null
   clock_in_lng?: number | null
+  clock_out_lat?: number | null
+  clock_out_lng?: number | null
   location_id?: string | null
   created_at: string
   user?: User

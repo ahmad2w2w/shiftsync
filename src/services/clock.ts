@@ -4,6 +4,26 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-f
 import { isWithinRadius } from '../lib/geo'
 import type { Location } from '../types/database'
 
+export type GpsCheck = { location: Location; radiusMeters: number }
+
+export interface GpsCoords {
+  lat: number
+  lng: number
+}
+
+function verifyGpsAtLocation(
+  lat: number,
+  lng: number,
+  { location, radiusMeters }: GpsCheck,
+  action: 'in' | 'out'
+): void {
+  const radius = location.radius_meters || radiusMeters
+  if (!isWithinRadius(lat, lng, Number(location.latitude), Number(location.longitude), radius)) {
+    const verb = action === 'in' ? 'in te klokken' : 'uit te klokken'
+    throw new Error(`Je moet binnen ${radius} meter van ${location.name} zijn om ${verb}.`)
+  }
+}
+
 export async function getActiveClock(userId: string): Promise<ClockRecord | null> {
   const { data, error } = await supabase
     .from('clock_records')
@@ -27,17 +47,13 @@ export async function clockIn(
   userId: string,
   organizationId: string,
   options?: ClockInOptions,
-  gpsCheck?: { location: Location; radiusMeters: number }
+  gpsCheck?: GpsCheck
 ): Promise<ClockRecord> {
   const active = await getActiveClock(userId)
   if (active) throw new Error('Je bent al ingeklokt')
 
   if (gpsCheck && options?.lat != null && options?.lng != null) {
-    const { location, radiusMeters } = gpsCheck
-    const radius = location.radius_meters || radiusMeters
-    if (!isWithinRadius(options.lat, options.lng, Number(location.latitude), Number(location.longitude), radius)) {
-      throw new Error(`Je moet binnen ${radius} meter van ${location.name} zijn om in te klokken.`)
-    }
+    verifyGpsAtLocation(options.lat, options.lng, gpsCheck, 'in')
   }
 
   const { data, error } = await supabase
@@ -57,10 +73,22 @@ export async function clockIn(
   return data as ClockRecord
 }
 
-export async function clockOut(recordId: string): Promise<ClockRecord> {
+export async function clockOut(
+  recordId: string,
+  options?: GpsCoords,
+  gpsCheck?: GpsCheck
+): Promise<ClockRecord> {
+  if (gpsCheck && options?.lat != null && options?.lng != null) {
+    verifyGpsAtLocation(options.lat, options.lng, gpsCheck, 'out')
+  }
+
   const { data, error } = await supabase
     .from('clock_records')
-    .update({ clock_out: new Date().toISOString() })
+    .update({
+      clock_out: new Date().toISOString(),
+      clock_out_lat: options?.lat ?? null,
+      clock_out_lng: options?.lng ?? null,
+    })
     .eq('id', recordId)
     .select()
     .single()

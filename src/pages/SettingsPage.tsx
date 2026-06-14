@@ -213,7 +213,7 @@ export function SettingsPage() {
 
       {canUseGps && (
         <Card>
-          <CardHeader title="GPS-inklokken" subtitle="Medewerkers moeten binnen de radius zijn om in te klokken" />
+          <CardHeader title="GPS-inklokken" subtitle="Medewerkers moeten op locatie zijn om in én uit te klokken" />
           <form onSubmit={handleGpsSave} className="space-y-4">
             <label className="flex cursor-pointer items-center gap-3">
               <input
@@ -235,7 +235,7 @@ export function SettingsPage() {
               onChange={(e) => setGpsRadius(e.target.value)}
             />
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              Medewerkers zien: &quot;Je moet binnen {gpsRadius || 100} meter van de locatie zijn om in te klokken.&quot;
+              Medewerkers zien bij in- én uitklokken: &quot;Je moet binnen {gpsRadius || 100} meter van de locatie zijn.&quot;
             </p>
             <Button type="submit" loading={saving}>Instellingen opslaan</Button>
           </form>

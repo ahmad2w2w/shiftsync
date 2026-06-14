@@ -1,14 +1,18 @@
 import { useState, type FormEvent } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { Zap, CheckCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 
+const PLAN_LABELS: Record<string, string> = { pro: 'Pro', business: 'Business' }
+
 export function RegisterPage() {
   const { session, loading } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const intendedPlan = searchParams.get('plan')
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -32,6 +36,9 @@ export function RegisterPage() {
         options: { data: { full_name: fullName, role: 'admin' } },
       })
       if (signUpError) throw signUpError
+      if (intendedPlan === 'pro' || intendedPlan === 'business') {
+        sessionStorage.setItem('shiftsync-intended-plan', intendedPlan)
+      }
       navigate('/onboarding')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registratie mislukt. Probeer het opnieuw.')
@@ -78,6 +85,16 @@ export function RegisterPage() {
 
           <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Account aanmaken</h1>
           <p className="mt-1.5 text-sm" style={{ color: 'var(--text-muted)' }}>Gratis beginnen, geen creditcard nodig</p>
+
+          {PLAN_LABELS[intendedPlan ?? ''] && (
+            <div
+              className="mt-5 flex items-center gap-2 rounded-xl px-4 py-3 text-sm"
+              style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.25)', color: 'var(--brand-strong)' }}
+            >
+              <CheckCircle className="h-4 w-4 shrink-0" />
+              Je kiest het <strong>{PLAN_LABELS[intendedPlan ?? '']}</strong>-plan. Maak eerst je account aan, daarna reken je af.
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
             <Input

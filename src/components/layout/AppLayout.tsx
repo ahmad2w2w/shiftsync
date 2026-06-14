@@ -17,6 +17,7 @@ import {
   BarChart3,
   Sun,
   Moon,
+  Lock,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useOrganization } from '../../context/OrganizationContext'
@@ -33,11 +34,20 @@ const employeeNav = [
   { to: '/app/profiel',         label: 'Profiel',          icon: UserCircle },
 ]
 
-const managerNav = [
+type NavItem = {
+  to: string
+  label: string
+  icon: typeof LayoutDashboard
+  feature?: 'planner'
+}
+
+const employeeNavTyped: NavItem[] = employeeNav
+
+const managerNav: NavItem[] = [
   { to: '/app/dashboard',       label: 'Dashboard',        icon: LayoutDashboard },
   { to: '/app/medewerkers',     label: 'Medewerkers',      icon: Users },
   { to: '/app/rooster',         label: 'Rooster',          icon: Calendar },
-  { to: '/app/maandplanner',    label: 'Maandplanner',     icon: BarChart3 },
+  { to: '/app/maandplanner',    label: 'Maandplanner',     icon: BarChart3, feature: 'planner' },
   { to: '/app/klok',            label: 'Klokregistratie',  icon: Clock },
   { to: '/app/uren',            label: 'Urenoverzicht',    icon: Timer },
   { to: '/app/verlof',          label: 'Verlofaanvragen',  icon: Palmtree },
@@ -46,11 +56,11 @@ const managerNav = [
 
 export function AppLayout() {
   const { profile, isAdmin, signOut } = useAuth()
-  const { organization, plan } = useOrganization()
+  const { organization, plan, hasFeature } = useOrganization()
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const nav = isAdmin ? managerNav : employeeNav
+  const nav = isAdmin ? managerNav : employeeNavTyped
 
   const handleSignOut = async () => {
     await signOut()
@@ -65,24 +75,33 @@ export function AppLayout() {
 
   const NavItems = () => (
     <div className="space-y-0.5">
-      {nav.map(({ to, label, icon: Icon }) => (
-        <NavLink
-          key={to}
-          to={to}
-          onClick={() => setMobileOpen(false)}
-          className={({ isActive }) =>
-            cn(
-              'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all',
-              isActive
-                ? 'bg-brand-500/15 text-brand-400'
-                : 'text-white/50 hover:bg-white/8 hover:text-white/90'
-            )
-          }
-        >
-          <Icon className="h-[17px] w-[17px] shrink-0" />
-          {label}
-        </NavLink>
-      ))}
+      {nav.map(({ to, label, icon: Icon, feature }) => {
+        const locked = feature ? !hasFeature(feature) : false
+        return (
+          <NavLink
+            key={to}
+            to={to}
+            onClick={() => setMobileOpen(false)}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all',
+                isActive
+                  ? 'bg-brand-500/15 text-brand-400'
+                  : 'text-white/50 hover:bg-white/8 hover:text-white/90'
+              )
+            }
+          >
+            <Icon className="h-[17px] w-[17px] shrink-0" />
+            <span className="flex-1">{label}</span>
+            {locked && (
+              <span className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold text-amber-400" style={{ background: 'rgba(245,158,11,0.15)' }}>
+                <Lock className="h-2.5 w-2.5" />
+                Pro
+              </span>
+            )}
+          </NavLink>
+        )
+      })}
     </div>
   )
 

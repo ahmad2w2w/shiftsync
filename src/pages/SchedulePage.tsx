@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { format, isSameMonth } from 'date-fns'
 import { Sparkles, CalendarDays, ChevronRight } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
 import { getShiftsForPeriod } from '../services/shifts'
 import { getAllAvailabilityForPeriod } from '../services/availability'
 import { DayScheduleEditor } from '../components/schedule/DayScheduleEditor'
@@ -19,6 +20,7 @@ function todayStr() {
 
 export function SchedulePage() {
   const { profile, isAdmin } = useAuth()
+  const toast = useToast()
   const [monthAnchor, setMonthAnchor] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<string | null>(todayStr())
   const [shifts, setShifts] = useState<Shift[]>([])
@@ -48,7 +50,7 @@ export function SchedulePage() {
     let cancelled = false
     setLoading(true)
     fetchData()
-      .catch(() => {})
+      .catch(() => { if (!cancelled) toast.error('Rooster laden mislukt. Probeer opnieuw.') })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [profile, fetchData])
@@ -215,9 +217,9 @@ export function SchedulePage() {
             {assignedShifts.length === 0 ? (
               <div
                 className="rounded-xl px-6 py-12 text-center"
-                style={{ border: '1px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)' }}
+                style={{ border: '1px dashed var(--border-strong)', background: 'var(--surface-subtle)' }}
               >
-                <p className="text-sm text-zinc-600">Je hebt op deze dag geen gepubliceerde diensten.</p>
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Je hebt op deze dag geen gepubliceerde diensten.</p>
               </div>
             ) : (
               <ul className="space-y-3">

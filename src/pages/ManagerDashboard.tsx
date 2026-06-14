@@ -7,6 +7,7 @@ import { getAllClockRecords } from '../services/clock'
 import { getShiftsForPeriod } from '../services/shifts'
 import { exportScheduleToPDF, exportScheduleToExcel } from '../services/export'
 import { useOrganization } from '../context/OrganizationContext'
+import { useToast } from '../context/ToastContext'
 import type { ClockRecord } from '../types/database'
 import { Card, CardHeader } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
@@ -16,6 +17,7 @@ import { formatDateTime, getWeekRange } from '../lib/utils'
 
 export function ManagerDashboard() {
   const { organization, hasFeature } = useOrganization()
+  const toast = useToast()
   const [employeeCount, setEmployeeCount] = useState(0)
   const [pendingLeave, setPendingLeave] = useState(0)
   const [activeClocks, setActiveClocks] = useState<ClockRecord[]>([])
@@ -32,31 +34,29 @@ export function ManagerDashboard() {
       .finally(() => setLoading(false))
   }, [])
 
-  const handleExportPDF = async () => {
+  const runExport = async (kind: 'pdf' | 'excel') => {
     if (!organization) return
     setExporting(true)
     try {
       const { start, end } = getWeekRange(new Date())
       const shifts = await getShiftsForPeriod(start, end)
+      if (shifts.length === 0) {
+        toast.info('Geen diensten in deze week om te exporteren')
+        return
+      }
       const periodLabel = `week ${start.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}`
-      exportScheduleToPDF(shifts, organization.name, periodLabel)
+      if (kind === 'pdf') exportScheduleToPDF(shifts, organization.name, periodLabel)
+      else exportScheduleToExcel(shifts, organization.name, periodLabel)
+      toast.success(`Export naar ${kind === 'pdf' ? 'PDF' : 'Excel'} gestart`)
+    } catch {
+      toast.error('Export mislukt')
     } finally {
       setExporting(false)
     }
   }
 
-  const handleExportExcel = async () => {
-    if (!organization) return
-    setExporting(true)
-    try {
-      const { start, end } = getWeekRange(new Date())
-      const shifts = await getShiftsForPeriod(start, end)
-      const periodLabel = `week ${start.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}`
-      exportScheduleToExcel(shifts, organization.name, periodLabel)
-    } finally {
-      setExporting(false)
-    }
-  }
+  const handleExportPDF = () => runExport('pdf')
+  const handleExportExcel = () => runExport('excel')
 
   const stats = [
     { label: 'Medewerkers', value: employeeCount, icon: Users, to: '/app/medewerkers', color: 'bg-brand-500/15 text-brand-400' },

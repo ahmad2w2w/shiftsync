@@ -185,13 +185,16 @@ export async function publishMonth(
 
   if (shiftError) throw shiftError
 
-  const { error: metaError } = await supabase.from('schedule_months').upsert({
-    organization_id: organizationId,
-    month_key: key,
-    published_at: new Date().toISOString(),
-    published_by: publishedBy,
-    max_hours_per_employee: maxHours,
-  })
+  const { error: metaError } = await supabase.from('schedule_months').upsert(
+    {
+      organization_id: organizationId,
+      month_key: key,
+      published_at: new Date().toISOString(),
+      published_by: publishedBy,
+      max_hours_per_employee: maxHours,
+    },
+    { onConflict: 'organization_id,month_key' }
+  )
 
   if (metaError) throw metaError
 }

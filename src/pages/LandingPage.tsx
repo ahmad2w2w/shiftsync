@@ -82,28 +82,28 @@ const plans = [
   },
 ]
 
-const testimonials = [
+const steps = [
   {
-    name: 'Sarah van den Berg',
-    role: 'Eigenaar, Bistro de Linde',
-    text: 'ShiftSync heeft ons roosterproces compleet getransformeerd. Wat vroeger uren kostte, is nu in minuten gedaan.',
-    avatar: 'S',
-    color: 'bg-brand-100 text-brand-700',
+    step: '01',
+    title: 'Stel je team samen',
+    desc: 'Voeg medewerkers toe, stel functies en uurlonen in. Klaar in een paar minuten.',
   },
   {
-    name: 'Marco Jansen',
-    role: 'Vestigingsmanager, Coffeebar Central',
-    text: 'Eindelijk een app die medewerkers ook echt gebruiken. De in/uitklok functie is super handig.',
-    avatar: 'M',
-    color: 'bg-emerald-100 text-emerald-700',
+    step: '02',
+    title: 'Plan slim in',
+    desc: 'Medewerkers geven hun beschikbaarheid door. Jij plant met sjablonen en drag-and-drop.',
   },
   {
-    name: 'Fatima El Amrani',
-    role: 'HR Manager, Restaurantgroep Noord',
-    text: 'De Excel-export bespaart ons elke maand uren aan loonadministratie. Absolute aanrader.',
-    avatar: 'F',
-    color: 'bg-amber-100 text-amber-700',
+    step: '03',
+    title: 'Publiceer & volg',
+    desc: 'Publiceer het rooster, medewerkers klokken in en uit, en uren worden automatisch berekend.',
   },
+]
+
+const benefits = [
+  { stat: 'Minuten', label: 'in plaats van uren aan roosteren per week' },
+  { stat: '1 plek', label: 'voor rooster, verlof, uren en tijdregistratie' },
+  { stat: '0 fouten', label: 'door automatische urenberekening en export' },
 ]
 
 export function LandingPage() {
@@ -246,17 +246,15 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── SOCIAL PROOF ── */}
+      {/* ── BENEFITS STRIP ── */}
       <section className="py-12" style={{ borderTop: '1px solid rgba(255,255,255,0.07)', borderBottom: '1px solid rgba(255,255,255,0.07)', background: '#111113' }}>
-        <div className="mx-auto max-w-7xl px-5">
-          <p className="mb-8 text-center text-xs font-semibold uppercase tracking-widest text-zinc-700">
-            Vertrouwd door bedrijven in Nederland
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-3">
-            {['Restaurant Noord', 'Café de Hoek', 'Bistro Linde', 'Sushi Bar X', 'Bakery 24'].map((name) => (
-              <span key={name} className="text-sm font-semibold text-zinc-700">{name}</span>
-            ))}
-          </div>
+        <div className="mx-auto grid max-w-5xl gap-8 px-5 sm:grid-cols-3">
+          {benefits.map(({ stat, label }) => (
+            <div key={stat} className="text-center">
+              <p className="text-3xl font-bold text-white">{stat}</p>
+              <p className="mt-1 text-sm text-zinc-500">{label}</p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -366,33 +364,24 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ── */}
+      {/* ── HOW IT WORKS ── */}
       <section className="px-5 py-24" style={{ background: '#09090b', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
         <div className="mx-auto max-w-7xl">
           <div className="mb-16 text-center">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-brand-500">Reviews</p>
+            <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-brand-500">Zo werkt het</p>
             <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-              Wat klanten zeggen
+              In drie stappen geregeld
             </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-lg text-zinc-500">
+              Van lege agenda naar een gepubliceerd rooster — zonder gedoe.
+            </p>
           </div>
           <div className="grid gap-5 sm:grid-cols-3">
-            {testimonials.map(({ name, role, text, avatar }) => (
-              <div key={name} className="rounded-2xl p-6 card-shadow" style={{ background: '#111113', border: '1px solid rgba(255,255,255,0.07)' }}>
-                <div className="mb-4 flex gap-0.5">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <p className="text-sm leading-relaxed text-zinc-400">"{text}"</p>
-                <div className="mt-5 flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-600/15 text-sm font-bold text-brand-400">
-                    {avatar}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-zinc-200">{name}</p>
-                    <p className="text-xs text-zinc-600">{role}</p>
-                  </div>
-                </div>
+            {steps.map(({ step, title, desc }) => (
+              <div key={step} className="relative rounded-2xl p-6 card-shadow" style={{ background: '#111113', border: '1px solid rgba(255,255,255,0.07)' }}>
+                <span className="text-4xl font-bold text-brand-500/30">{step}</span>
+                <h3 className="mt-3 font-semibold text-zinc-100">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-500">{desc}</p>
               </div>
             ))}
           </div>

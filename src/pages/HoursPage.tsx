@@ -1,17 +1,25 @@
 import { useEffect, useState } from 'react'
+import { FileText, FileSpreadsheet } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useOrganization } from '../context/OrganizationContext'
+import { useToast } from '../context/ToastContext'
 import { getClockRecords, sumHours } from '../services/clock'
 import { getAllUsers } from '../services/users'
+import { exportHoursToPDF, exportHoursToExcel } from '../services/export'
 import type { ClockRecord, User } from '../types/database'
 import { Card, CardHeader } from '../components/ui/Card'
+import { Button } from '../components/ui/Button'
 import { WeekNavigator } from '../components/ui/WeekNavigator'
+import { MonthNavigator } from '../components/ui/MonthNavigator'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { Select } from '../components/ui/Select'
-import { formatDateTime, addWeeks, subWeeks } from '../lib/utils'
+import { formatDateTime, addWeeks, subWeeks, addMonths, subMonths, weekLabel, monthLabel } from '../lib/utils'
 
 export function HoursPage() {
   const { profile, isAdmin } = useAuth()
-  const [weekAnchor, setWeekAnchor] = useState(new Date())
+  const { organization, hasFeature } = useOrganization()
+  const toast = useToast()
+  const [anchor, setAnchor] = useState(new Date())
   const [range, setRange] = useState<'week' | 'month'>('week')
   const [records, setRecords] = useState<ClockRecord[]>([])
   const [employees, setEmployees] = useState<User[]>([])
@@ -24,7 +32,7 @@ export function HoursPage() {
     if (!targetUserId) return
     setLoading(true)
     try {
-      const data = await getClockRecords(targetUserId, range, weekAnchor)
+      const data = await getClockRecords(targetUserId, range, anchor)
       setRecords(data)
       if (isAdmin && employees.length === 0) {
         const users = await getAllUsers()
@@ -39,9 +47,33 @@ export function HoursPage() {
 
   useEffect(() => {
     if (profile) load()
-  }, [weekAnchor, range, targetUserId, profile])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anchor, range, targetUserId, profile])
 
   const total = sumHours(records)
+  const periodLabel = range === 'week' ? weekLabel(anchor) : monthLabel(anchor)
+  const canExport = hasFeature('export')
+
+  const exportUsers = isAdmin
+    ? employees
+    : profile
+      ? [profile as User]
+      : []
+
+  const handleExport = (kind: 'pdf' | 'excel') => {
+    if (records.length === 0) {
+      toast.info('Geen registraties om te exporteren in deze periode')
+      return
+    }
+    const orgName = organization?.name ?? 'ShiftSync'
+    try {
+      if (kind === 'pdf') exportHoursToPDF(records, exportUsers, orgName, periodLabel)
+      else exportHoursToExcel(records, exportUsers, orgName, periodLabel)
+      toast.success(`Export naar ${kind === 'pdf' ? 'PDF' : 'Excel'} gestart`)
+    } catch {
+      toast.error('Export mislukt')
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -62,34 +94,58 @@ export function HoursPage() {
             <option value="week">Week</option>
             <option value="month">Maand</option>
           </select>
-          {range === 'week' && (
+          {range === 'week' ? (
             <WeekNavigator
-              weekAnchor={weekAnchor}
-              onPrev={() => setWeekAnchor(subWeeks(weekAnchor, 1))}
-              onNext={() => setWeekAnchor(addWeeks(weekAnchor, 1))}
-              onToday={() => setWeekAnchor(new Date())}
+              weekAnchor={anchor}
+              onPrev={() => setAnchor(subWeeks(anchor, 1))}
+              onNext={() => setAnchor(addWeeks(anchor, 1))}
+              onToday={() => setAnchor(new Date())}
+            />
+          ) : (
+            <MonthNavigator
+              monthAnchor={anchor}
+              onPrev={() => setAnchor(subMonths(anchor, 1))}
+              onNext={() => setAnchor(addMonths(anchor, 1))}
+              onToday={() => setAnchor(new Date())}
             />
           )}
         </div>
       </div>
 
-      {isAdmin && employees.length > 0 && (
-        <Select
-          label="Medewerker"
-          value={selectedUser}
-          onChange={(e) => setSelectedUser(e.target.value)}
-          options={employees.map((e) => ({ value: e.id, label: e.full_name }))}
-        />
-      )}
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        {isAdmin && employees.length > 0 ? (
+          <div className="min-w-[220px]">
+            <Select
+              label="Medewerker"
+              value={selectedUser}
+              onChange={(e) => setSelectedUser(e.target.value)}
+              options={employees.map((e) => ({ value: e.id, label: e.full_name }))}
+            />
+          </div>
+        ) : <div />}
+
+        {canExport && (
+          <div className="flex gap-2">
+            <Button variant="secondary" size="sm" onClick={() => handleExport('pdf')}>
+              <FileText className="h-4 w-4" />
+              PDF
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => handleExport('excel')}>
+              <FileSpreadsheet className="h-4 w-4" />
+              Excel
+            </Button>
+          </div>
+        )}
+      </div>
 
       {/* Totaal uren card */}
       <div
         className="rounded-2xl p-6"
         style={{ background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(37,99,235,0.25)' }}
       >
-        <p className="text-sm font-medium text-brand-400">Totaal gewerkte uren</p>
-        <p className="mt-1 text-5xl font-bold text-white">{total.toFixed(2)}</p>
-        <p className="mt-1 text-xs text-zinc-500">uur in geselecteerde periode</p>
+        <p className="text-sm font-medium" style={{ color: 'var(--brand-strong)' }}>Totaal gewerkte uren</p>
+        <p className="mt-1 text-5xl font-bold" style={{ color: 'var(--text-primary)' }}>{total.toFixed(2)}</p>
+        <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>uur in geselecteerde periode</p>
       </div>
 
       {loading ? (

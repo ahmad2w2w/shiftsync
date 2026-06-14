@@ -33,11 +33,31 @@ serve(async (req: Request) => {
 
     const { plan, organizationId, returnUrl, portal } = await req.json()
 
+    if (!organizationId) throw new Error('organizationId ontbreekt')
+
     // Get or create Stripe customer
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
+
+    // Authorization: caller must be an admin of the target organization
+    const { data: callerProfile } = await supabaseAdmin
+      .from('users')
+      .select('organization_id, role')
+      .eq('id', user.id)
+      .single()
+
+    if (
+      !callerProfile ||
+      callerProfile.organization_id !== organizationId ||
+      callerProfile.role !== 'admin'
+    ) {
+      return new Response(
+        JSON.stringify({ error: 'Geen toegang tot dit abonnement.' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
 
     const { data: org } = await supabaseAdmin
       .from('organizations')

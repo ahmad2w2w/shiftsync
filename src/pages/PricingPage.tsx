@@ -59,6 +59,17 @@ const plans = [
   },
 ]
 
+const comparison: { label: string; values: (boolean | string)[] }[] = [
+  { label: 'Medewerkers', values: ['5', '25', 'Onbeperkt'] },
+  { label: 'Roosterplanning', values: [true, true, true] },
+  { label: 'Tijdregistratie', values: [true, true, true] },
+  { label: 'Verlofbeheer', values: [true, true, true] },
+  { label: 'Maandplanner', values: [false, true, true] },
+  { label: 'PDF & Excel export', values: [false, true, true] },
+  { label: 'E-mailnotificaties', values: [false, false, true] },
+  { label: 'Persoonlijke onboarding', values: [false, false, true] },
+]
+
 const faqs = [
   {
     q: 'Kan ik tussentijds upgraden of downgraden?',
@@ -179,6 +190,42 @@ export function PricingPage() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Feature comparison */}
+        <div className="mt-24">
+          <h2 className="mb-10 text-center text-2xl font-bold text-white">Functies vergelijken</h2>
+          <div className="mx-auto max-w-3xl overflow-hidden rounded-2xl" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+            {comparison.map((row, i) => (
+              <div
+                key={row.label}
+                className="grid grid-cols-4 items-center gap-2 px-5 py-3.5 text-sm"
+                style={{
+                  background: i % 2 === 0 ? '#111113' : 'transparent',
+                  borderBottom: i < comparison.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+                }}
+              >
+                <span className="col-span-1 text-zinc-300">{row.label}</span>
+                {row.values.map((v, idx) => (
+                  <span key={idx} className="text-center">
+                    {v === true ? (
+                      <CheckCircle className="mx-auto h-4 w-4 text-brand-500" />
+                    ) : v === false ? (
+                      <X className="mx-auto h-4 w-4 text-zinc-700" />
+                    ) : (
+                      <span className="text-zinc-400">{v}</span>
+                    )}
+                  </span>
+                ))}
+              </div>
+            ))}
+            <div className="grid grid-cols-4 gap-2 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-600" style={{ background: '#0d0d0f', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <span />
+              <span className="text-center">Free</span>
+              <span className="text-center">Pro</span>
+              <span className="text-center">Business</span>
+            </div>
+          </div>
         </div>
 
         {/* FAQ */}

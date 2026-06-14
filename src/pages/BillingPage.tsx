@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { CheckCircle, CreditCard, Zap, Star, ExternalLink } from 'lucide-react'
+import { CheckCircle, CreditCard, Zap, Star, ExternalLink, ShieldCheck } from 'lucide-react'
 import { useOrganization } from '../context/OrganizationContext'
+import { useToast } from '../context/ToastContext'
 import { supabase } from '../lib/supabase'
 import { Card, CardHeader } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
@@ -44,9 +45,15 @@ const plans: {
 
 export function BillingPage() {
   const { organization, plan, refreshOrganization } = useOrganization()
+  const toast = useToast()
   const [loading, setLoading] = useState<OrgPlan | null>(null)
   const [portalLoading, setPortalLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const handleRefresh = async () => {
+    await refreshOrganization()
+    toast.success('Abonnementsgegevens ververst')
+  }
 
   const handleUpgrade = async (targetPlan: OrgPlan) => {
     if (targetPlan === plan) return
@@ -109,7 +116,7 @@ export function BillingPage() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={refreshOrganization}>Verversen</Button>
+            <Button variant="secondary" size="sm" onClick={handleRefresh}>Verversen</Button>
             {plan !== 'free' && (
               <Button variant="secondary" size="sm" onClick={handlePortal} loading={portalLoading}>
                 <ExternalLink className="h-4 w-4" />
@@ -187,13 +194,18 @@ export function BillingPage() {
       </div>
 
       <Card>
-        <p className="text-sm leading-relaxed text-zinc-500">
-          Betalingen worden veilig verwerkt via <span className="text-zinc-300 font-medium">Stripe</span>. Je kunt je abonnement op elk moment wijzigen of opzeggen.
-          Voor vragen:{' '}
-          <a href="mailto:support@shiftsync.nl" className="text-brand-400 hover:text-brand-300 transition-colors">
-            support@shiftsync.nl
-          </a>
-        </p>
+        <div className="flex items-start gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ background: 'rgba(16,185,129,0.12)' }}>
+            <ShieldCheck className="h-5 w-5" style={{ color: '#10B981' }} />
+          </div>
+          <p className="text-sm leading-relaxed text-zinc-500">
+            Betalingen worden veilig verwerkt via <span className="text-zinc-300 font-medium">Stripe</span>. Je kunt je abonnement op elk moment wijzigen of opzeggen.
+            Voor vragen:{' '}
+            <a href="mailto:support@shiftsync.nl" className="text-brand-400 hover:text-brand-300 transition-colors">
+              support@shiftsync.nl
+            </a>
+          </p>
+        </div>
       </Card>
     </div>
   )

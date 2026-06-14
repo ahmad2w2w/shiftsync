@@ -72,23 +72,24 @@ export function AvailabilityPage() {
     }
   }
 
+  // Hooks must run unconditionally (Rules of Hooks) — computed once for both views.
+  const weeks = useMemo(() => {
+    const weekStarts = eachWeekOfInterval({ start, end }, { weekStartsOn: 1 })
+    return weekStarts.map((ws) => eachDayOfInterval({ start: ws, end: endOfWeek(ws, { weekStartsOn: 1 }) }))
+  }, [start, end])
+
+  const countByDate = useMemo(() => {
+    const map = new Map<string, (Availability & { users?: { full_name: string } })[]>()
+    for (const e of allEntries) {
+      const list = map.get(e.date) ?? []
+      list.push(e)
+      map.set(e.date, list)
+    }
+    return map
+  }, [allEntries])
+
   // ── ADMIN VIEW ─────────────────────────────────────────────────────────────
   if (isAdmin) {
-    const countByDate = useMemo(() => {
-      const map = new Map<string, (Availability & { users?: { full_name: string } })[]>()
-      for (const e of allEntries) {
-        const list = map.get(e.date) ?? []
-        list.push(e)
-        map.set(e.date, list)
-      }
-      return map
-    }, [allEntries])
-
-    const weeks = useMemo(() => {
-      const weekStarts = eachWeekOfInterval({ start, end }, { weekStartsOn: 1 })
-      return weekStarts.map((ws) => eachDayOfInterval({ start: ws, end: endOfWeek(ws, { weekStartsOn: 1 }) }))
-    }, [start, end])
-
     return (
       <div className="space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -201,11 +202,6 @@ export function AvailabilityPage() {
   }
 
   // ── EMPLOYEE VIEW ───────────────────────────────────────────────────────────
-  const weeks = useMemo(() => {
-    const weekStarts = eachWeekOfInterval({ start, end }, { weekStartsOn: 1 })
-    return weekStarts.map((ws) => eachDayOfInterval({ start: ws, end: endOfWeek(ws, { weekStartsOn: 1 }) }))
-  }, [start, end])
-
   const availableCount = entries.length
   const daysInMonth = getMonthRange(monthAnchor).days.length
   const percentage = daysInMonth > 0 ? Math.round((availableCount / daysInMonth) * 100) : 0

@@ -21,6 +21,9 @@
 
 /* ─── Light theme (default) ─── */
 :root {
+  --brand:           #3B82F6;
+  --brand-strong:    #2563eb;
+
   --surface-page:    #F1F5F9;
   --surface-card:    #FFFFFF;
   --surface-hover:   #F8FAFC;
@@ -55,6 +58,9 @@
 
 /* ─── Dark theme ─── */
 .dark {
+  --brand:           #60a5fa;
+  --brand-strong:    #3b82f6;
+
   --surface-page:    #09090b;
   --surface-card:    #18181b;
   --surface-hover:   rgba(255,255,255,0.06);
@@ -105,11 +111,23 @@
   .text-zinc-700, .text-zinc-800 { color: var(--text-disabled); }
   .bg-zinc-900 { background-color: var(--surface-card); }
   .bg-zinc-800 { background-color: var(--surface-hover); }
+
+  /* White-alpha borders → theme borders */
+  .border-white\/5,
   .border-white\/8 { border-color: var(--border) !important; }
   .border-white\/10 { border-color: var(--border-strong) !important; }
   .border-white\/15, .border-white\/20 { border-color: var(--border-strong) !important; }
+
+  /* White-alpha dividers → theme borders */
+  .divide-white\/5 > :not([hidden]) ~ :not([hidden]),
   .divide-white\/6 > :not([hidden]) ~ :not([hidden]),
   .divide-white\/8 > :not([hidden]) ~ :not([hidden]) { border-color: var(--border) !important; }
+
+  /* White-alpha hover backgrounds → subtle theme hover */
+  .hover\:bg-white\/4:hover,
+  .hover\:bg-white\/5:hover,
+  .hover\:bg-white\/8:hover { background-color: var(--surface-hover) !important; }
+
   /* Navy scale for auth pages */
   .bg-navy-950 { background-color: var(--surface-page); }
   .bg-navy-800 { background-color: var(--surface-input); }
@@ -150,4 +168,19 @@
   .card-shadow-md {
     box-shadow: var(--shadow-card-md);
   }
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes dialog-in {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
 }

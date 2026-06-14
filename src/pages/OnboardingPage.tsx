@@ -12,6 +12,8 @@ const steps = [
   { id: 2, label: 'Bevestiging' },
 ]
 
+const PLAN_LABELS: Record<string, string> = { pro: 'Pro', business: 'Business' }
+
 export function OnboardingPage() {
   const { profile, refreshProfile } = useAuth()
   const { refreshOrganization } = useOrganization()
@@ -20,6 +22,13 @@ export function OnboardingPage() {
   const [companyName, setCompanyName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const intendedPlan = typeof window !== 'undefined' ? sessionStorage.getItem('shiftsync-intended-plan') : null
+
+  const goToBilling = () => {
+    sessionStorage.removeItem('shiftsync-intended-plan')
+    navigate('/app/abonnement')
+  }
 
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault()
@@ -135,13 +144,27 @@ export function OnboardingPage() {
               Je kunt nu beginnen met het plannen van je team.
             </p>
             <div className="mt-8 space-y-3">
-              <Button onClick={() => navigate('/app/medewerkers')} className="w-full" size="lg">
-                Medewerkers toevoegen
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-              <Button onClick={() => navigate('/app/dashboard')} variant="secondary" className="w-full" size="lg">
-                Ga naar dashboard
-              </Button>
+              {PLAN_LABELS[intendedPlan ?? ''] ? (
+                <>
+                  <Button onClick={goToBilling} className="w-full" size="lg">
+                    Ga verder naar {PLAN_LABELS[intendedPlan ?? '']}-abonnement
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                  <Button onClick={() => navigate('/app/medewerkers')} variant="secondary" className="w-full" size="lg">
+                    Eerst medewerkers toevoegen
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button onClick={() => navigate('/app/medewerkers')} className="w-full" size="lg">
+                    Medewerkers toevoegen
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                  <Button onClick={() => navigate('/app/dashboard')} variant="secondary" className="w-full" size="lg">
+                    Ga naar dashboard
+                  </Button>
+                </>
+              )}
             </div>
             <p className="mt-6 text-xs" style={{ color: 'var(--text-disabled)' }}>
               Je kunt medewerkers ook later toevoegen via het menu.

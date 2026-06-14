@@ -1,4 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
 const FROM_EMAIL = Deno.env.get('FROM_EMAIL') ?? 'noreply@shiftsync.nl'
@@ -119,7 +120,63 @@ serve(async (req: Request) => {
   }
 
   try {
+    // ── Authorization ──────────────────────────────────────────
+    // Caller must be an authenticated admin, and the recipient must
+    // belong to the same organization as the caller.
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Niet ingelogd' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    )
+    const { data: { user } } = await supabaseClient.auth.getUser()
+    if (!user) {
+      return new Response(
+        JSON.stringify({ error: 'Niet ingelogd' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     const payload: NotificationPayload = await req.json()
+
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
+    const { data: caller } = await supabaseAdmin
+      .from('users')
+      .select('organization_id, role')
+      .eq('id', user.id)
+      .single()
+
+    if (!caller || caller.role !== 'admin') {
+      return new Response(
+        JSON.stringify({ error: 'Alleen beheerders mogen meldingen versturen.' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const { data: recipient } = await supabaseAdmin
+      .from('users')
+      .select('organization_id')
+      .eq('email', payload.recipientEmail)
+      .maybeSingle()
+
+    if (!recipient || recipient.organization_id !== caller.organization_id) {
+      return new Response(
+        JSON.stringify({ error: 'Ontvanger hoort niet bij jouw organisatie.' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     const { subject, html } = buildEmail(payload)
 
     const response = await fetch('https://api.resend.com/emails', {

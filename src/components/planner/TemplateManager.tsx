@@ -3,6 +3,8 @@ import { Plus, Trash2 } from 'lucide-react'
 import type { ShiftTemplate } from '../../types/database'
 import { createShiftTemplate, deleteShiftTemplate } from '../../services/shiftTemplates'
 import { useOrganization } from '../../context/OrganizationContext'
+import { useConfirm } from '../../context/ConfirmContext'
+import { useToast } from '../../context/ToastContext'
 import { DAY_NAMES } from '../../lib/plannerEngine'
 import { SHIFT_POSITIONS } from '../../lib/utils'
 import { Card, CardHeader } from '../ui/Card'
@@ -17,6 +19,8 @@ interface TemplateManagerProps {
 
 export function TemplateManager({ templates, onChange }: TemplateManagerProps) {
   const { organization } = useOrganization()
+  const confirm = useConfirm()
+  const toast = useToast()
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({
     day_of_week: '5',
@@ -30,17 +34,22 @@ export function TemplateManager({ templates, onChange }: TemplateManagerProps) {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!organization) return
-    await createShiftTemplate({
-      organization_id: organization.id,
-      day_of_week: Number(form.day_of_week),
-      position: form.position,
-      start_time: form.start_time,
-      end_time: form.end_time,
-      required_count: Number(form.required_count),
-      label: form.label || null,
-    })
-    setShowForm(false)
-    onChange()
+    try {
+      await createShiftTemplate({
+        organization_id: organization.id,
+        day_of_week: Number(form.day_of_week),
+        position: form.position,
+        start_time: form.start_time,
+        end_time: form.end_time,
+        required_count: Number(form.required_count),
+        label: form.label || null,
+      })
+      setShowForm(false)
+      toast.success('Template toegevoegd')
+      onChange()
+    } catch {
+      toast.error('Template opslaan mislukt')
+    }
   }
 
   const byDay = DAY_NAMES.map((_, dow) => templates.filter((t) => t.day_of_week === dow))
@@ -115,9 +124,19 @@ export function TemplateManager({ templates, onChange }: TemplateManagerProps) {
                     <button
                       type="button"
                       onClick={async () => {
-                        if (confirm('Template verwijderen?')) {
+                        const ok = await confirm({
+                          title: 'Template verwijderen?',
+                          message: `${t.required_count}× ${t.position} (${t.start_time.slice(0, 5)}–${t.end_time.slice(0, 5)})`,
+                          confirmLabel: 'Verwijderen',
+                          danger: true,
+                        })
+                        if (!ok) return
+                        try {
                           await deleteShiftTemplate(t.id)
+                          toast.success('Template verwijderd')
                           onChange()
+                        } catch {
+                          toast.error('Verwijderen mislukt')
                         }
                       }}
                       className="transition-colors hover:text-red-500"

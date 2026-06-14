@@ -1,5 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
+import { ToastProvider } from './context/ToastContext'
+import { ConfirmProvider } from './context/ConfirmContext'
 import { AuthProvider } from './context/AuthContext'
 import { OrganizationProvider } from './context/OrganizationContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
@@ -29,6 +31,8 @@ export default function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider>
+      <ToastProvider>
+      <ConfirmProvider>
       <AuthProvider>
         <OrganizationProvider>
           <BrowserRouter>
@@ -76,6 +80,8 @@ export default function App() {
           </BrowserRouter>
         </OrganizationProvider>
       </AuthProvider>
+      </ConfirmProvider>
+      </ToastProvider>
       </ThemeProvider>
     </ErrorBoundary>
   )

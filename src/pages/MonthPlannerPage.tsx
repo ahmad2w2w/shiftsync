@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useOrganization } from '../context/OrganizationContext'
+import { useConfirm } from '../context/ConfirmContext'
 import { getAllUsers } from '../services/users'
 import { getAllAvailabilityForPeriod } from '../services/availability'
 import { getLeaveRequests } from '../services/leave'
@@ -33,12 +34,14 @@ import {
   publishMonth,
   plannerStats,
 } from '../services/monthPlanner'
-import { rankEmployeesForSlot, DAY_NAMES } from '../lib/plannerEngine'
+import { notifyShiftPublished } from '../services/notifications'
+import { rankEmployeesForSlot } from '../lib/plannerEngine'
 import { enrichShift, patchShiftInList } from '../lib/plannerShifts'
 import type { Shift, ShiftTemplate, User } from '../types/database'
 import type { Availability, LeaveRequest } from '../types/database'
 import { MonthNavigator } from '../components/ui/MonthNavigator'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
+import { UpgradePrompt } from '../components/ui/UpgradePrompt'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
@@ -53,7 +56,8 @@ type Tab = 'planner' | 'templates' | 'availability'
 
 export function MonthPlannerPage() {
   const { profile, isAdmin } = useAuth()
-  const { organization } = useOrganization()
+  const { organization, hasFeature } = useOrganization()
+  const confirm = useConfirm()
   const [monthAnchor, setMonthAnchor] = useState(new Date())
   const [tab, setTab] = useState<Tab>('planner')
   const [shifts, setShifts] = useState<Shift[]>([])
@@ -192,23 +196,12 @@ export function MonthPlannerPage() {
 
   const handleGenerate = async () => {
     const preview = previewMonthGeneration(monthAnchor, templates)
-    const dayLines = DAY_NAMES.map((name, dow) => {
-      const n = preview.perWeekday[dow] ?? 0
-      return n > 0 ? `${name}: ${n} diensten` : null
+    const ok = await confirm({
+      title: 'Maand vullen uit templates?',
+      message: `Dit maakt ${preview.total} open diensten aan voor deze maand. Bestaande open plekken worden vervangen; ingeplande medewerkers blijven staan.`,
+      confirmLabel: 'Genereren',
     })
-      .filter(Boolean)
-      .join('\n')
-
-    const msg = [
-      `Maand opnieuw vullen uit templates?`,
-      ``,
-      `Totaal: ${preview.total} open diensten voor deze maand.`,
-      dayLines ? `\nPer weekdag:\n${dayLines}` : '',
-      ``,
-      `Bestaande open plekken worden verwijderd; ingeplande medewerkers blijven staan.`,
-    ].join('\n')
-
-    if (!confirm(msg)) return
+    if (!ok) return
     setBusy('generate')
     setActionError('')
     try {
@@ -241,14 +234,30 @@ export function MonthPlannerPage() {
   }
 
   const handlePublish = async () => {
-    if (stats.open > 0) {
-      if (!confirm(`${stats.open} open diensten blijven leeg. Toch publiceren?`)) return
-    }
-    if (!confirm('Maandrooster publiceren? Medewerkers zien hun diensten direct.')) return
+    const ok = await confirm({
+      title: 'Maandrooster publiceren?',
+      message:
+        stats.open > 0
+          ? `Let op: ${stats.open} open diensten blijven leeg. Medewerkers zien hun diensten direct na publicatie.`
+          : 'Medewerkers zien hun diensten direct na publicatie.',
+      confirmLabel: 'Publiceren',
+    })
+    if (!ok) return
     setBusy('publish')
     setActionError('')
     try {
       await publishMonth(monthAnchor, profile!.id, organization!.id, maxHours)
+
+      // Notify assigned employees (Business plan only)
+      if (hasFeature('notifications')) {
+        const label = monthLabel(monthAnchor)
+        const assignedIds = new Set(shifts.filter((s) => s.user_id).map((s) => s.user_id))
+        const recipients = employees.filter((e) => assignedIds.has(e.id) && e.email)
+        await Promise.all(
+          recipients.map((e) => notifyShiftPublished(e.email, e.full_name, label))
+        )
+      }
+
       await fetchPlannerData()
       setToast('Maandrooster gepubliceerd!')
     } catch {
@@ -274,6 +283,21 @@ export function MonthPlannerPage() {
   ]
 
   if (!isAdmin) return <Navigate to="/app/rooster" replace />
+  if (!hasFeature('planner')) {
+    return (
+      <UpgradePrompt
+        title="Slimme Maandplanner"
+        description="Plan een volledige maand in minuten met templates, drag & drop en automatische suggesties op basis van beschikbaarheid."
+        benefits={[
+          'Genereer roosters uit weektemplates',
+          'Sleep medewerkers naar diensten',
+          'Slimme suggesties per dienst',
+          'Publiceer met één klik',
+        ]}
+        requiredPlan="Pro"
+      />
+    )
+  }
   if (loading) return <LoadingSpinner className="min-h-[60vh]" />
 
   return (
@@ -281,7 +305,7 @@ export function MonthPlannerPage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <Link
-            to="/rooster"
+            to="/app/rooster"
             className="mb-2 inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -291,7 +315,7 @@ export function MonthPlannerPage() {
             <Sparkles className="h-7 w-7" />
             Slimme Maandrooster Planner
           </h1>
-          <p className="text-sm text-gray-500 capitalize">{monthLabel(monthAnchor)}</p>
+          <p className="text-sm capitalize" style={{ color: 'var(--text-muted)' }}>{monthLabel(monthAnchor)}</p>
         </div>
         <MonthNavigator
           monthAnchor={monthAnchor}

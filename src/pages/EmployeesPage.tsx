@@ -1,7 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, Link } from 'react-router-dom'
+import { Sparkles } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useOrganization } from '../context/OrganizationContext'
+import { useToast } from '../context/ToastContext'
+import { useConfirm } from '../context/ConfirmContext'
 import { getAllUsers, updateUser, deleteUser, createEmployeeAccount } from '../services/users'
 import type { User, UserRole } from '../types/database'
 import { Card, CardHeader } from '../components/ui/Card'
@@ -13,7 +16,9 @@ import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 
 export function EmployeesPage() {
   const { profile, isAdmin } = useAuth()
-  const { organization } = useOrganization()
+  const { organization, maxEmployees, plan } = useOrganization()
+  const toast = useToast()
+  const confirm = useConfirm()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -51,8 +56,15 @@ export function EmployeesPage() {
     setError('')
   }
 
+  const memberCount = users.length + 1 // include the current admin
+  const atLimit = memberCount >= maxEmployees
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    if (!editing && atLimit) {
+      setError(`Je ${plan}-abonnement staat maximaal ${maxEmployees} teamleden toe. Upgrade om meer toe te voegen.`)
+      return
+    }
     setSubmitting(true)
     setError('')
     try {
@@ -62,6 +74,7 @@ export function EmployeesPage() {
           hourly_rate: parseFloat(form.hourly_rate),
           role: form.role,
         })
+        toast.success('Medewerker bijgewerkt')
       } else {
         await createEmployeeAccount({
           email: form.email,
@@ -70,6 +83,7 @@ export function EmployeesPage() {
           hourly_rate: parseFloat(form.hourly_rate),
           organization_id: organization!.id,
         })
+        toast.success('Medewerker toegevoegd')
       }
       resetForm()
       load()
@@ -92,10 +106,21 @@ export function EmployeesPage() {
     setShowForm(true)
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Medewerker verwijderen? Dit verwijdert alleen het profiel.')) return
-    await deleteUser(id)
-    load()
+  const handleDelete = async (user: User) => {
+    const ok = await confirm({
+      title: 'Medewerker verwijderen?',
+      message: `${user.full_name} wordt uit je team verwijderd. Hun rooster- en uurgegevens blijven bewaard.`,
+      confirmLabel: 'Verwijderen',
+      danger: true,
+    })
+    if (!ok) return
+    try {
+      await deleteUser(user.id)
+      toast.success('Medewerker verwijderd')
+      load()
+    } catch {
+      toast.error('Verwijderen mislukt')
+    }
   }
 
   return (
@@ -103,12 +128,34 @@ export function EmployeesPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-zinc-100">Medewerkers</h1>
-          <p className="text-sm text-zinc-500">Team beheren en rollen instellen</p>
+          <p className="text-sm text-zinc-500">
+            Team beheren en rollen instellen · {memberCount} / {maxEmployees} plekken gebruikt
+          </p>
         </div>
-        <Button onClick={() => { resetForm(); setShowForm(true) }}>
-          Medewerker toevoegen
-        </Button>
+        {atLimit ? (
+          <Link
+            to="/app/abonnement"
+            className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-brand-700"
+          >
+            <Sparkles className="h-4 w-4" />
+            Upgrade voor meer plekken
+          </Link>
+        ) : (
+          <Button onClick={() => { resetForm(); setShowForm(true) }}>
+            Medewerker toevoegen
+          </Button>
+        )}
       </div>
+
+      {atLimit && (
+        <div
+          className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm"
+          style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', color: '#B45309' }}
+        >
+          <Sparkles className="h-4 w-4 shrink-0" style={{ color: '#F59E0B' }} />
+          Je hebt de limiet van {maxEmployees} teamleden bereikt op je {plan}-abonnement. Upgrade om je team uit te breiden.
+        </div>
+      )}
 
       {showForm && (
         <Card>
@@ -202,7 +249,7 @@ export function EmployeesPage() {
                       <td className="py-3">
                         <div className="flex gap-2">
                           <Button size="sm" variant="secondary" onClick={() => startEdit(u)}>Bewerken</Button>
-                          <Button size="sm" variant="danger" onClick={() => handleDelete(u.id)}>Verwijderen</Button>
+                          <Button size="sm" variant="danger" onClick={() => handleDelete(u)}>Verwijderen</Button>
                         </div>
                       </td>
                     </tr>

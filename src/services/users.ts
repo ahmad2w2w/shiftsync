@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { parseEdgeFunctionError } from '../lib/edgeFunctions'
 import type { User, UserRole } from '../types/database'
 import type { User as AuthUser } from '@supabase/supabase-js'
 
@@ -80,7 +81,9 @@ export async function createEmployeeAccount(params: {
       hourly_rate: params.hourly_rate ?? 0,
     },
   })
-  if (error) throw error
+  if (error) {
+    throw new Error(await parseEdgeFunctionError(error, data))
+  }
   if (data?.error) throw new Error(data.error)
 }
 

@@ -176,9 +176,9 @@ export function AppLayout() {
       <a href="#main-content" className="skip-link">
         Naar hoofdinhoud
       </a>
-      {/* Desktop sidebar — always dark */}
+      {/* Desktop sidebar — always dark navy, independent of app light/dark theme */}
       <aside
-        className="hidden w-60 shrink-0 flex-col lg:flex"
+        className="app-sidebar hidden w-60 shrink-0 flex-col lg:flex"
         style={{ background: 'var(--sidebar-bg)', borderRight: '1px solid rgba(255,255,255,0.06)' }}
       >
         <SidebarContent />
@@ -196,7 +196,7 @@ export function AppLayout() {
       <aside
         ref={mobileNavRef}
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-60 flex-col transition-transform duration-200 lg:hidden',
+          'app-sidebar fixed inset-y-0 left-0 z-50 flex w-60 flex-col transition-transform duration-200 lg:hidden',
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}
         style={{ background: 'var(--sidebar-bg)', borderRight: '1px solid rgba(255,255,255,0.06)' }}

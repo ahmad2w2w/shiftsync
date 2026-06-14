@@ -160,6 +160,32 @@
   .text-navy-400, .text-navy-500 { color: var(--text-muted); }
 }
 
+/* Sidebar stays dark in light mode — don't remap white/alpha utilities here */
+:root:not(.dark) .app-sidebar {
+  --sidebar-bg: #0F172A;
+  color: #fff;
+}
+
+:root:not(.dark) .app-sidebar .hover\:bg-white\/4:hover,
+:root:not(.dark) .app-sidebar .hover\:bg-white\/5:hover,
+:root:not(.dark) .app-sidebar .hover\:bg-white\/8:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+:root:not(.dark) .app-sidebar .border-white\/5,
+:root:not(.dark) .app-sidebar .border-white\/8,
+:root:not(.dark) .app-sidebar .border-white\/10,
+:root:not(.dark) .app-sidebar .border-white\/15,
+:root:not(.dark) .app-sidebar .border-white\/20 {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+:root:not(.dark) .app-sidebar .divide-white\/5 > :not([hidden]) ~ :not([hidden]),
+:root:not(.dark) .app-sidebar .divide-white\/6 > :not([hidden]) ~ :not([hidden]),
+:root:not(.dark) .app-sidebar .divide-white\/8 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
 @layer utilities {
   /* Marketing pages always use light theme, even if user saved dark mode in the app */
   .marketing-light {

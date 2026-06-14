@@ -55,21 +55,6 @@ export async function deleteAvailability(id: string): Promise<void> {
   if (error) throw error
 }
 
-export async function updateAvailability(
-  id: string,
-  updates: Partial<Pick<Availability, 'available_from' | 'available_until' | 'note'>>
-): Promise<Availability> {
-  const { data, error } = await supabase
-    .from('availability')
-    .update(updates)
-    .eq('id', id)
-    .select()
-    .single()
-
-  if (error) throw error
-  return data as Availability
-}
-
 export async function setDayAvailable(
   userId: string,
   date: string,

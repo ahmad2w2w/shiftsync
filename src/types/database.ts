@@ -2,6 +2,8 @@ export type UserRole = 'admin' | 'employee'
 export type LeaveStatus = 'pending' | 'approved' | 'rejected'
 export type ShiftStatus = 'scheduled' | 'completed' | 'cancelled'
 export type OrgPlan = 'free' | 'pro' | 'business'
+export type SickStatus = 'active' | 'resolved'
+export type ShiftSwapStatus = 'offered' | 'accepted' | 'approved' | 'rejected' | 'cancelled'
 
 export interface Organization {
   id: string
@@ -11,6 +13,8 @@ export interface Organization {
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
   max_employees: number
+  gps_enabled?: boolean
+  gps_radius_meters?: number
   created_at: string
 }
 
@@ -82,6 +86,11 @@ export interface ClockRecord {
   clock_out: string | null
   total_hours: number | null
   note: string | null
+  break_started_at?: string | null
+  total_break_minutes?: number
+  clock_in_lat?: number | null
+  clock_in_lng?: number | null
+  location_id?: string | null
   created_at: string
   user?: User
 }
@@ -97,6 +106,45 @@ export interface LeaveRequest {
   manager_note: string | null
   created_at: string
   user?: User
+}
+
+export interface Location {
+  id: string
+  organization_id: string
+  name: string
+  address: string | null
+  latitude: number
+  longitude: number
+  radius_meters: number
+  is_primary: boolean
+  created_at: string
+}
+
+export interface SickReport {
+  id: string
+  organization_id: string
+  user_id: string
+  start_date: string
+  end_date: string | null
+  note: string | null
+  status: SickStatus
+  created_at: string
+  user?: User
+}
+
+export interface ShiftSwap {
+  id: string
+  organization_id: string
+  shift_id: string
+  offered_by: string
+  accepted_by: string | null
+  status: ShiftSwapStatus
+  manager_note: string | null
+  created_at: string
+  updated_at: string
+  shift?: Shift
+  offerer?: User
+  accepter?: User
 }
 
 export const PLAN_LIMITS: Record<OrgPlan, { maxEmployees: number; label: string; price: string }> = {

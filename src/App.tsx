@@ -27,6 +27,8 @@ import { EmployeesPage } from './pages/EmployeesPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { BillingPage } from './pages/BillingPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { SickLeavePage } from './pages/SickLeavePage'
+import { ShiftSwapPage } from './pages/ShiftSwapPage'
 
 export default function App() {
   return (
@@ -63,6 +65,8 @@ export default function App() {
                   <Route path="/app/profiel" element={<ProfilePage />} />
                   <Route path="/app/abonnement" element={<BillingPage />} />
                   <Route path="/app/instellingen" element={<SettingsPage />} />
+                  <Route path="/app/ziek" element={<SickLeavePage />} />
+                  <Route path="/app/ruilen" element={<ShiftSwapPage />} />
                 </Route>
               </Route>
 

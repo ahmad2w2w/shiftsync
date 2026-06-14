@@ -18,7 +18,7 @@ interface OrganizationContextValue {
   plan: OrgPlan
   maxEmployees: number
   canAddEmployee: (currentCount: number) => boolean
-  hasFeature: (feature: 'planner' | 'export' | 'notifications') => boolean
+  hasFeature: (feature: 'planner' | 'export' | 'notifications' | 'gps') => boolean
   refreshOrganization: () => Promise<void>
 }
 
@@ -68,9 +68,9 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       plan,
       maxEmployees,
       canAddEmployee: (count: number) => count < maxEmployees,
-      hasFeature: (feature: 'planner' | 'export' | 'notifications') => {
+      hasFeature: (feature: 'planner' | 'export' | 'notifications' | 'gps') => {
         if (feature === 'planner' || feature === 'export') return plan !== 'free'
-        if (feature === 'notifications') return plan === 'business'
+        if (feature === 'notifications' || feature === 'gps') return plan === 'business'
         return false
       },
       refreshOrganization,

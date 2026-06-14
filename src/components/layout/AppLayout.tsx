@@ -19,6 +19,8 @@ import {
   Moon,
   Lock,
   Settings,
+  Thermometer,
+  ArrowLeftRight,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useOrganization } from '../../context/OrganizationContext'
@@ -32,6 +34,8 @@ const employeeNav = [
   { to: '/app/klok',            label: 'In-/Uitklokken',   icon: Clock },
   { to: '/app/uren',            label: 'Mijn uren',        icon: Timer },
   { to: '/app/verlof',          label: 'Verlof',           icon: Palmtree },
+  { to: '/app/ziek',            label: 'Ziekmelden',       icon: Thermometer },
+  { to: '/app/ruilen',          label: 'Diensten ruilen',  icon: ArrowLeftRight },
   { to: '/app/profiel',         label: 'Profiel',          icon: UserCircle },
 ]
 
@@ -52,6 +56,8 @@ const managerNav: NavItem[] = [
   { to: '/app/klok',            label: 'Klokregistratie',  icon: Clock },
   { to: '/app/uren',            label: 'Urenoverzicht',    icon: Timer },
   { to: '/app/verlof',          label: 'Verlofaanvragen',  icon: Palmtree },
+  { to: '/app/ziek',            label: 'Ziekmeldingen',    icon: Thermometer },
+  { to: '/app/ruilen',          label: 'Diensten ruilen',  icon: ArrowLeftRight },
   { to: '/app/instellingen',    label: 'Instellingen',     icon: Settings },
   { to: '/app/profiel',         label: 'Profiel',          icon: UserCircle },
 ]

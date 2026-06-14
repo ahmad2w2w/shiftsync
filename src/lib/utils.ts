@@ -75,6 +75,19 @@ export const shiftStatusLabel: Record<string, string> = {
   cancelled: 'Geannuleerd',
 }
 
+export const sickStatusLabel: Record<string, string> = {
+  active: 'Ziek gemeld',
+  resolved: 'Hersteld',
+}
+
+export const shiftSwapStatusLabel: Record<string, string> = {
+  offered: 'Aangeboden',
+  accepted: 'Geaccepteerd',
+  approved: 'Goedgekeurd',
+  rejected: 'Afgewezen',
+  cancelled: 'Geannuleerd',
+}
+
 export const DEFAULT_SHIFT_POSITIONS = [
   { value: 'Bediening', label: 'Bediening' },
   { value: 'Keuken', label: 'Keuken' },

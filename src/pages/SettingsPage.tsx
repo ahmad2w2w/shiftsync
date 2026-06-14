@@ -1,111 +1,254 @@
+import { useEffect, useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
-import {
-  Building2,
-  MapPin,
-  Navigation,
-  Users,
-  Clock,
-  Bell,
-  Lock,
-} from 'lucide-react'
+import { MapPin, Navigation, Trash2, Plus } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useOrganization } from '../context/OrganizationContext'
+import { useToast } from '../context/ToastContext'
+import {
+  getLocations,
+  createLocation,
+  deleteLocation,
+  updateOrganizationGps,
+} from '../services/locations'
+import type { Location } from '../types/database'
 import { PageHeader } from '../components/ui/PageHeader'
 import { Card, CardHeader } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Input } from '../components/ui/Input'
-
-const sections = [
-  {
-    icon: Building2,
-    title: 'Bedrijfsgegevens',
-    description: 'Naam, branche en contactgegevens van je organisatie.',
-    available: true,
-  },
-  {
-    icon: MapPin,
-    title: 'Locaties & vestigingen',
-    description: 'Beheer meerdere werkplekken voor roosters en klokregistratie.',
-    badge: 'Business',
-  },
-  {
-    icon: Navigation,
-    title: 'GPS-radius',
-    description: 'Stel de geofence in voor inklokken op locatie (standaard 100 meter).',
-    badge: 'Business',
-  },
-  {
-    icon: Users,
-    title: 'Teams & afdelingen',
-    description: 'Groepeer medewerkers voor filters en rapportages.',
-    badge: 'Pro',
-  },
-  {
-    icon: Clock,
-    title: 'Openingstijden',
-    description: 'Standaard openingstijden voor automatische dienstsuggesties.',
-    badge: 'Pro',
-  },
-  {
-    icon: Bell,
-    title: 'Notificaties',
-    description: 'E-mail en push voor verlof, rooster en ziekmeldingen.',
-    badge: 'Business',
-  },
-]
+import { Button } from '../components/ui/Button'
 
 export function SettingsPage() {
   const { isAdmin } = useAuth()
-  const { organization } = useOrganization()
+  const { organization, hasFeature, refreshOrganization } = useOrganization()
+  const toast = useToast()
+  const [locations, setLocations] = useState<Location[]>([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [gpsEnabled, setGpsEnabled] = useState(false)
+  const [gpsRadius, setGpsRadius] = useState('100')
+  const [showForm, setShowForm] = useState(false)
+  const [locForm, setLocForm] = useState({
+    name: '',
+    address: '',
+    latitude: '',
+    longitude: '',
+    radius_meters: '100',
+    is_primary: true,
+  })
+
+  const canUseGps = hasFeature('gps')
+
+  const load = async () => {
+    if (!organization) return
+    setLoading(true)
+    try {
+      const locs = await getLocations(organization.id)
+      setLocations(locs)
+      setGpsEnabled(organization.gps_enabled ?? false)
+      setGpsRadius(String(organization.gps_radius_meters ?? 100))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (organization) load()
+  }, [organization?.id])
 
   if (!isAdmin) return <Navigate to="/app/dashboard" replace />
 
+  const handleGpsSave = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!organization) return
+    setSaving(true)
+    try {
+      await updateOrganizationGps(organization.id, {
+        gps_enabled: gpsEnabled,
+        gps_radius_meters: parseInt(gpsRadius, 10) || 100,
+      })
+      await refreshOrganization()
+      toast.success('GPS-instellingen opgeslagen')
+    } catch {
+      toast.error('Opslaan mislukt')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleAddLocation = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!organization) return
+    setSaving(true)
+    try {
+      await createLocation({
+        organization_id: organization.id,
+        name: locForm.name,
+        address: locForm.address || null,
+        latitude: parseFloat(locForm.latitude),
+        longitude: parseFloat(locForm.longitude),
+        radius_meters: parseInt(locForm.radius_meters, 10) || 100,
+        is_primary: locForm.is_primary,
+      })
+      setLocForm({ name: '', address: '', latitude: '', longitude: '', radius_meters: '100', is_primary: locations.length === 0 })
+      setShowForm(false)
+      toast.success('Locatie toegevoegd')
+      load()
+    } catch {
+      toast.error('Locatie toevoegen mislukt')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDeleteLocation = async (id: string) => {
+    try {
+      await deleteLocation(id)
+      toast.success('Locatie verwijderd')
+      load()
+    } catch {
+      toast.error('Verwijderen mislukt')
+    }
+  }
+
+  const useCurrentPosition = () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocatie niet beschikbaar')
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocForm((f) => ({
+          ...f,
+          latitude: pos.coords.latitude.toFixed(6),
+          longitude: pos.coords.longitude.toFixed(6),
+        }))
+        toast.success('Huidige locatie ingevuld')
+      },
+      () => toast.error('Kon locatie niet ophalen')
+    )
+  }
+
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <PageHeader
-        title="Instellingen"
-        subtitle="Beheer bedrijfsgegevens, locaties en voorkeuren"
-      />
+      <PageHeader title="Instellingen" subtitle="Bedrijfsgegevens, locaties en GPS-inklokken" />
 
       <Card>
-        <CardHeader title="Bedrijfsgegevens" subtitle="Basisinformatie van je organisatie" />
+        <CardHeader title="Bedrijfsgegevens" />
         <div className="grid gap-4 sm:grid-cols-2">
           <Input label="Bedrijfsnaam" value={organization?.name ?? ''} readOnly />
-          <Input label="Organisatie-ID" value={organization?.id ?? ''} readOnly />
+          <Input label="Abonnement" value={organization?.plan?.toUpperCase() ?? ''} readOnly />
         </div>
-        <p className="mt-4 text-xs" style={{ color: 'var(--text-muted)' }}>
-          Uitgebreide bedrijfsinstellingen worden binnenkort toegevoegd.
-        </p>
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        {sections.slice(1).map(({ icon: Icon, title, description, badge }) => (
-          <Card key={title} className="relative opacity-90">
-            <div className="flex items-start gap-3">
-              <div
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-                style={{ background: 'var(--brand-muted)' }}
-              >
-                <Icon className="h-5 w-5" style={{ color: 'var(--brand-strong)' }} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h3>
-                  {badge && (
-                    <Badge variant="business">
-                      <Lock className="mr-1 inline h-3 w-3" />
-                      {badge}
-                    </Badge>
-                  )}
+      <Card>
+        <CardHeader
+          title="Locaties & vestigingen"
+          subtitle="Werkplekken voor GPS-controle bij inklokken"
+          action={
+            canUseGps ? (
+              <Button size="sm" variant="secondary" onClick={() => setShowForm(!showForm)}>
+                <Plus className="h-4 w-4" /> Locatie
+              </Button>
+            ) : (
+              <Badge variant="business">Business</Badge>
+            )
+          }
+        />
+
+        {!canUseGps ? (
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            Upgrade naar Business om locaties en GPS-inklokken in te stellen.
+          </p>
+        ) : loading ? (
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Laden…</p>
+        ) : (
+          <>
+            {showForm && (
+              <form onSubmit={handleAddLocation} className="mb-5 grid gap-4 rounded-xl p-4 sm:grid-cols-2" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
+                <Input label="Naam" value={locForm.name} onChange={(e) => setLocForm({ ...locForm, name: e.target.value })} required />
+                <Input label="Adres" value={locForm.address} onChange={(e) => setLocForm({ ...locForm, address: e.target.value })} />
+                <Input label="Latitude" value={locForm.latitude} onChange={(e) => setLocForm({ ...locForm, latitude: e.target.value })} required />
+                <Input label="Longitude" value={locForm.longitude} onChange={(e) => setLocForm({ ...locForm, longitude: e.target.value })} required />
+                <Input label="Radius (meter)" type="number" value={locForm.radius_meters} onChange={(e) => setLocForm({ ...locForm, radius_meters: e.target.value })} />
+                <div className="flex items-end sm:col-span-2">
+                  <Button type="button" variant="secondary" size="sm" onClick={useCurrentPosition}>
+                    <Navigation className="h-4 w-4" /> Huidige GPS-locatie
+                  </Button>
                 </div>
-                <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-                  {description}
-                </p>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+                <div className="flex gap-2 sm:col-span-2">
+                  <Button type="submit" loading={saving}>Opslaan</Button>
+                  <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>Annuleren</Button>
+                </div>
+              </form>
+            )}
+
+            {locations.length === 0 ? (
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                Nog geen locaties. Voeg je werkplek toe om GPS-inklokken te activeren.
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {locations.map((loc) => (
+                  <li
+                    key={loc.id}
+                    className="flex items-center justify-between gap-3 rounded-xl px-4 py-3"
+                    style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <MapPin className="h-4 w-4 shrink-0" style={{ color: 'var(--brand)' }} />
+                      <div className="min-w-0">
+                        <p className="font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+                          {loc.name}
+                          {loc.is_primary && (
+                            <Badge variant="scheduled" className="ml-2">Primair</Badge>
+                          )}
+                        </p>
+                        <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
+                          {loc.latitude}, {loc.longitude} · {loc.radius_meters}m radius
+                        </p>
+                      </div>
+                    </div>
+                    <Button size="sm" variant="danger" onClick={() => handleDeleteLocation(loc.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
+      </Card>
+
+      {canUseGps && (
+        <Card>
+          <CardHeader title="GPS-inklokken" subtitle="Medewerkers moeten binnen de radius zijn om in te klokken" />
+          <form onSubmit={handleGpsSave} className="space-y-4">
+            <label className="flex cursor-pointer items-center gap-3">
+              <input
+                type="checkbox"
+                checked={gpsEnabled}
+                onChange={(e) => setGpsEnabled(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                GPS-controle inschakelen
+              </span>
+            </label>
+            <Input
+              label="Standaard radius (meter)"
+              type="number"
+              min={25}
+              max={500}
+              value={gpsRadius}
+              onChange={(e) => setGpsRadius(e.target.value)}
+            />
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              Medewerkers zien: &quot;Je moet binnen {gpsRadius || 100} meter van de locatie zijn om in te klokken.&quot;
+            </p>
+            <Button type="submit" loading={saving}>Instellingen opslaan</Button>
+          </form>
+        </Card>
+      )}
     </div>
   )
 }

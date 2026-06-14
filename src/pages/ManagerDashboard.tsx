@@ -15,10 +15,14 @@ import {
   ChevronRight,
   FileText,
   FileSpreadsheet,
+  Thermometer,
+  ArrowLeftRight,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { getAllUsers } from '../services/users'
 import { getPendingLeaveCount } from '../services/leave'
+import { getActiveSickCount } from '../services/sick'
+import { getOpenSwapCount } from '../services/shiftSwaps'
 import { getAllClockRecords, sumHours } from '../services/clock'
 import { getShiftsForPeriod } from '../services/shifts'
 import { exportScheduleToPDF, exportScheduleToExcel } from '../services/export'
@@ -43,6 +47,8 @@ export function ManagerDashboard() {
   const [weekShifts, setWeekShifts] = useState<Shift[]>([])
   const [todayShifts, setTodayShifts] = useState<Shift[]>([])
   const [weekRecords, setWeekRecords] = useState<ClockRecord[]>([])
+  const [activeSick, setActiveSick] = useState(0)
+  const [openSwaps, setOpenSwaps] = useState(0)
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
 
@@ -56,14 +62,18 @@ export function ManagerDashboard() {
     Promise.all([
       getAllUsers(),
       getPendingLeaveCount(),
+      getActiveSickCount(),
+      getOpenSwapCount(),
       getAllClockRecords(50),
       getShiftsForPeriod(weekStart, weekEnd),
       getShiftsForPeriod(todayStart, todayEnd),
       getAllClockRecords(200),
     ])
-      .then(([users, pending, clocks, shifts, todayS, allRecords]) => {
+      .then(([users, pending, sick, swaps, clocks, shifts, todayS, allRecords]) => {
         setEmployees(users.filter((u) => u.role === 'employee'))
         setPendingLeave(pending)
+        setActiveSick(sick)
+        setOpenSwaps(swaps)
         setActiveClocks(clocks.filter((c) => !c.clock_out))
         setWeekShifts(shifts)
         setTodayShifts(todayS.filter((s) => s.user_id))
@@ -153,7 +163,12 @@ export function ManagerDashboard() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Medewerkers" value={employees.length} icon={Users} to="/app/medewerkers" accent="neutral" />
+        <StatCard label="Ziekmeldingen" value={activeSick} icon={Thermometer} to="/app/ziek" accent={activeSick > 0 ? 'warning' : 'neutral'} />
+        <StatCard label="Ruilverzoeken" value={openSwaps} icon={ArrowLeftRight} to="/app/ruilen" accent={openSwaps > 0 ? 'warning' : 'neutral'} />
         <StatCard label="Uren deze week" value={weekHours.toFixed(0)} icon={Timer} to="/app/uren" accent="brand" trend="Geklokte uren" />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Loonkosten (indicatie)" value={`€${laborCost.toFixed(0)}`} icon={Euro} accent="warning" trend="Deze week" />
         <StatCard label="Diensten deze week" value={weekShifts.filter((s) => s.user_id).length} icon={Calendar} to="/app/rooster" accent="neutral" />
       </div>

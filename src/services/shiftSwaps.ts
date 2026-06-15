@@ -67,9 +67,12 @@ export async function acceptShiftSwap(swapId: string, userId: string): Promise<S
     .eq('id', swapId)
     .eq('status', 'offered')
     .select(SWAP_SELECT)
-    .single()
+    .maybeSingle()
 
   if (error) throw error
+  if (!data) {
+    throw new Error('Deze dienst is niet meer beschikbaar of kon niet worden geaccepteerd.')
+  }
   return data as ShiftSwap
 }
 
@@ -119,8 +122,9 @@ export async function cancelShiftSwap(swapId: string): Promise<ShiftSwap> {
     .eq('id', swapId)
     .in('status', ['offered', 'accepted'])
     .select(SWAP_SELECT)
-    .single()
+    .maybeSingle()
 
   if (error) throw error
+  if (!data) throw new Error('Ruilverzoek kon niet worden geannuleerd.')
   return data as ShiftSwap
 }

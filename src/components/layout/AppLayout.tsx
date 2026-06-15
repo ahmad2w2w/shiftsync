@@ -287,7 +287,7 @@ export function AppLayout() {
   )
 
   return (
-    <div className="flex min-h-screen" style={{ background: 'var(--surface-page)' }}>
+    <div className="app-shell flex min-h-[100dvh] min-h-screen" style={{ background: 'var(--surface-page)' }}>
       <a href="#main-content" className="skip-link">Naar hoofdinhoud</a>
 
       {/* Desktop sidebar */}
@@ -350,8 +350,8 @@ export function AppLayout() {
         </div>
       </aside>
 
-      {/* Main column */}
-      <div className="flex min-w-0 flex-1 flex-col">
+      {/* Main column — flex column so bottom nav stays at viewport bottom on mobile */}
+      <div className="app-main-column flex min-h-0 min-w-0 flex-1 flex-col lg:min-h-screen">
         <header
           className="sticky top-0 z-30 flex items-center gap-3 px-4 py-3 backdrop-blur-md lg:px-6"
           style={{ background: 'var(--topbar-bg)', borderBottom: '1px solid var(--topbar-border)' }}
@@ -425,16 +425,16 @@ export function AppLayout() {
 
         <TrialBanner />
 
-        <main id="main-content" className={cn('print-page flex-1 p-4 lg:p-6', !isAdmin && 'pb-20 lg:pb-6')}>
+        <main id="main-content" className="min-h-0 flex-1 overflow-y-auto p-4 lg:p-6 lg:pb-6">
           <ErrorBoundary>
             <OrgConfigProvider>
               <Outlet />
             </OrgConfigProvider>
           </ErrorBoundary>
         </main>
-      </div>
 
-      {!isAdmin && <MobileBottomNav onOpenMenu={() => setMobileOpen(true)} />}
+        {!isAdmin && <MobileBottomNav onOpenMenu={() => setMobileOpen(true)} />}
+      </div>
 
       <CommandMenu open={paletteOpen} onClose={() => setPaletteOpen(false)} commands={commands} />
       {isAdmin && <AnnouncementModal open={announceOpen} onClose={() => setAnnounceOpen(false)} />}

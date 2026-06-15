@@ -20,7 +20,7 @@ interface MonthCalendarProps {
   hasMarker?: (dateStr: string) => boolean
   getDayMeta?: (dateStr: string) => DayMeta | undefined
   getDayShifts?: (dateStr: string) => Shift[]
-  size?: 'default' | 'large'
+  variant?: 'default' | 'compact'
 }
 
 export function MonthCalendar({
@@ -29,8 +29,101 @@ export function MonthCalendar({
   onSelectDate,
   getDayMeta,
   getDayShifts,
+  variant = 'default',
 }: MonthCalendarProps) {
   const grid = getCalendarGrid(monthAnchor)
+  const compact = variant === 'compact'
+
+  if (compact) {
+    return (
+      <div className="w-full">
+        <div className="mb-2 grid grid-cols-7 gap-1">
+          {WEEKDAYS.map((d) => (
+            <div
+              key={d}
+              className="py-1 text-center text-[10px] font-semibold uppercase tracking-wide"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              {d}
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-7 gap-x-1 gap-y-2">
+          {grid.map((day) => {
+            const dateStr = format(day, 'yyyy-MM-dd')
+            const inMonth = isSameMonth(day, monthAnchor)
+            const selected = selectedDate === dateStr
+            const today = isToday(day)
+            const dayShifts = getDayShifts?.(dateStr) ?? []
+            const hasShift = inMonth && dayShifts.length > 0
+            const shiftColor = hasShift ? getPositionColor(dayShifts[0].position) : null
+
+            return (
+              <button
+                key={dateStr}
+                type="button"
+                data-calendar-day={dateStr}
+                disabled={!inMonth || !onSelectDate}
+                onClick={(e) => {
+                  if (!inMonth || !onSelectDate) return
+                  onSelectDate(dateStr, e.currentTarget.getBoundingClientRect(), {
+                    x: e.clientX,
+                    y: e.clientY,
+                  })
+                }}
+                className={cn(
+                  'mx-auto flex w-full max-w-[44px] flex-col items-center gap-1',
+                  inMonth && onSelectDate && 'cursor-pointer',
+                  !inMonth && 'pointer-events-none opacity-25'
+                )}
+                aria-label={
+                  inMonth
+                    ? `${format(day, 'd MMMM', { locale: nl })}${hasShift ? `, ${dayShifts.length} dienst${dayShifts.length > 1 ? 'en' : ''}` : ', geen diensten'}`
+                    : undefined
+                }
+                aria-pressed={selected}
+              >
+                <span
+                  className={cn(
+                    'flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition-all',
+                    selected && 'scale-105 shadow-md shadow-brand-600/25',
+                    !selected && inMonth && onSelectDate && 'hover:scale-105'
+                  )}
+                  style={{
+                    background: selected
+                      ? '#2563EB'
+                      : today
+                        ? 'rgba(59,130,246,0.12)'
+                        : 'var(--surface-subtle)',
+                    color: selected ? '#fff' : today ? '#2563EB' : 'var(--text-primary)',
+                    border: selected
+                      ? '2px solid #2563EB'
+                      : today
+                        ? '2px solid rgba(59,130,246,0.35)'
+                        : '1px solid var(--border)',
+                  }}
+                >
+                  {format(day, 'd')}
+                </span>
+                <span
+                  className="flex h-1.5 w-1.5 items-center justify-center"
+                  aria-hidden="true"
+                >
+                  {hasShift && shiftColor && (
+                    <span
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ background: shiftColor.accent }}
+                    />
+                  )}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="w-full">
@@ -111,7 +204,6 @@ export function MonthCalendar({
                 )}
               </div>
 
-              {/* Shift preview bars */}
               {inMonth && dayShifts.length > 0 && (
                 <div className="mt-auto flex flex-col gap-1 pt-2">
                   {dayShifts.slice(0, 3).map((s) => {

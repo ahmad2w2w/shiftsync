@@ -69,6 +69,7 @@ export function SchedulePage() {
   const [editShift, setEditShift] = useState<Shift | null>(null)
   const [modalDate, setModalDate] = useState(todayStr())
   const [popover, setPopover] = useState<{ date: string; anchor: DOMRect; point: { x: number; y: number } } | null>(null)
+  const dayDetailRef = useRef<HTMLDivElement>(null)
 
   const monthRange = useMemo(() => getMonthRange(anchor), [anchor])
   const weekRange = useMemo(() => getWeekRange(anchor), [anchor])
@@ -318,7 +319,6 @@ export function SchedulePage() {
           <>
             <div className="rounded-2xl p-4 sm:p-5" style={{ background: 'var(--surface-card)', border: '1px solid var(--border)' }}>
               <MonthCalendar
-                size="large"
                 monthAnchor={anchor}
                 selectedDate={selectedDate}
                 onSelectDate={(d, rect, point) => {
@@ -387,17 +387,32 @@ export function SchedulePage() {
         {/* EMPLOYEE — month calendar + day detail */}
         {!isAdmin && (
           <>
-            <div className="rounded-2xl p-4 sm:p-5" style={{ background: 'var(--surface-card)', border: '1px solid var(--border)' }}>
+            <div className="rounded-2xl p-3 sm:p-5" style={{ background: 'var(--surface-card)', border: '1px solid var(--border)' }}>
               <MonthCalendar
-                size="large"
+                variant="compact"
                 monthAnchor={anchor}
                 selectedDate={selectedDate}
-                onSelectDate={(d) => { if (isSameMonth(new Date(d + 'T12:00:00'), anchor)) setSelectedDate(d) }}
-                getDayMeta={dayMeta}
+                onSelectDate={(d) => {
+                  if (!isSameMonth(new Date(d + 'T12:00:00'), anchor)) return
+                  setSelectedDate(d)
+                  requestAnimationFrame(() => {
+                    dayDetailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+                  })
+                }}
                 getDayShifts={getDayShifts}
               />
+              <p className="mt-3 flex items-center justify-center gap-3 text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
+                  Dienst gepland
+                </span>
+              </p>
             </div>
-            <div className="rounded-2xl p-5" style={{ background: 'var(--surface-card)', border: '1px solid var(--border)' }}>
+            <div
+              ref={dayDetailRef}
+              className="scroll-mt-4 rounded-2xl p-5"
+              style={{ background: 'var(--surface-card)', border: '1px solid var(--border)' }}
+            >
               <h2 className="mb-4 text-lg font-semibold capitalize" style={{ color: 'var(--text-primary)' }}>{formatDayHeader(selectedDate)}</h2>
               {assignedShifts.length === 0 ? (
                 <EmptyState

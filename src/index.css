@@ -430,6 +430,27 @@
   left: 0;
 }
 
+/* Mobile shell: full viewport height so bottom nav stays pinned */
+@media (max-width: 1023px) {
+  .app-shell {
+    height: 100dvh;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .app-main-column {
+    min-height: 0;
+  }
+}
+
+.mobile-bottom-nav {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  z-index: 30;
+}
+
 @media print {
   aside,
   header,

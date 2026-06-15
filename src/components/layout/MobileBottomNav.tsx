@@ -15,7 +15,7 @@ interface MobileBottomNavProps {
 export function MobileBottomNav({ onOpenMenu }: MobileBottomNavProps) {
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t pb-[env(safe-area-inset-bottom)] lg:hidden"
+      className="mobile-bottom-nav shrink-0 border-t lg:hidden"
       style={{ background: 'var(--surface-card)', borderColor: 'var(--border)' }}
       aria-label="Hoofdnavigatie"
     >

@@ -50,7 +50,21 @@ export async function getAllUsers(): Promise<User[]> {
 
 export async function updateUser(
   id: string,
-  updates: Partial<Pick<User, 'full_name' | 'hourly_rate' | 'role' | 'primary_position' | 'avatar_url'>>
+  updates: Partial<
+    Pick<
+      User,
+      | 'full_name'
+      | 'hourly_rate'
+      | 'role'
+      | 'primary_position'
+      | 'avatar_url'
+      | 'department_id'
+      | 'contract_hours_per_week'
+      | 'active'
+      | 'notify_email'
+      | 'notify_inapp'
+    >
+  >
 ): Promise<User> {
   const { data, error } = await supabase
     .from('users')
@@ -61,6 +75,11 @@ export async function updateUser(
 
   if (error) throw error
   return data as User
+}
+
+/** Deactivate/reactivate an employee (keeps history, hides from planning). */
+export async function setUserActive(id: string, active: boolean): Promise<User> {
+  return updateUser(id, { active })
 }
 
 export async function deleteUser(id: string): Promise<void> {
@@ -83,6 +102,16 @@ export async function createEmployeeAccount(params: {
     }
   )
   return result.message ?? 'Uitnodiging verstuurd'
+}
+
+/** Re-send the invitation email to an existing/pending employee. */
+export async function resendInvite(params: { email: string; full_name: string; hourly_rate?: number }): Promise<string> {
+  const result = await invokeEdgeFunction<{ success?: boolean; message?: string }>('invite-employee', {
+    email: params.email,
+    full_name: params.full_name,
+    hourly_rate: params.hourly_rate ?? 0,
+  })
+  return result.message ?? 'Uitnodiging opnieuw verstuurd'
 }
 
 export async function uploadAvatar(userId: string, file: File): Promise<string> {

@@ -20,7 +20,7 @@ import { Badge } from '../components/ui/Badge'
 import { Input } from '../components/ui/Input'
 import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
-import { DashboardSkeleton } from '../components/ui/Skeleton'
+import { FormSkeleton } from '../components/ui/Skeleton'
 import { LoadError } from '../components/ui/LoadError'
 import { OrgStructure } from '../components/settings/OrgStructure'
 
@@ -198,7 +198,7 @@ export function SettingsPage() {
         {loadError ? (
           <LoadError onRetry={load} />
         ) : loading ? (
-          <DashboardSkeleton />
+          <FormSkeleton />
         ) : (
           <>
             {showForm && (

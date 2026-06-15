@@ -3,10 +3,10 @@ import { Plus, Trash2 } from 'lucide-react'
 import type { ShiftTemplate } from '../../types/database'
 import { createShiftTemplate, deleteShiftTemplate } from '../../services/shiftTemplates'
 import { useOrganization } from '../../context/OrganizationContext'
+import { useOrgConfig } from '../../context/OrgConfigContext'
 import { useConfirm } from '../../context/ConfirmContext'
 import { useToast } from '../../context/ToastContext'
 import { DAY_NAMES } from '../../lib/plannerEngine'
-import { SHIFT_POSITIONS } from '../../lib/utils'
 import { Card, CardHeader } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
@@ -19,6 +19,7 @@ interface TemplateManagerProps {
 
 export function TemplateManager({ templates, onChange }: TemplateManagerProps) {
   const { organization } = useOrganization()
+  const { positionOptions } = useOrgConfig()
   const confirm = useConfirm()
   const toast = useToast()
   const [showForm, setShowForm] = useState(false)
@@ -84,7 +85,7 @@ export function TemplateManager({ templates, onChange }: TemplateManagerProps) {
       {showForm && (
         <form onSubmit={handleSubmit} className="mb-6 grid gap-3 pb-6 sm:grid-cols-3" style={{ borderBottom: '1px solid var(--border)' }}>
           <Select label="Weekdag" value={form.day_of_week} onChange={(e) => setForm({ ...form, day_of_week: e.target.value })} options={DAY_NAMES.map((d, i) => ({ value: String(i), label: d }))} />
-          <Select label="Functie" value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} options={[...SHIFT_POSITIONS]} />
+          <Select label="Functie" value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} options={positionOptions} />
           <Input label="Aantal" type="number" min={1} value={form.required_count} onChange={(e) => setForm({ ...form, required_count: e.target.value })} />
           <Input label="Start" type="time" value={form.start_time} onChange={(e) => setForm({ ...form, start_time: e.target.value })} />
           <Input label="Einde" type="time" value={form.end_time} onChange={(e) => setForm({ ...form, end_time: e.target.value })} />

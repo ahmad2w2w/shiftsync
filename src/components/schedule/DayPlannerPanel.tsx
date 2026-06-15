@@ -3,6 +3,7 @@ import { X, Clock, UserPlus, Trash2, Check, AlertTriangle } from 'lucide-react'
 import type { Shift, User, Availability, LeaveRequest } from '../../types/database'
 import { createShift, deleteShift } from '../../services/shifts'
 import { useOrganization } from '../../context/OrganizationContext'
+import { useOrgConfig } from '../../context/OrgConfigContext'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
 import {
@@ -19,7 +20,6 @@ import {
   DEFAULT_SHIFT_END,
   DEFAULT_SHIFT_START,
   DEFAULT_SHIFT_POSITION,
-  SHIFT_POSITIONS,
   getPositionColor,
   formatTime,
   cn,
@@ -115,6 +115,7 @@ export function DayPlannerPanel({
   popover,
 }: DayPlannerPanelProps) {
   const { organization } = useOrganization()
+  const { positionOptions } = useOrgConfig()
   const toast = useToast()
   const confirm = useConfirm()
   const [position, setPosition] = useState(DEFAULT_SHIFT_POSITION)
@@ -145,7 +146,7 @@ export function DayPlannerPanel({
     if (!selectedUserId) return []
     const entry = ranked.find((r) => r.user.id === selectedUserId)
     if (entry) return entry.warnings
-    return getWarnings(selectedUserId, slot, availability, leave, shifts, 160)
+    return getWarnings(selectedUserId, slot, availability, leave, shifts, 160, pool.find((e) => e.id === selectedUserId)?.contract_hours_per_week)
   }, [selectedUserId, ranked, slot, availability, leave, shifts])
 
   useEffect(() => {
@@ -312,7 +313,7 @@ export function DayPlannerPanel({
               label="Afdeling"
               value={position}
               onChange={(e) => setPosition(e.target.value)}
-              options={[...SHIFT_POSITIONS]}
+              options={positionOptions}
             />
             <div className="grid grid-cols-2 gap-2">
               <Input label="Start" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
@@ -381,7 +382,7 @@ export function DayPlannerPanel({
                   Overige medewerkers
                 </p>
                 {others.map((user) => {
-                  const warnings = getWarnings(user.id, slot, availability, leave, shifts, 160)
+                  const warnings = getWarnings(user.id, slot, availability, leave, shifts, 160, user.contract_hours_per_week)
                   const hours = monthlyHoursForUser(user.id, shifts)
                   return (
                     <EmployeeRow

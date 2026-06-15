@@ -27,7 +27,9 @@ const typeIcon: Record<NotificationType, typeof Bell> = {
   leave_rejected: Palmtree,
   leave_requested: Palmtree,
   swap_requested: ArrowLeftRight,
+  swap_accepted: ArrowLeftRight,
   sick_reported: Thermometer,
+  shift_claimed: Calendar,
 }
 
 const typeColor: Record<NotificationType, string> = {
@@ -39,7 +41,9 @@ const typeColor: Record<NotificationType, string> = {
   leave_rejected: 'var(--color-error)',
   leave_requested: 'var(--color-leave)',
   swap_requested: 'var(--brand-strong)',
+  swap_accepted: 'var(--color-success)',
   sick_reported: 'var(--color-warning)',
+  shift_claimed: 'var(--brand-strong)',
 }
 
 export function NotificationCenter() {

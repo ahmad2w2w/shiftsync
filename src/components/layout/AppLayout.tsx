@@ -31,6 +31,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useOrganization } from '../../context/OrganizationContext'
+import { OrgConfigProvider } from '../../context/OrgConfigContext'
 import { useTheme } from '../../context/ThemeContext'
 import { ErrorBoundary } from '../ErrorBoundary'
 import { MobileBottomNav } from './MobileBottomNav'
@@ -43,6 +44,8 @@ import { Kbd } from '../ui/Kbd'
 import { Popover } from '../ui/Popover'
 import { CommandMenu, type Command } from '../ui/CommandMenu'
 import { useAttention } from '../../lib/useAttention'
+import { getAllUsers } from '../../services/users'
+import type { User } from '../../types/database'
 import { cn } from '../../lib/utils'
 
 type BadgeKey = 'leave' | 'sick' | 'swaps'
@@ -88,6 +91,7 @@ const employeeGroups: NavGroup[] = [
     label: 'Planning',
     items: [
       { to: '/app/rooster', label: 'Mijn rooster', icon: Calendar },
+      { to: '/app/team', label: 'Team', icon: Users },
       { to: '/app/beschikbaarheid', label: 'Beschikbaarheid', icon: CalendarCheck },
     ],
   },
@@ -115,7 +119,14 @@ export function AppLayout() {
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COLLAPSE_KEY) === '1')
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [announceOpen, setAnnounceOpen] = useState(false)
+  const [searchUsers, setSearchUsers] = useState<User[]>([])
   const mobileNavRef = useRef<HTMLElement>(null)
+
+  // Load colleagues once for global search (managers see all, employees see team)
+  useEffect(() => {
+    if (!organization) return
+    getAllUsers().then(setSearchUsers).catch(() => {})
+  }, [organization])
 
   const groups = isAdmin ? managerGroups : employeeGroups
   const attention = useAttention(true)
@@ -198,9 +209,21 @@ export function AppLayout() {
       { id: 'act-theme', label: theme === 'dark' ? 'Licht thema' : 'Donker thema', group: 'Acties', icon: theme === 'dark' ? <Sun className="h-4 w-4" style={{ color: 'var(--text-muted)' }} /> : <Moon className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />, perform: toggleTheme },
       { id: 'act-signout', label: 'Uitloggen', group: 'Acties', icon: <LogOut className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />, perform: handleSignOut },
     )
-    return [...navCommands, ...actions]
+
+    // Searchable people — managers jump to the detail page, employees to the team roster
+    const peopleCommands: Command[] = searchUsers.map((u) => ({
+      id: `user-${u.id}`,
+      label: u.full_name,
+      hint: u.role === 'admin' ? 'Manager' : 'Medewerker',
+      group: 'Medewerkers',
+      keywords: u.email,
+      icon: <Users className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />,
+      perform: () => navigate(isAdmin ? `/app/medewerkers/${u.id}` : '/app/team'),
+    }))
+
+    return [...navCommands, ...actions, ...peopleCommands]
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groups, isAdmin, theme])
+  }, [groups, isAdmin, theme, searchUsers])
 
   const NavSection = ({ onNavigate, showLabels }: { onNavigate?: () => void; showLabels: boolean }) => (
     <div className="space-y-4">
@@ -404,7 +427,9 @@ export function AppLayout() {
 
         <main id="main-content" className={cn('print-page flex-1 p-4 lg:p-6', !isAdmin && 'pb-20 lg:pb-6')}>
           <ErrorBoundary>
-            <Outlet />
+            <OrgConfigProvider>
+              <Outlet />
+            </OrgConfigProvider>
           </ErrorBoundary>
         </main>
       </div>

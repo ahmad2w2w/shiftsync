@@ -120,9 +120,54 @@ const POSITION_COLOR_MAP: Record<string, { bg: string; text: string; border: str
 
 const DEFAULT_POSITION_COLOR = { bg: 'rgba(59,130,246,0.12)', text: '#2563EB', border: 'rgba(59,130,246,0.28)', accent: '#3B82F6' }
 
+/** Convert a hex color (#RRGGBB) into the tinted swatch shape used for positions. */
+export function colorObjFromHex(hex: string) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim())
+  if (!m) return DEFAULT_POSITION_COLOR
+  const int = parseInt(m[1], 16)
+  const r = (int >> 16) & 255
+  const g = (int >> 8) & 255
+  const b = int & 255
+  return {
+    bg: `rgba(${r},${g},${b},0.12)`,
+    text: hex,
+    border: `rgba(${r},${g},${b},0.28)`,
+    accent: hex,
+  }
+}
+
+/** Colors registered at runtime from the org's configured positions. */
+const runtimePositionColors: Record<string, { bg: string; text: string; border: string; accent: string }> = {}
+
+export function registerPositionColors(positions: { name: string; color: string }[]) {
+  for (const p of positions) {
+    if (p?.name && p?.color) runtimePositionColors[p.name] = colorObjFromHex(p.color)
+  }
+}
+
 export function getPositionColor(position: string) {
-  return POSITION_COLOR_MAP[position] ?? DEFAULT_POSITION_COLOR
+  return runtimePositionColors[position] ?? POSITION_COLOR_MAP[position] ?? DEFAULT_POSITION_COLOR
 }
 
 export const cn = (...classes: (string | false | undefined | null)[]) =>
   classes.filter(Boolean).join(' ')
+
+/** Count weekdays (Mon–Fri) between two ISO dates, inclusive. */
+export function countWeekdays(startISO: string, endISO: string): number {
+  const start = new Date(startISO + 'T12:00:00')
+  const end = new Date(endISO + 'T12:00:00')
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return 0
+  let count = 0
+  const d = new Date(start)
+  while (d <= end) {
+    const day = d.getDay()
+    if (day !== 0 && day !== 6) count++
+    d.setDate(d.getDate() + 1)
+  }
+  return count
+}
+
+/** Estimate leave hours from a date range (weekdays × hours/day). */
+export function estimateLeaveHours(startISO: string, endISO: string, hoursPerDay = 8): number {
+  return countWeekdays(startISO, endISO) * hoursPerDay
+}

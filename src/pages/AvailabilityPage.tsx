@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Check, X, CalendarCheck, Info } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Check, X, CalendarCheck, Info, Repeat, CalendarPlus } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useOrganization } from '../context/OrganizationContext'
 import {
@@ -8,13 +9,15 @@ import {
   setDayAvailable,
   removeDayAvailable,
   upsertAvailability,
+  applyWeeklyPattern,
 } from '../services/availability'
 import { useToast } from '../context/ToastContext'
 import type { Availability } from '../types/database'
 import { Card, CardHeader } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
+import { Input } from '../components/ui/Input'
 import { PageHeader } from '../components/ui/PageHeader'
-import { DashboardSkeleton } from '../components/ui/Skeleton'
+import { ListSkeleton, TableSkeleton } from '../components/ui/Skeleton'
 import { LoadError } from '../components/ui/LoadError'
 import { MonthNavigator } from '../components/ui/MonthNavigator'
 import { getMonthRange, addMonths, subMonths, isSameMonth } from '../lib/utils'
@@ -23,6 +26,8 @@ import { nl } from 'date-fns/locale'
 
 const DAY_NAMES = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo']
 const DAY_FULL  = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag']
+// Map Ma..Zo index → JS getDay() value (0=Sun)
+const DAY_INDEX_TO_JS = [1, 2, 3, 4, 5, 6, 0]
 
 function toDateStr(d: Date) {
   return format(d, 'yyyy-MM-dd')
@@ -39,9 +44,46 @@ export function AvailabilityPage() {
   const [loadError, setLoadError]       = useState(false)
   const [toggling, setToggling]         = useState<string | null>(null)
   const [expandedDate, setExpandedDate] = useState<string | null>(null)
+  const [patternDays, setPatternDays]   = useState<Set<number>>(new Set())
+  const [patternFrom, setPatternFrom]   = useState('')
+  const [patternUntil, setPatternUntil] = useState('')
+  const [applyingPattern, setApplyingPattern] = useState(false)
 
   const { start, end } = getMonthRange(monthAnchor)
   const userId = profile!.id
+
+  const togglePatternDay = (jsDay: number) =>
+    setPatternDays((prev) => {
+      const next = new Set(prev)
+      if (next.has(jsDay)) next.delete(jsDay)
+      else next.add(jsDay)
+      return next
+    })
+
+  const handleApplyPattern = async () => {
+    if (patternDays.size === 0) {
+      toast.info('Selecteer minstens één weekdag')
+      return
+    }
+    setApplyingPattern(true)
+    try {
+      const count = await applyWeeklyPattern({
+        userId,
+        organizationId: organization!.id,
+        periodStart: start,
+        periodEnd: end,
+        weekdays: [...patternDays],
+        from: patternFrom || null,
+        until: patternUntil || null,
+      })
+      toast.success(count > 0 ? `${count} dagen ingsteld als beschikbaar` : 'Geen toekomstige dagen in deze maand')
+      await load()
+    } catch {
+      toast.error('Patroon toepassen mislukt')
+    } finally {
+      setApplyingPattern(false)
+    }
+  }
 
   const load = async () => {
     setLoading(true)
@@ -137,7 +179,7 @@ export function AvailabilityPage() {
         {loadError ? (
           <LoadError onRetry={load} />
         ) : loading ? (
-          <DashboardSkeleton />
+          <TableSkeleton />
         ) : (
           <Card>
             <div className="overflow-x-auto">
@@ -208,22 +250,37 @@ export function AvailabilityPage() {
                 className="mt-4 rounded-xl p-3 text-sm"
                 style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
               >
-                <p className="mb-2 font-semibold" style={{ color: 'var(--text-primary)' }}>
-                  Beschikbaar op {format(new Date(expandedDate + 'T12:00:00'), 'd MMMM', { locale: nl })}
-                </p>
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    Beschikbaar op {format(new Date(expandedDate + 'T12:00:00'), 'd MMMM', { locale: nl })}
+                  </p>
+                  <Link to="/app/rooster" className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold" style={{ background: 'var(--brand-muted)', color: 'var(--brand-strong)' }}>
+                    <CalendarPlus className="h-3.5 w-3.5" /> Plan deze dag
+                  </Link>
+                </div>
                 <ul className="space-y-1">
                   {(countByDate.get(expandedDate) ?? []).map((p) => (
-                    <li key={p.id} style={{ color: 'var(--text-secondary)' }}>
+                    <li key={p.id} className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+                      <span className="h-1.5 w-1.5 rounded-full" style={{ background: '#10B981' }} />
                       {p.users?.full_name ?? 'Medewerker'}
+                      {(p.available_from || p.available_until) && (
+                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                          {p.available_from?.slice(0, 5) ?? '…'}–{p.available_until?.slice(0, 5) ?? '…'}
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ul>
               </div>
             )}
-            <p className="mt-4 flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-disabled)' }}>
-              <Info className="h-3.5 w-3.5 shrink-0" />
-              Tik op een getal om namen te zien. Plan diensten via Rooster.
-            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-4 text-xs" style={{ color: 'var(--text-muted)' }}>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-flex h-4 w-4 items-center justify-center rounded-md" style={{ background: 'rgba(16,185,129,0.12)', color: '#10B981' }}><Check className="h-3 w-3" /></span>
+                Aantal beschikbare medewerkers
+              </span>
+              <span className="flex items-center gap-1.5"><span style={{ color: 'var(--text-disabled)' }}>—</span> Niemand beschikbaar</span>
+              <span className="flex items-center gap-1.5"><Info className="h-3.5 w-3.5" /> Tik op een getal voor namen en tijden</span>
+            </div>
           </Card>
         )}
       </div>
@@ -261,10 +318,53 @@ export function AvailabilityPage() {
         </div>
       </div>
 
+      {/* Weekly recurring pattern */}
+      {!loading && !loadError && (
+        <Card>
+          <CardHeader
+            title="Vast weekpatroon"
+            subtitle="Geef in één keer aan op welke weekdagen je meestal kunt — dit vult de rest van deze maand."
+          />
+          <div className="flex flex-wrap items-center gap-2">
+            {DAY_NAMES.map((d, i) => {
+              const jsDay = DAY_INDEX_TO_JS[i]
+              const active = patternDays.has(jsDay)
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => togglePatternDay(jsDay)}
+                  className="press h-10 w-12 rounded-xl text-sm font-semibold transition-all"
+                  style={{
+                    background: active ? 'rgba(16,185,129,0.12)' : 'var(--surface-subtle)',
+                    border: active ? '1.5px solid rgba(16,185,129,0.4)' : '1.5px solid var(--border)',
+                    color: active ? '#10B981' : 'var(--text-secondary)',
+                  }}
+                  aria-pressed={active}
+                >
+                  {d}
+                </button>
+              )
+            })}
+          </div>
+          <div className="mt-4 flex flex-wrap items-end gap-3">
+            <div className="w-32">
+              <Input label="Van (optioneel)" type="time" value={patternFrom} onChange={(e) => setPatternFrom(e.target.value)} />
+            </div>
+            <div className="w-32">
+              <Input label="Tot (optioneel)" type="time" value={patternUntil} onChange={(e) => setPatternUntil(e.target.value)} />
+            </div>
+            <Button onClick={handleApplyPattern} loading={applyingPattern}>
+              <Repeat className="h-4 w-4" /> Toepassen op deze maand
+            </Button>
+          </div>
+        </Card>
+      )}
+
       {loadError ? (
         <LoadError onRetry={load} />
       ) : loading ? (
-        <DashboardSkeleton />
+        <ListSkeleton withHeader={false} />
       ) : (
         <Card>
           <CardHeader
@@ -399,21 +499,13 @@ function AvailWindowRow({
         {format(new Date(entry.date + 'T12:00:00'), 'EEE d MMM', { locale: nl })}
       </span>
       <div className="flex items-center gap-2">
-        <input
-          type="time"
-          value={from}
-          onChange={(e) => setFrom(e.target.value)}
-          className="rounded-lg px-2 py-1.5 text-sm"
-          style={{ background: 'var(--surface-card)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-        />
+        <div className="w-28">
+          <Input type="time" value={from} onChange={(e) => setFrom(e.target.value)} aria-label="Van" />
+        </div>
         <span style={{ color: 'var(--text-muted)' }}>–</span>
-        <input
-          type="time"
-          value={until}
-          onChange={(e) => setUntil(e.target.value)}
-          className="rounded-lg px-2 py-1.5 text-sm"
-          style={{ background: 'var(--surface-card)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-        />
+        <div className="w-28">
+          <Input type="time" value={until} onChange={(e) => setUntil(e.target.value)} aria-label="Tot" />
+        </div>
       </div>
       {!from && !until && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Hele dag</span>}
       {dirty && (

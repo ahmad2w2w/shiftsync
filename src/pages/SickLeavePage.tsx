@@ -4,20 +4,25 @@ import { useAuth } from '../context/AuthContext'
 import { useOrganization } from '../context/OrganizationContext'
 import { useToast } from '../context/ToastContext'
 import { getSickReports, reportSick, resolveSickReport } from '../services/sick'
+import { getShiftsForPeriod } from '../services/shifts'
+import { notifyAdmins } from '../services/notifications'
+import { exportSickToPDF, exportSickToExcel } from '../services/export'
 import type { SickReport } from '../types/database'
 import { Card, CardHeader } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
-import { Badge } from '../components/ui/Badge'
+import { StatusBadge } from '../components/ui/StatusBadge'
 import { PageHeader } from '../components/ui/PageHeader'
 import { EmptyState } from '../components/ui/EmptyState'
-import { DashboardSkeleton } from '../components/ui/Skeleton'
+import { ListSkeleton } from '../components/ui/Skeleton'
 import { LoadError } from '../components/ui/LoadError'
-import { formatDate, sickStatusLabel } from '../lib/utils'
+import { AlertTriangle, FileText, FileSpreadsheet } from 'lucide-react'
+import { formatDate, parseISO } from '../lib/utils'
+import { addDays } from 'date-fns'
 
 export function SickLeavePage() {
   const { profile, isAdmin } = useAuth()
-  const { organization } = useOrganization()
+  const { organization, hasFeature } = useOrganization()
   const toast = useToast()
   const [reports, setReports] = useState<SickReport[]>([])
   const [loading, setLoading] = useState(true)
@@ -25,6 +30,7 @@ export function SickLeavePage() {
   const [showForm, setShowForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [resolvingId, setResolvingId] = useState<string | null>(null)
+  const [conflicts, setConflicts] = useState<Record<string, number>>({})
   const [form, setForm] = useState({ start_date: new Date().toISOString().slice(0, 10), note: '' })
 
   const load = async () => {
@@ -33,6 +39,21 @@ export function SickLeavePage() {
     try {
       const data = await getSickReports(isAdmin ? undefined : profile!.id)
       setReports(data)
+      if (isAdmin) {
+        const active = data.filter((r) => r.status === 'active')
+        const entries = await Promise.all(
+          active.map(async (r) => {
+            try {
+              const start = parseISO(r.start_date)
+              const shifts = await getShiftsForPeriod(start, addDays(start, 14), { userId: r.user_id, publishedOnly: true })
+              return [r.id, shifts.length] as const
+            } catch {
+              return [r.id, 0] as const
+            }
+          })
+        )
+        setConflicts(Object.fromEntries(entries))
+      }
     } catch {
       setLoadError(true)
     } finally {
@@ -55,6 +76,12 @@ export function SickLeavePage() {
         start_date: form.start_date,
         note: form.note || null,
       })
+      await notifyAdmins(organization.id, {
+        type: 'sick_reported',
+        title: 'Nieuwe ziekmelding',
+        body: `${profile.full_name} heeft zich ziek gemeld vanaf ${formatDate(form.start_date)}.`,
+        link: '/app/ziek',
+      }).catch(() => {})
       toast.success('Ziekmelding verstuurd. Je manager is op de hoogte gebracht.')
       setForm({ start_date: new Date().toISOString().slice(0, 10), note: '' })
       setShowForm(false)
@@ -82,6 +109,22 @@ export function SickLeavePage() {
   const getName = (r: SickReport) => (r.user as { full_name?: string })?.full_name ?? '—'
   const activeCount = reports.filter((r) => r.status === 'active').length
 
+  const exportSick = (kind: 'pdf' | 'excel') => {
+    if (reports.length === 0) {
+      toast.info('Geen ziekmeldingen om te exporteren')
+      return
+    }
+    const orgName = organization?.name ?? 'ShiftSync'
+    const label = `alle meldingen ${new Date().getFullYear()}`
+    try {
+      if (kind === 'pdf') exportSickToPDF(reports, orgName, label)
+      else exportSickToExcel(reports, orgName, label)
+      toast.success(`Export naar ${kind === 'pdf' ? 'PDF' : 'Excel'} gestart`)
+    } catch {
+      toast.error('Export mislukt')
+    }
+  }
+
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeader
@@ -96,6 +139,15 @@ export function SickLeavePage() {
             <Button onClick={() => setShowForm(!showForm)} variant={showForm ? 'secondary' : 'primary'}>
               {showForm ? 'Annuleren' : 'Ziekmelden'}
             </Button>
+          ) : hasFeature('export') ? (
+            <div className="flex gap-2">
+              <Button variant="secondary" size="sm" onClick={() => exportSick('pdf')}>
+                <FileText className="h-4 w-4" /> PDF
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => exportSick('excel')}>
+                <FileSpreadsheet className="h-4 w-4" /> Excel
+              </Button>
+            </div>
           ) : undefined
         }
       />
@@ -125,7 +177,7 @@ export function SickLeavePage() {
       {loadError ? (
         <LoadError onRetry={load} />
       ) : loading ? (
-        <DashboardSkeleton />
+        <ListSkeleton withHeader={false} />
       ) : reports.length === 0 ? (
         <Card>
           <EmptyState
@@ -155,11 +207,15 @@ export function SickLeavePage() {
                   {r.note && (
                     <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>{r.note}</p>
                   )}
+                  {isAdmin && r.status === 'active' && (conflicts[r.id] ?? 0) > 0 && (
+                    <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium" style={{ background: 'rgba(245,158,11,0.12)', color: '#D97706' }}>
+                      <AlertTriangle className="h-3.5 w-3.5" />
+                      {conflicts[r.id]} ingeplande dienst{conflicts[r.id] > 1 ? 'en' : ''} de komende 2 weken — herplan deze
+                    </p>
+                  )}
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-2">
-                  <Badge variant={r.status === 'active' ? 'sick' : 'approved'}>
-                    {sickStatusLabel[r.status]}
-                  </Badge>
+                  <StatusBadge domain="sick" status={r.status} />
                   {isAdmin && r.status === 'active' && (
                     <Button size="sm" variant="secondary" loading={resolvingId === r.id} onClick={() => handleResolve(r)}>
                       <CheckCircle className="h-4 w-4" />

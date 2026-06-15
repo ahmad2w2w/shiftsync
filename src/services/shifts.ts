@@ -66,6 +66,36 @@ export async function deleteShift(id: string): Promise<void> {
   if (error) throw error
 }
 
+/** Open, unassigned published shifts in a period that an employee could claim. */
+export async function getOpenShifts(periodStart: Date, periodEnd: Date): Promise<Shift[]> {
+  const { data, error } = await supabase
+    .from('shifts')
+    .select('*')
+    .is('user_id', null)
+    .eq('published', true)
+    .gte('date', format(periodStart, 'yyyy-MM-dd'))
+    .lte('date', format(periodEnd, 'yyyy-MM-dd'))
+    .order('date')
+    .order('start_time')
+  if (error) throw error
+  return (data ?? []) as Shift[]
+}
+
+/** Claim an open shift for the given user. Guarded so it only succeeds when still open. */
+export async function claimOpenShift(shiftId: string, userId: string): Promise<Shift> {
+  const { data, error } = await supabase
+    .from('shifts')
+    .update({ user_id: userId })
+    .eq('id', shiftId)
+    .is('user_id', null)
+    .eq('published', true)
+    .select()
+    .maybeSingle()
+  if (error) throw error
+  if (!data) throw new Error('Deze dienst is al door iemand anders opgepakt.')
+  return data as Shift
+}
+
 export async function deleteShiftsForPeriod(
   periodStart: Date,
   periodEnd: Date,

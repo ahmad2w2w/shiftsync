@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase'
 import { updateShift } from './shifts'
+import { createNotification, notifyAdmins } from './notifications'
 import type { ShiftSwap, ShiftSwapStatus } from '../types/database'
 
 const SWAP_SELECT = '*, shift:shifts(id, date, start_time, end_time, position, user_id, published)'
@@ -53,7 +54,14 @@ export async function offerShiftSwap(
     .single()
 
   if (error) throw error
-  return data as ShiftSwap
+  const swap = data as ShiftSwap
+  await notifyAdmins(organizationId, {
+    type: 'swap_requested',
+    title: 'Dienst aangeboden voor ruil',
+    body: swap.shift ? `Dienst op ${swap.shift.date} (${swap.shift.start_time.slice(0, 5)}–${swap.shift.end_time.slice(0, 5)}) is aangeboden.` : 'Er is een dienst aangeboden voor ruil.',
+    link: '/app/ruilen',
+  }).catch(() => {})
+  return swap
 }
 
 export async function acceptShiftSwap(swapId: string, userId: string): Promise<ShiftSwap> {
@@ -73,7 +81,24 @@ export async function acceptShiftSwap(swapId: string, userId: string): Promise<S
   if (!data) {
     throw new Error('Deze dienst is niet meer beschikbaar of kon niet worden geaccepteerd.')
   }
-  return data as ShiftSwap
+  const swap = data as ShiftSwap
+  if (swap.offered_by && swap.offered_by !== userId) {
+    await createNotification({
+      organizationId: swap.organization_id,
+      userId: swap.offered_by,
+      type: 'swap_accepted',
+      title: 'Je aangeboden dienst is overgenomen',
+      body: swap.shift ? `Een collega neemt je dienst op ${swap.shift.date} over. Wacht op goedkeuring van je manager.` : 'Een collega heeft je aangeboden dienst overgenomen.',
+      link: '/app/ruilen',
+    }).catch(() => {})
+  }
+  await notifyAdmins(swap.organization_id, {
+    type: 'swap_requested',
+    title: 'Dienstruil wacht op goedkeuring',
+    body: 'Een medewerker heeft een aangeboden dienst overgenomen en wacht op goedkeuring.',
+    link: '/app/ruilen',
+  }).catch(() => {})
+  return swap
 }
 
 export async function approveShiftSwap(swapId: string): Promise<ShiftSwap> {

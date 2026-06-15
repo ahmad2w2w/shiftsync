@@ -51,7 +51,7 @@ export function SmartEmployeeSelect({
   const others = employees.filter((e) => !rankedIds.has(e.id))
 
   const selectedWarnings = value
-    ? getWarnings(value, slot, availability, leave, shifts, maxHours)
+    ? getWarnings(value, slot, availability, leave, shifts, maxHours, employees.find((e) => e.id === value)?.contract_hours_per_week)
     : []
 
   return (
@@ -133,7 +133,7 @@ export function SmartEmployeeSelect({
               Overige medewerkers
             </p>
             {others.map((user) => {
-              const warnings = getWarnings(user.id, slot, availability, leave, shifts, maxHours)
+              const warnings = getWarnings(user.id, slot, availability, leave, shifts, maxHours, user.contract_hours_per_week)
               const selected = value === user.id
               const unavailable = warnings.some((w) => w.type === 'unavailable')
               return (

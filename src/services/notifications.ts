@@ -127,6 +127,27 @@ export async function createNotificationsBulk(inputs: CreateNotificationInput[])
   if (error) throw error
 }
 
+/** Create a notification for every admin/manager in the organization. */
+export async function notifyAdmins(
+  organizationId: string,
+  payload: { type: AppNotificationType; title: string; body?: string; link?: string }
+): Promise<void> {
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, notify_inapp')
+    .eq('organization_id', organizationId)
+    .eq('role', 'admin')
+  if (error) {
+    console.warn('Kon managers niet ophalen voor notificatie:', error)
+    return
+  }
+  const admins = ((data ?? []) as { id: string; notify_inapp?: boolean }[]).filter((a) => a.notify_inapp !== false)
+  if (admins.length === 0) return
+  await createNotificationsBulk(
+    admins.map((a) => ({ organizationId, userId: a.id, ...payload }))
+  ).catch((e) => console.warn('Manager-notificatie mislukt:', e))
+}
+
 /** Subscribe to new notifications for a user. Returns an unsubscribe fn. */
 export function subscribeToNotifications(userId: string, onInsert: (n: AppNotification) => void): () => void {
   const channel = supabase

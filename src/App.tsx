@@ -24,6 +24,8 @@ import { ClockPage } from './pages/ClockPage'
 import { HoursPage } from './pages/HoursPage'
 import { LeavePage } from './pages/LeavePage'
 import { EmployeesPage } from './pages/EmployeesPage'
+import { EmployeeDetailPage } from './pages/EmployeeDetailPage'
+import { TeamPage } from './pages/TeamPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { BillingPage } from './pages/BillingPage'
 import { SettingsPage } from './pages/SettingsPage'
@@ -75,6 +77,8 @@ export default function App() {
                   <Route path="/app/uren" element={<HoursPage />} />
                   <Route path="/app/verlof" element={<LeavePage />} />
                   <Route path="/app/medewerkers" element={<EmployeesPage />} />
+                  <Route path="/app/medewerkers/:id" element={<EmployeeDetailPage />} />
+                  <Route path="/app/team" element={<TeamPage />} />
                   <Route path="/app/profiel" element={<ProfilePage />} />
                   <Route path="/app/abonnement" element={<BillingPage />} />
                   <Route path="/app/instellingen" element={<SettingsPage />} />

@@ -1,7 +1,7 @@
 import { Input } from '../ui/Input'
 import { Select } from '../ui/Select'
 import { Button } from '../ui/Button'
-import { SHIFT_POSITIONS } from '../../lib/utils'
+import { useOrgConfig } from '../../context/OrgConfigContext'
 
 export interface ShiftFormValues {
   start_time: string
@@ -31,6 +31,7 @@ export function ShiftEditorForm({
   employees,
   showEmployee,
 }: ShiftEditorFormProps) {
+  const { positionOptions } = useOrgConfig()
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       {showEmployee && employees && (
@@ -53,7 +54,7 @@ export function ShiftEditorForm({
           label="Functie"
           value={values.position}
           onChange={(e) => onChange({ position: e.target.value })}
-          options={[...SHIFT_POSITIONS]}
+          options={positionOptions}
         />
       </div>
       <div className="flex flex-wrap gap-2 sm:col-span-2">

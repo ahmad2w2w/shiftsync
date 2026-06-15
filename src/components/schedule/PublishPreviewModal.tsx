@@ -47,7 +47,8 @@ export function PublishPreviewModal({
         availability,
         leave,
         shifts,
-        maxHours
+        maxHours,
+        user?.contract_hours_per_week
       )
       if (warnings.length > 0) {
         items.push({ shift, name: user?.full_name ?? 'Medewerker', warnings })

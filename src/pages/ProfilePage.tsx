@@ -18,6 +18,23 @@ export function ProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [notifyInapp, setNotifyInapp] = useState(profile?.notify_inapp !== false)
+  const [notifyEmail, setNotifyEmail] = useState(profile?.notify_email !== false)
+  const [savingPrefs, setSavingPrefs] = useState(false)
+
+  const savePrefs = async (next: { notify_inapp?: boolean; notify_email?: boolean }) => {
+    if (!profile) return
+    setSavingPrefs(true)
+    try {
+      await updateUser(profile.id, next)
+      await refreshProfile()
+      toast.success('Voorkeuren opgeslagen')
+    } catch {
+      toast.error('Opslaan mislukt')
+    } finally {
+      setSavingPrefs(false)
+    }
+  }
 
   const handleSave = async (e: FormEvent) => {
     e.preventDefault()
@@ -156,6 +173,38 @@ export function ProfilePage() {
           />
           <Button type="submit" loading={saving}>Opslaan</Button>
         </form>
+      </Card>
+
+      <Card>
+        <CardHeader title="Notificatievoorkeuren" subtitle="Bepaal hoe je op de hoogte wordt gehouden" />
+        <div className="space-y-1">
+          <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl px-1 py-2.5">
+            <span>
+              <span className="block text-sm font-medium" style={{ color: 'var(--text-primary)' }}>In-app meldingen</span>
+              <span className="block text-xs" style={{ color: 'var(--text-muted)' }}>Toon meldingen in het belletje</span>
+            </span>
+            <input
+              type="checkbox"
+              className="h-5 w-5 accent-brand-500"
+              checked={notifyInapp}
+              disabled={savingPrefs}
+              onChange={(e) => { setNotifyInapp(e.target.checked); savePrefs({ notify_inapp: e.target.checked }) }}
+            />
+          </label>
+          <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl px-1 py-2.5">
+            <span>
+              <span className="block text-sm font-medium" style={{ color: 'var(--text-primary)' }}>E-mailmeldingen</span>
+              <span className="block text-xs" style={{ color: 'var(--text-muted)' }}>Ontvang belangrijke updates per e-mail</span>
+            </span>
+            <input
+              type="checkbox"
+              className="h-5 w-5 accent-brand-500"
+              checked={notifyEmail}
+              disabled={savingPrefs}
+              onChange={(e) => { setNotifyEmail(e.target.checked); savePrefs({ notify_email: e.target.checked }) }}
+            />
+          </label>
+        </div>
       </Card>
 
       <Card>

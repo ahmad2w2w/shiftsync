@@ -54,6 +54,10 @@ export interface User {
   primary_position?: string
   department_id?: string | null
   avatar_url?: string | null
+  contract_hours_per_week?: number | null
+  active?: boolean
+  notify_email?: boolean
+  notify_inapp?: boolean
   created_at: string
 }
 
@@ -83,7 +87,9 @@ export type NotificationType =
   | 'leave_rejected'
   | 'leave_requested'
   | 'swap_requested'
+  | 'swap_accepted'
   | 'sick_reported'
+  | 'shift_claimed'
   | 'announcement'
 
 export interface AppNotification {
@@ -204,8 +210,11 @@ export interface LeaveRequest {
   reason: string
   status: LeaveStatus
   manager_note: string | null
+  leave_type_id?: string | null
+  hours?: number | null
   created_at: string
   user?: User
+  leave_type?: LeaveType
 }
 
 export interface Location {

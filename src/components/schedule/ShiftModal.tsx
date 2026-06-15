@@ -4,13 +4,14 @@ import type { Shift, User, Availability, LeaveRequest } from '../../types/databa
 import { createShift, updateShift } from '../../services/shifts'
 import { createShiftTemplate } from '../../services/shiftTemplates'
 import { useOrganization } from '../../context/OrganizationContext'
+import { useOrgConfig } from '../../context/OrgConfigContext'
 import { useToast } from '../../context/ToastContext'
 import { Modal } from '../ui/Modal'
 import { Input } from '../ui/Input'
 import { Select } from '../ui/Select'
 import { Button } from '../ui/Button'
 import { SmartEmployeeSelect } from './SmartEmployeeSelect'
-import { DEFAULT_SHIFT_END, DEFAULT_SHIFT_START, DEFAULT_SHIFT_POSITION, SHIFT_POSITIONS } from '../../lib/utils'
+import { DEFAULT_SHIFT_END, DEFAULT_SHIFT_START, DEFAULT_SHIFT_POSITION } from '../../lib/utils'
 
 export interface ShiftModalValues {
   date: string
@@ -62,6 +63,7 @@ export function ShiftModal({
   editShift,
 }: ShiftModalProps) {
   const { organization } = useOrganization()
+  const { positionOptions } = useOrgConfig()
   const toast = useToast()
   const [form, setForm] = useState<ShiftModalValues>(defaultValues(initialDate, initialUserId))
   const [saving, setSaving] = useState(false)
@@ -81,10 +83,14 @@ export function ShiftModal({
         note: '',
       })
     } else {
-      setForm(defaultValues(initialDate, initialUserId))
+      const d = defaultValues(initialDate, initialUserId)
+      if (positionOptions.length && !positionOptions.some((o) => o.value === d.position)) {
+        d.position = positionOptions[0].value
+      }
+      setForm(d)
     }
     setSaveTemplate(false)
-  }, [open, initialDate, initialUserId, editShift])
+  }, [open, initialDate, initialUserId, editShift, positionOptions])
 
   const patch = (p: Partial<ShiftModalValues>) => setForm((f) => ({ ...f, ...p }))
 
@@ -151,10 +157,10 @@ export function ShiftModal({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Select
-            label="Afdeling / team"
+            label="Functie"
             value={form.position}
             onChange={(e) => patch({ position: e.target.value })}
-            options={[...SHIFT_POSITIONS]}
+            options={positionOptions}
           />
           <Input label="Datum" type="date" value={form.date} onChange={(e) => patch({ date: e.target.value })} />
           <Input label="Starttijd" type="time" value={form.start_time} onChange={(e) => patch({ start_time: e.target.value })} />

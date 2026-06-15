@@ -4,10 +4,11 @@ import type { Shift, User, Availability, LeaveRequest } from '../../types/databa
 import { rankEmployeesForSlot } from '../../lib/plannerEngine'
 import { createShift } from '../../services/shifts'
 import { useOrganization } from '../../context/OrganizationContext'
+import { useOrgConfig } from '../../context/OrgConfigContext'
 import { useToast } from '../../context/ToastContext'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
-import { DEFAULT_SHIFT_END, DEFAULT_SHIFT_START, SHIFT_POSITIONS } from '../../lib/utils'
+import { DEFAULT_SHIFT_END, DEFAULT_SHIFT_START } from '../../lib/utils'
 
 interface AIPlannerPanelProps {
   date: string
@@ -39,6 +40,7 @@ export function AIPlannerPanel({
   maxHours = 160,
   onSaved,
 }: AIPlannerPanelProps) {
+  const { positionOptions } = useOrgConfig()
   const { organization } = useOrganization()
   const toast = useToast()
   const [needs, setNeeds] = useState<NeedRow[]>([
@@ -160,7 +162,7 @@ export function AIPlannerPanel({
               className="rounded-xl border px-3 py-2 text-sm"
               style={{ background: 'var(--surface-input)', borderColor: 'var(--border-input)', color: 'var(--text-primary)' }}
             >
-              {SHIFT_POSITIONS.map((p) => (
+              {positionOptions.map((p) => (
                 <option key={p.value} value={p.value}>{p.label}</option>
               ))}
             </select>

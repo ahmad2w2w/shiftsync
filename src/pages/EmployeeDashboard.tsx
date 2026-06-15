@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar, Clock, Palmtree, ChevronRight, CalendarCheck, ArrowRight, CalendarDays } from 'lucide-react'
 import { differenceInCalendarDays, parseISO } from 'date-fns'
@@ -37,24 +37,32 @@ export function EmployeeDashboard() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     if (!profile) return
+    setLoading(true)
+    setLoadError(false)
     const { start, end } = getWeekRange(new Date())
-    Promise.all([
-      getShiftsForWeek(start, end, { userId: profile.id, publishedOnly: true }),
-      getActiveClock(profile.id),
-      getClockRecords(profile.id, 'week', new Date()),
-      getLeaveRequests(profile.id),
-    ])
-      .then(([s, clock, records, l]) => {
-        setShifts(s)
-        setActiveClock(clock)
-        setWeekHours(sumHours(records))
-        setLeave(l.filter((r) => r.status === 'pending').slice(0, 3))
-      })
-      .catch(() => setLoadError(true))
-      .finally(() => setLoading(false))
+    try {
+      const [s, clock, records, l] = await Promise.all([
+        getShiftsForWeek(start, end, { userId: profile.id, publishedOnly: true }),
+        getActiveClock(profile.id),
+        getClockRecords(profile.id, 'week', new Date()),
+        getLeaveRequests(profile.id),
+      ])
+      setShifts(s)
+      setActiveClock(clock)
+      setWeekHours(sumHours(records))
+      setLeave(l.filter((r) => r.status === 'pending').slice(0, 3))
+    } catch {
+      setLoadError(true)
+    } finally {
+      setLoading(false)
+    }
   }, [profile])
+
+  useEffect(() => {
+    load()
+  }, [load])
 
   const firstName = profile?.full_name?.split(' ')[0] ?? 'daar'
 
@@ -67,7 +75,7 @@ export function EmployeeDashboard() {
   const scheduledHours = useMemo(() => shifts.reduce((sum, s) => sum + shiftHours(s.start_time, s.end_time), 0), [shifts])
 
   if (loading) return <DashboardSkeleton />
-  if (loadError) return <LoadError onRetry={() => window.location.reload()} />
+  if (loadError) return <LoadError onRetry={load} />
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -77,23 +85,23 @@ export function EmployeeDashboard() {
         {/* Next shift hero */}
         <div className="lg:col-span-2">
           {nextShift ? (
-            <div className="relative overflow-hidden rounded-2xl p-5 text-white" style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%)', boxShadow: 'var(--shadow-3)' }}>
-              <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }} />
+            <div className="relative h-full overflow-hidden rounded-2xl p-5" style={{ background: 'var(--surface-card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-1)' }}>
+              <div className="absolute left-0 top-0 h-full w-1" style={{ background: 'var(--brand-strong)' }} />
               <div className="relative">
-                <p className="text-xs font-semibold uppercase tracking-wider text-white/70">Volgende dienst</p>
-                <p className="mt-1 text-2xl font-bold">{relativeDay(nextShift.date)}</p>
+                <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--brand-strong)' }}>Volgende dienst</p>
+                <p className="mt-1 text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{relativeDay(nextShift.date)}</p>
                 <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
-                  <span className="flex items-center gap-2 text-sm">
-                    <Clock className="h-4 w-4 text-white/70" />
+                  <span className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    <Clock className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />
                     <span className="font-semibold tabular-nums">{formatTime(nextShift.start_time)} – {formatTime(nextShift.end_time)}</span>
                   </span>
-                  <span className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-white/70" />
-                    <span className="capitalize">{formatDate(nextShift.date, 'EEEE d MMMM')}</span>
+                  <span className="flex items-center gap-2 text-sm capitalize" style={{ color: 'var(--text-secondary)' }}>
+                    <Calendar className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />
+                    {formatDate(nextShift.date, 'EEEE d MMMM')}
                   </span>
-                  <span className="rounded-full px-2.5 py-0.5 text-xs font-semibold" style={{ background: 'rgba(255,255,255,0.18)' }}>{nextShift.position}</span>
+                  <span className="rounded-full px-2.5 py-0.5 text-xs font-semibold" style={{ background: 'var(--brand-muted)', color: 'var(--brand-strong)' }}>{nextShift.position}</span>
                 </div>
-                <Link to="/app/rooster" className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur-sm transition-colors hover:bg-white/25">
+                <Link to="/app/rooster" className="mt-5 inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold transition-colors" style={{ background: 'var(--brand-muted)', color: 'var(--brand-strong)' }}>
                   Volledig rooster <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>

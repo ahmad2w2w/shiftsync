@@ -2,9 +2,9 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
 import { format } from 'date-fns'
-import { formatDate, formatTime } from '../lib/utils'
+import { formatDate, formatTime, leaveStatusLabel, sickStatusLabel } from '../lib/utils'
 import { shiftHours } from '../lib/plannerEngine'
-import type { Shift, ClockRecord, User, ShiftStatus } from '../types/database'
+import type { Shift, ClockRecord, User, ShiftStatus, LeaveRequest, SickReport } from '../types/database'
 
 export interface ScheduleExportOptions {
   shifts: Shift[]
@@ -302,6 +302,109 @@ export function exportScheduleToExcel(opts: ScheduleExportOptions): void {
   XLSX.utils.book_append_sheet(wb, summarySheet, 'Per medewerker')
   XLSX.utils.book_append_sheet(wb, overviewSheet, 'Overzicht')
   XLSX.writeFile(wb, `rooster-${safeFileLabel(opts.periodLabel)}.xlsx`)
+}
+
+// ─── LEAVE & SICK EXPORTS ───────────────────────────────────
+
+const LEAVE_HEADERS = ['Medewerker', 'Startdatum', 'Einddatum', 'Type', 'Uren', 'Status', 'Reden', 'Opmerking'] as const
+
+function buildLeaveRows(requests: LeaveRequest[]) {
+  return [...requests]
+    .sort((a, b) => b.start_date.localeCompare(a.start_date))
+    .map((r) => [
+      r.user?.full_name ?? '—',
+      formatDate(r.start_date, 'yyyy-MM-dd'),
+      formatDate(r.end_date, 'yyyy-MM-dd'),
+      r.leave_type?.name ?? '—',
+      r.hours != null ? Number(r.hours).toFixed(1) : '—',
+      leaveStatusLabel[r.status] ?? r.status,
+      r.reason ?? '—',
+      r.manager_note ?? '',
+    ])
+}
+
+const SICK_HEADERS = ['Medewerker', 'Startdatum', 'Einddatum', 'Status', 'Toelichting'] as const
+
+function buildSickRows(reports: SickReport[]) {
+  return [...reports]
+    .sort((a, b) => b.start_date.localeCompare(a.start_date))
+    .map((r) => [
+      r.user?.full_name ?? '—',
+      formatDate(r.start_date, 'yyyy-MM-dd'),
+      r.end_date ? formatDate(r.end_date, 'yyyy-MM-dd') : '—',
+      sickStatusLabel[r.status] ?? r.status,
+      r.note ?? '',
+    ])
+}
+
+export function exportLeaveToExcel(requests: LeaveRequest[], organizationName: string, periodLabel: string): void {
+  const ws = XLSX.utils.aoa_to_sheet([
+    ['ShiftSync — Verlof export'],
+    [`Organisatie: ${organizationName}  |  ${periodLabel}`],
+    [],
+    [...LEAVE_HEADERS],
+    ...buildLeaveRows(requests),
+  ])
+  ws['!cols'] = [{ wch: 22 }, { wch: 12 }, { wch: 12 }, { wch: 16 }, { wch: 8 }, { wch: 16 }, { wch: 26 }, { wch: 26 }]
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Verlof')
+  XLSX.writeFile(wb, `verlof-${safeFileLabel(periodLabel)}.xlsx`)
+}
+
+export function exportLeaveToPDF(requests: LeaveRequest[], organizationName: string, periodLabel: string): void {
+  const doc = new jsPDF()
+  doc.setFontSize(16)
+  doc.setFont('helvetica', 'bold')
+  doc.text('ShiftSync — Verlofoverzicht', 14, 18)
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(100)
+  doc.text(`${organizationName} · ${periodLabel}`, 14, 25)
+  doc.setTextColor(0)
+  autoTable(doc, {
+    head: [LEAVE_HEADERS as unknown as string[]],
+    body: buildLeaveRows(requests),
+    startY: 31,
+    headStyles: { fillColor: [139, 92, 246], textColor: 255, fontSize: 8 },
+    alternateRowStyles: { fillColor: [248, 250, 252] },
+    styles: { fontSize: 8 },
+  })
+  doc.save(`verlof-${safeFileLabel(periodLabel)}.pdf`)
+}
+
+export function exportSickToExcel(reports: SickReport[], organizationName: string, periodLabel: string): void {
+  const ws = XLSX.utils.aoa_to_sheet([
+    ['ShiftSync — Ziekteverzuim export'],
+    [`Organisatie: ${organizationName}  |  ${periodLabel}`],
+    [],
+    [...SICK_HEADERS],
+    ...buildSickRows(reports),
+  ])
+  ws['!cols'] = [{ wch: 22 }, { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 30 }]
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Ziekte')
+  XLSX.writeFile(wb, `ziekte-${safeFileLabel(periodLabel)}.xlsx`)
+}
+
+export function exportSickToPDF(reports: SickReport[], organizationName: string, periodLabel: string): void {
+  const doc = new jsPDF()
+  doc.setFontSize(16)
+  doc.setFont('helvetica', 'bold')
+  doc.text('ShiftSync — Ziekteverzuim', 14, 18)
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(100)
+  doc.text(`${organizationName} · ${periodLabel}`, 14, 25)
+  doc.setTextColor(0)
+  autoTable(doc, {
+    head: [SICK_HEADERS as unknown as string[]],
+    body: buildSickRows(reports),
+    startY: 31,
+    headStyles: { fillColor: [217, 119, 6], textColor: 255, fontSize: 8 },
+    alternateRowStyles: { fillColor: [248, 250, 252] },
+    styles: { fontSize: 8 },
+  })
+  doc.save(`ziekte-${safeFileLabel(periodLabel)}.pdf`)
 }
 
 export function exportHoursToExcel(

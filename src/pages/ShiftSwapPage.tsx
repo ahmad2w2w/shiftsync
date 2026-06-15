@@ -18,12 +18,12 @@ import {
 import type { Shift, ShiftSwap, User } from '../types/database'
 import { Card, CardHeader } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
-import { Badge } from '../components/ui/Badge'
 import { PageHeader } from '../components/ui/PageHeader'
 import { EmptyState } from '../components/ui/EmptyState'
-import { DashboardSkeleton } from '../components/ui/Skeleton'
+import { ListSkeleton } from '../components/ui/Skeleton'
 import { LoadError } from '../components/ui/LoadError'
-import { formatDate, formatTime, shiftSwapStatusLabel, cn } from '../lib/utils'
+import { StatusBadge } from '../components/ui/StatusBadge'
+import { formatDate, formatTime, cn } from '../lib/utils'
 
 type Tab = 'mine' | 'market' | 'pending' | 'history'
 
@@ -124,9 +124,7 @@ export function ShiftSwapPage() {
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">
-            <Badge variant={swap.status === 'approved' ? 'approved' : swap.status === 'rejected' ? 'rejected' : 'pending'}>
-              {shiftSwapStatusLabel[swap.status]}
-            </Badge>
+            <StatusBadge domain="swap" status={swap.status} />
             {actions}
           </div>
         </div>
@@ -144,7 +142,7 @@ export function ShiftSwapPage() {
         { id: 'market', label: 'Marktplaats', count: marketplace.length },
       ]
 
-  if (loading) return <DashboardSkeleton />
+  if (loading) return <ListSkeleton />
   if (loadError) return <LoadError onRetry={load} />
 
   return (

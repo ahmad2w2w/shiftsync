@@ -20,7 +20,7 @@ import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
 import { PageHeader } from '../components/ui/PageHeader'
 import { EmptyState } from '../components/ui/EmptyState'
-import { DashboardSkeleton } from '../components/ui/Skeleton'
+import { ListSkeleton } from '../components/ui/Skeleton'
 import { Table, TableHead, TableHeaderCell, TableBody, TableRow, TableCell } from '../components/ui/Table'
 import { formatDateTime } from '../lib/utils'
 import { InstallBanner } from '../components/InstallBanner'
@@ -134,7 +134,7 @@ export function ClockPage() {
     }
   }
 
-  if (loading) return <DashboardSkeleton />
+  if (loading) return <ListSkeleton />
 
   if (isAdmin) {
     return (

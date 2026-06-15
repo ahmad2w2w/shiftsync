@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar, Clock, Palmtree, ChevronRight, CalendarCheck } from 'lucide-react'
+import { Calendar, Clock, Palmtree, ChevronRight, CalendarCheck, ArrowRight, CalendarDays } from 'lucide-react'
+import { differenceInCalendarDays, parseISO } from 'date-fns'
 import { useAuth } from '../context/AuthContext'
 import { useOrganization } from '../context/OrganizationContext'
 import { getShiftsForWeek } from '../services/shifts'
@@ -14,7 +15,17 @@ import { PageHeader } from '../components/ui/PageHeader'
 import { EmptyState } from '../components/ui/EmptyState'
 import { DashboardSkeleton } from '../components/ui/Skeleton'
 import { LoadError } from '../components/ui/LoadError'
-import { getWeekRange, formatDate, formatTime, leaveStatusLabel } from '../lib/utils'
+import { ProgressRing } from '../components/charts/ProgressRing'
+import { shiftHours } from '../lib/plannerEngine'
+import { getWeekRange, formatDate, formatTime, leaveStatusLabel, getPositionColor } from '../lib/utils'
+
+function relativeDay(date: string) {
+  const diff = differenceInCalendarDays(parseISO(date), new Date())
+  if (diff === 0) return 'Vandaag'
+  if (diff === 1) return 'Morgen'
+  if (diff > 1 && diff < 7) return `Over ${diff} dagen`
+  return formatDate(date, 'EEEE d MMM')
+}
 
 export function EmployeeDashboard() {
   const { profile } = useAuth()
@@ -47,174 +58,166 @@ export function EmployeeDashboard() {
 
   const firstName = profile?.full_name?.split(' ')[0] ?? 'daar'
 
-  const quickActions = [
-    { to: '/app/klok', label: 'In-/Uitklokken', icon: Clock, desc: activeClock ? 'Je bent ingeklokt' : 'Start je dienst', accent: activeClock ? 'success' as const : 'brand' as const },
-    { to: '/app/rooster', label: 'Mijn rooster', icon: Calendar, desc: `${shifts.length} dienst${shifts.length !== 1 ? 'en' : ''} deze week`, accent: 'brand' as const },
-    { to: '/app/beschikbaarheid', label: 'Beschikbaarheid', icon: CalendarCheck, desc: 'Geef door wanneer je kunt', accent: 'neutral' as const },
-    { to: '/app/verlof', label: 'Verlof', icon: Palmtree, desc: 'Aanvragen of status bekijken', accent: 'leave' as const },
-  ]
-
-  const accentBg = {
-    brand: 'rgba(59,130,246,0.12)',
-    success: 'rgba(16,185,129,0.12)',
-    leave: 'rgba(139,92,246,0.12)',
-    neutral: 'var(--surface-subtle)',
-  }
-  const accentColor = {
-    brand: '#3B82F6',
-    success: '#10B981',
-    leave: '#8B5CF6',
-    neutral: 'var(--text-muted)',
-  }
+  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), [])
+  const upcoming = useMemo(
+    () => [...shifts].filter((s) => s.date >= todayStr).sort((a, b) => (a.date + a.start_time).localeCompare(b.date + b.start_time)),
+    [shifts, todayStr]
+  )
+  const nextShift = upcoming[0]
+  const scheduledHours = useMemo(() => shifts.reduce((sum, s) => sum + shiftHours(s.start_time, s.end_time), 0), [shifts])
 
   if (loading) return <DashboardSkeleton />
-  if (loadError) {
-    return <LoadError onRetry={() => window.location.reload()} />
-  }
+  if (loadError) return <LoadError onRetry={() => window.location.reload()} />
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <PageHeader
-        title={`Hoi, ${firstName}!`}
-        subtitle={organization?.name}
-      />
+    <div className="mx-auto max-w-5xl space-y-6">
+      <PageHeader title={`Hoi, ${firstName}!`} subtitle={organization?.name} />
 
-      {/* Active clock banner — prominent on mobile */}
-      {activeClock ? (
-        <Link to="/app/klok">
-          <div
-            className="flex items-center justify-between rounded-2xl px-5 py-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
-            style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)' }}
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: 'rgba(16,185,129,0.15)' }}>
-                <Clock className="h-5 w-5" style={{ color: '#10B981' }} />
-              </div>
-              <div>
-                <p className="font-semibold" style={{ color: '#059669' }}>Je bent ingeklokt</p>
-                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Vergeet niet uit te klokken na je dienst.</p>
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* Next shift hero */}
+        <div className="lg:col-span-2">
+          {nextShift ? (
+            <div className="relative overflow-hidden rounded-2xl p-5 text-white" style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%)', boxShadow: 'var(--shadow-3)' }}>
+              <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }} />
+              <div className="relative">
+                <p className="text-xs font-semibold uppercase tracking-wider text-white/70">Volgende dienst</p>
+                <p className="mt-1 text-2xl font-bold">{relativeDay(nextShift.date)}</p>
+                <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+                  <span className="flex items-center gap-2 text-sm">
+                    <Clock className="h-4 w-4 text-white/70" />
+                    <span className="font-semibold tabular-nums">{formatTime(nextShift.start_time)} – {formatTime(nextShift.end_time)}</span>
+                  </span>
+                  <span className="flex items-center gap-2 text-sm">
+                    <Calendar className="h-4 w-4 text-white/70" />
+                    <span className="capitalize">{formatDate(nextShift.date, 'EEEE d MMMM')}</span>
+                  </span>
+                  <span className="rounded-full px-2.5 py-0.5 text-xs font-semibold" style={{ background: 'rgba(255,255,255,0.18)' }}>{nextShift.position}</span>
+                </div>
+                <Link to="/app/rooster" className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur-sm transition-colors hover:bg-white/25">
+                  Volledig rooster <ArrowRight className="h-4 w-4" />
+                </Link>
               </div>
             </div>
-            <ChevronRight className="h-5 w-5 shrink-0" style={{ color: '#10B981' }} />
-          </div>
-        </Link>
-      ) : (
-        <Link to="/app/klok">
-          <div
-            className="flex items-center justify-between rounded-2xl px-5 py-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
-            style={{ background: 'var(--surface-card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600/10">
-                <Clock className="h-5 w-5 text-brand-600" />
-              </div>
-              <div>
-                <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>Klaar om te beginnen?</p>
-                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Klok in wanneer je dienst start.</p>
-              </div>
-            </div>
-            <Button size="sm">Inklokken</Button>
-          </div>
-        </Link>
-      )}
+          ) : (
+            <Card className="flex h-full flex-col items-center justify-center text-center" elevation={1}>
+              <EmptyState
+                icon={CalendarDays}
+                title="Geen geplande diensten"
+                description="Zodra je manager het rooster publiceert, verschijnt je volgende dienst hier."
+                action={<Link to="/app/beschikbaarheid"><Button variant="secondary" size="sm">Beschikbaarheid invullen</Button></Link>}
+              />
+            </Card>
+          )}
+        </div>
 
-      {/* Week summary */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl p-4" style={{ background: 'var(--surface-card)', border: '1px solid var(--border)' }}>
-          <p className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Deze week</p>
-          <p className="mt-1 text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{weekHours.toFixed(1)}u</p>
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Gewerkte uren</p>
-        </div>
-        <div className="rounded-2xl p-4" style={{ background: 'var(--surface-card)', border: '1px solid var(--border)' }}>
-          <p className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Diensten</p>
-          <p className="mt-1 text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{shifts.length}</p>
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Deze week</p>
-        </div>
-        <div className="col-span-2 rounded-2xl p-4 sm:col-span-1" style={{ background: 'var(--surface-card)', border: '1px solid var(--border)' }}>
-          <p className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Verlof</p>
-          <p className="mt-1 text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{leave.length}</p>
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Openstaand</p>
-        </div>
+        {/* Hours ring */}
+        <Card className="flex flex-col items-center justify-center gap-2 text-center">
+          <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Deze week</p>
+          <ProgressRing value={weekHours} max={scheduledHours || Math.max(weekHours, 1)} size={120} color="var(--brand)">
+            <p className="text-2xl font-bold tabular-nums" style={{ color: 'var(--text-primary)' }}>{weekHours.toFixed(1)}u</p>
+            <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>gewerkt</p>
+          </ProgressRing>
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {scheduledHours > 0 ? `van ${scheduledHours.toFixed(0)}u gepland` : 'Nog niets gepland'}
+          </p>
+        </Card>
       </div>
 
-      {/* Quick actions — mobile-first grid */}
-      <div className="grid gap-3 sm:grid-cols-2">
-        {quickActions.map(({ to, label, icon: Icon, desc, accent }) => (
+      {/* Clock status */}
+      <Link to="/app/klok">
+        <div
+          className="flex items-center justify-between rounded-2xl px-5 py-4 transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-3)]"
+          style={
+            activeClock
+              ? { background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)' }
+              : { background: 'var(--surface-card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-1)' }
+          }
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: activeClock ? 'rgba(16,185,129,0.15)' : 'var(--brand-muted)' }}>
+              <Clock className="h-5 w-5" style={{ color: activeClock ? '#10B981' : 'var(--brand-strong)' }} />
+            </div>
+            <div>
+              <p className="font-semibold" style={{ color: activeClock ? '#059669' : 'var(--text-primary)' }}>
+                {activeClock ? 'Je bent ingeklokt' : 'Klaar om te beginnen?'}
+              </p>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                {activeClock ? 'Vergeet niet uit te klokken na je dienst.' : 'Klok in wanneer je dienst start.'}
+              </p>
+            </div>
+          </div>
+          {activeClock ? <ChevronRight className="h-5 w-5" style={{ color: '#10B981' }} /> : <Button size="sm">Inklokken</Button>}
+        </div>
+      </Link>
+
+      {/* Quick actions */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { to: '/app/rooster', label: 'Mijn rooster', icon: Calendar, desc: `${shifts.length} deze week`, color: '#3B82F6', bg: 'rgba(59,130,246,0.12)' },
+          { to: '/app/beschikbaarheid', label: 'Beschikbaarheid', icon: CalendarCheck, desc: 'Geef door wanneer je kunt', color: '#10B981', bg: 'rgba(16,185,129,0.12)' },
+          { to: '/app/verlof', label: 'Verlof', icon: Palmtree, desc: `${leave.length} openstaand`, color: '#8B5CF6', bg: 'rgba(139,92,246,0.12)' },
+          { to: '/app/uren', label: 'Mijn uren', icon: Clock, desc: 'Bekijk je urenstaat', color: 'var(--text-muted)', bg: 'var(--surface-subtle)' },
+        ].map(({ to, label, icon: Icon, desc, color, bg }) => (
           <Link key={to} to={to}>
-            <div
-              className="group flex items-center gap-3 rounded-2xl p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
-              style={{ background: 'var(--surface-card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}
-            >
-              <div
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105"
-                style={{ background: accentBg[accent] }}
-              >
-                <Icon className="h-5 w-5" style={{ color: accentColor[accent] }} />
+            <div className="group flex items-center gap-3 rounded-2xl p-4 transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-3)]" style={{ background: 'var(--surface-card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-1)' }}>
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105" style={{ background: bg }}>
+                <Icon className="h-5 w-5" style={{ color }} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{label}</p>
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{desc}</p>
+                <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{label}</p>
+                <p className="truncate text-xs" style={{ color: 'var(--text-muted)' }}>{desc}</p>
               </div>
-              <ChevronRight className="h-4 w-4 shrink-0" style={{ color: 'var(--text-disabled)' }} />
             </div>
           </Link>
         ))}
       </div>
 
-      {/* Upcoming shifts */}
-      <Card>
-        <CardHeader
-          title="Komende diensten"
-          subtitle="Deze week"
-          action={
-            <Link to="/app/rooster" className="flex items-center gap-1 text-sm font-medium text-brand-600 hover:text-brand-700">
-              Volledig rooster <ChevronRight className="h-4 w-4" />
-            </Link>
-          }
-        />
-        {shifts.length === 0 ? (
-          <EmptyState
-            icon={Calendar}
-            title="Geen diensten deze week"
-            description="Zodra je manager het rooster publiceert, zie je je diensten hier."
-            action={<Link to="/app/beschikbaarheid"><Button variant="secondary" size="sm">Beschikbaarheid invullen</Button></Link>}
-          />
-        ) : (
-          <ul className="space-y-2">
-            {shifts.slice(0, 5).map((s) => (
-              <li
-                key={s.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-xl px-4 py-3"
-                style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
-              >
-                <span className="text-sm font-medium capitalize" style={{ color: 'var(--text-primary)' }}>
-                  {formatDate(s.date, 'EEEE d MMM')}
-                </span>
-                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  {formatTime(s.start_time)} – {formatTime(s.end_time)}
-                  <span className="ml-2 rounded-md px-2 py-0.5 text-xs" style={{ background: 'var(--brand-muted)', color: 'var(--brand-strong)' }}>
-                    {s.position}
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
-
-      {leave.length > 0 && (
+      <div className="grid gap-4 lg:grid-cols-2">
         <Card>
-          <CardHeader title="Openstaande verlofaanvragen" action={<Link to="/app/verlof" className="text-sm font-medium text-brand-600">Bekijken</Link>} />
-          <ul className="space-y-2">
-            {leave.map((r) => (
-              <li key={r.id} className="flex items-center justify-between rounded-xl px-4 py-3 text-sm" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>{formatDate(r.start_date)} – {formatDate(r.end_date)}</span>
-                <Badge variant={r.status}>{leaveStatusLabel[r.status]}</Badge>
-              </li>
-            ))}
-          </ul>
+          <CardHeader
+            title="Komende diensten"
+            subtitle="Deze week"
+            action={<Link to="/app/rooster" className="flex items-center gap-1 text-sm font-medium text-brand-600 hover:text-brand-700">Rooster <ChevronRight className="h-4 w-4" /></Link>}
+          />
+          {upcoming.length === 0 ? (
+            <EmptyState icon={Calendar} title="Geen diensten deze week" description="Zodra je manager publiceert, zie je je diensten hier." />
+          ) : (
+            <ul className="space-y-2">
+              {upcoming.slice(0, 5).map((s) => {
+                const c = getPositionColor(s.position)
+                return (
+                  <li key={s.id} className="flex items-center gap-3 rounded-xl px-4 py-3" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
+                    <span className="h-9 w-1 shrink-0 rounded-full" style={{ background: c.accent }} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium capitalize" style={{ color: 'var(--text-primary)' }}>{formatDate(s.date, 'EEEE d MMM')}</p>
+                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{s.position}</p>
+                    </div>
+                    <span className="shrink-0 text-sm font-medium tabular-nums" style={{ color: 'var(--text-secondary)' }}>
+                      {formatTime(s.start_time)}–{formatTime(s.end_time)}
+                    </span>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
         </Card>
-      )}
+
+        <Card>
+          <CardHeader title="Mijn verlofaanvragen" action={<Link to="/app/verlof" className="text-sm font-medium text-brand-600 hover:underline">Bekijken</Link>} />
+          {leave.length === 0 ? (
+            <EmptyState icon={Palmtree} title="Geen openstaande aanvragen" description="Vraag verlof aan wanneer je vrij wilt." action={<Link to="/app/verlof"><Button variant="secondary" size="sm">Verlof aanvragen</Button></Link>} />
+          ) : (
+            <ul className="space-y-2">
+              {leave.map((r) => (
+                <li key={r.id} className="flex items-center justify-between rounded-xl px-4 py-3 text-sm" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>{formatDate(r.start_date)} – {formatDate(r.end_date)}</span>
+                  <Badge variant={r.status}>{leaveStatusLabel[r.status]}</Badge>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      </div>
     </div>
   )
 }

@@ -20,12 +20,16 @@ export function ConflictBadge({ warning, compact, className }: ConflictBadgeProp
   const Icon = c.icon
   return (
     <span
-      className={cn('inline-flex items-center gap-1 rounded-full font-medium', compact ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-xs', className)}
+      className={cn(
+        'inline-flex max-w-full items-center gap-1 rounded-full font-medium',
+        compact ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-xs',
+        className
+      )}
       style={{ background: c.bg, color: c.color, border: `1px solid ${c.color}33` }}
       title={warning.message}
     >
-      <Icon className={compact ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
-      {!compact && warning.message}
+      <Icon className={cn('shrink-0', compact ? 'h-3 w-3' : 'h-3.5 w-3.5')} />
+      <span className="truncate">{warning.message}</span>
     </span>
   )
 }

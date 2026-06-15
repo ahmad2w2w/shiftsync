@@ -5,7 +5,11 @@ import { createShift, deleteShift } from '../../services/shifts'
 import { useOrganization } from '../../context/OrganizationContext'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
-import { rankEmployeesForSlot, monthlyHoursForUser } from '../../lib/plannerEngine'
+import {
+  rankEmployeesForSlot,
+  monthlyHoursForUser,
+  getWarnings,
+} from '../../lib/plannerEngine'
 import { ConflictList } from './ConflictBadge'
 import { formatDayHeader } from '../calendar/MonthCalendar'
 import { Button } from '../ui/Button'
@@ -29,7 +33,75 @@ interface DayPlannerPanelProps {
   leave: LeaveRequest[]
   onSaved: () => Promise<void>
   onClose?: () => void
-  compact?: boolean
+  /** Popover layout: 2 columns, sticky footer — same info as inline, no stripped fields */
+  popover?: boolean
+}
+
+function EmployeeRow({
+  user,
+  hours,
+  position,
+  reasons,
+  warnings,
+  selected,
+  onSelect,
+  dense,
+}: {
+  user: User
+  hours: number
+  position?: string
+  reasons: string[]
+  warnings: ReturnType<typeof getWarnings>
+  selected: boolean
+  onSelect: () => void
+  dense?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        'flex w-full flex-col gap-1.5 rounded-xl text-left transition-all',
+        dense ? 'px-3 py-2.5' : 'gap-2 px-4 py-3',
+        selected ? 'ring-2 ring-brand-500' : 'hover:ring-1 hover:ring-brand-500/30'
+      )}
+      style={{
+        background: selected ? 'rgba(59,130,246,0.06)' : 'var(--surface-subtle)',
+        border: '1px solid var(--border)',
+      }}
+    >
+      <div className="flex items-center gap-3">
+        <span
+          className={cn(
+            'flex shrink-0 items-center justify-center rounded-full font-bold',
+            dense ? 'h-8 w-8 text-xs' : 'h-10 w-10 text-sm'
+          )}
+          style={{ background: 'var(--brand-muted)', color: 'var(--brand-strong)' }}
+        >
+          {user.full_name[0]?.toUpperCase()}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
+            {user.full_name}
+          </p>
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {position ?? user.primary_position ?? 'Medewerker'} · {hours.toFixed(0)}u deze maand
+          </p>
+        </div>
+        {selected && <Check className="h-4 w-4 shrink-0 text-brand-600" />}
+      </div>
+      {reasons[0] && !warnings.length && (
+        <p className="text-[11px] font-medium pl-11" style={{ color: '#10B981' }}>
+          {reasons.join(' · ')}
+        </p>
+      )}
+      {warnings.length > 0 && (
+        <div className="pl-11">
+          <ConflictList warnings={warnings} compact />
+        </div>
+      )}
+    </button>
+  )
 }
 
 export function DayPlannerPanel({
@@ -40,7 +112,7 @@ export function DayPlannerPanel({
   leave,
   onSaved,
   onClose,
-  compact,
+  popover,
 }: DayPlannerPanelProps) {
   const { organization } = useOrganization()
   const toast = useToast()
@@ -69,7 +141,12 @@ export function DayPlannerPanel({
     return pool.filter((e) => !ids.has(e.id))
   }, [ranked, pool])
 
-  const selectedRank = ranked.find((r) => r.user.id === selectedUserId)
+  const selectedWarnings = useMemo(() => {
+    if (!selectedUserId) return []
+    const entry = ranked.find((r) => r.user.id === selectedUserId)
+    if (entry) return entry.warnings
+    return getWarnings(selectedUserId, slot, availability, leave, shifts, 160)
+  }, [selectedUserId, ranked, slot, availability, leave, shifts])
 
   useEffect(() => {
     setSelectedUserId(null)
@@ -121,10 +198,10 @@ export function DayPlannerPanel({
     <div
       className={cn(
         'flex min-h-0 flex-col overflow-hidden',
-        !compact && 'animate-slide-up rounded-2xl'
+        !popover && 'animate-slide-up rounded-2xl'
       )}
       style={
-        compact
+        popover
           ? undefined
           : {
               background: 'var(--surface-card)',
@@ -134,32 +211,22 @@ export function DayPlannerPanel({
       }
     >
       <div
-        className={cn(
-          'flex shrink-0 items-center justify-between gap-3',
-          compact ? 'px-3 py-2.5' : 'px-5 py-4'
-        )}
+        className={cn('flex shrink-0 items-center justify-between gap-3', popover ? 'px-4 py-3' : 'px-5 py-4')}
         style={{
           background: 'linear-gradient(135deg, rgba(59,130,246,0.06) 0%, transparent 100%)',
           borderBottom: '1px solid var(--border)',
         }}
       >
         <div className="min-w-0">
-          {!compact && (
-            <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--brand-strong)' }}>
-              Dag plannen
-            </p>
-          )}
-          <h2
-            className={cn('font-semibold capitalize leading-tight', compact ? 'text-sm' : 'text-lg')}
-            style={{ color: 'var(--text-primary)' }}
-          >
+          <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--brand-strong)' }}>
+            Dag plannen
+          </p>
+          <h2 className="text-base font-semibold capitalize leading-tight" style={{ color: 'var(--text-primary)' }}>
             {formatDayHeader(date)}
           </h2>
-          {!compact && (
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              {dayShifts.length} dienst{dayShifts.length !== 1 ? 'en' : ''} · kies medewerker en tijden
-            </p>
-          )}
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {dayShifts.length} dienst{dayShifts.length !== 1 ? 'en' : ''} · kies medewerker en tijden
+          </p>
         </div>
         {onClose && (
           <button
@@ -169,31 +236,31 @@ export function DayPlannerPanel({
             style={{ color: 'var(--text-muted)' }}
             aria-label="Sluiten"
           >
-            <X className={compact ? 'h-4 w-4' : 'h-5 w-5'} />
+            <X className="h-5 w-5" />
           </button>
         )}
       </div>
 
       <div
         className={cn(
-          'grid min-h-0 flex-1',
-          compact ? 'grid-cols-2 gap-0' : 'gap-6 p-5 lg:grid-cols-[1fr_1.2fr]'
+          'grid min-h-0 flex-1 overflow-hidden',
+          popover ? 'grid-cols-[minmax(220px,260px)_1fr]' : 'gap-6 p-5 lg:grid-cols-[1fr_1.2fr]'
         )}
       >
-        {/* Left: config + existing */}
+        {/* Left: existing shifts + slot config */}
         <div
           className={cn(
-            'space-y-2 overflow-y-auto',
-            compact ? 'border-r p-3' : 'space-y-5',
+            'flex min-h-0 flex-col gap-3 overflow-y-auto',
+            popover ? 'border-r p-4' : 'space-y-5'
           )}
-          style={compact ? { borderColor: 'var(--border)' } : undefined}
+          style={popover ? { borderColor: 'var(--border)' } : undefined}
         >
           {dayShifts.length > 0 && (
-            <div className="space-y-1">
+            <div className="space-y-2">
               <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                Gepland ({dayShifts.length})
+                Geplande diensten
               </p>
-              <ul className="space-y-1">
+              <ul className="space-y-2">
                 {dayShifts
                   .sort((a, b) => a.start_time.localeCompare(b.start_time))
                   .map((shift) => {
@@ -202,37 +269,29 @@ export function DayPlannerPanel({
                     return (
                       <li
                         key={shift.id}
-                        className={cn(
-                          'group flex items-center gap-2 rounded-lg',
-                          compact ? 'px-2 py-1.5' : 'gap-3 rounded-xl px-3 py-2.5'
-                        )}
+                        className="group flex items-center gap-2 rounded-xl px-3 py-2.5"
                         style={{ background: 'var(--surface-subtle)', border: `1px solid ${c.border}` }}
                       >
-                        <span className={cn('shrink-0 rounded-full', compact ? 'h-5 w-0.5' : 'h-8 w-1')} style={{ background: c.accent }} />
+                        <span className="h-8 w-1 shrink-0 rounded-full" style={{ background: c.accent }} />
                         <div className="min-w-0 flex-1">
-                          <p className={cn('font-medium', compact ? 'text-[11px] leading-tight' : 'text-sm')} style={{ color: 'var(--text-primary)' }}>
-                            {formatTime(shift.start_time)}–{formatTime(shift.end_time)}
-                            {!compact && (
-                              <>
-                                <span className="mx-1.5" style={{ color: 'var(--text-disabled)' }}>·</span>
-                                {shift.position}
-                              </>
-                            )}
+                          <p className="text-sm font-medium leading-snug" style={{ color: 'var(--text-primary)' }}>
+                            {formatTime(shift.start_time)} – {formatTime(shift.end_time)}
+                            <span className="mx-1.5" style={{ color: 'var(--text-disabled)' }}>·</span>
+                            {shift.position}
                           </p>
-                          {!compact && (
-                            <p className="truncate text-xs" style={{ color: 'var(--text-muted)' }}>
-                              {name ?? 'Open dienst'}
-                              {!shift.published && ' · Concept'}
-                            </p>
-                          )}
+                          <p className="truncate text-xs" style={{ color: 'var(--text-muted)' }}>
+                            {name ?? 'Open dienst'}
+                            {!shift.published && ' · Concept'}
+                          </p>
                         </div>
                         <button
                           type="button"
                           onClick={() => handleDelete(shift)}
-                          className="rounded p-1 hover:bg-red-500/10"
+                          className="rounded-lg p-1.5 hover:bg-red-500/10"
                           style={{ color: '#EF4444' }}
+                          aria-label="Dienst verwijderen"
                         >
-                          <Trash2 className={compact ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </li>
                     )
@@ -242,17 +301,15 @@ export function DayPlannerPanel({
           )}
 
           <div
-            className={cn('space-y-2 rounded-lg', compact ? 'p-2' : 'rounded-xl p-3')}
+            className="space-y-2 rounded-xl p-3"
             style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
           >
-            {!compact && (
-              <p className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
-                <Clock className="h-3.5 w-3.5" style={{ color: 'var(--brand-strong)' }} />
-                Tijd & afdeling
-              </p>
-            )}
+            <p className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
+              <Clock className="h-3.5 w-3.5" style={{ color: 'var(--brand-strong)' }} />
+              Tijd & afdeling
+            </p>
             <Select
-              label={compact ? 'Afdeling' : 'Afdeling'}
+              label="Afdeling"
               value={position}
               onChange={(e) => setPosition(e.target.value)}
               options={[...SHIFT_POSITIONS]}
@@ -265,20 +322,17 @@ export function DayPlannerPanel({
         </div>
 
         {/* Right: employee picker */}
-        <div className={cn('flex min-h-0 flex-col', compact ? 'p-3' : 'space-y-2')}>
-          {!compact && (
-            <p className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
-              <UserPlus className="h-3.5 w-3.5" style={{ color: 'var(--brand-strong)' }} />
-              Medewerker
-            </p>
-          )}
+        <div className={cn('flex min-h-0 flex-col gap-2', popover ? 'p-4' : 'space-y-2')}>
+          <p className="flex shrink-0 items-center gap-1.5 text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
+            <UserPlus className="h-3.5 w-3.5" style={{ color: 'var(--brand-strong)' }} />
+            Medewerker
+          </p>
 
           <button
             type="button"
             onClick={() => setSelectedUserId(null)}
             className={cn(
-              'flex w-full shrink-0 items-center gap-2 rounded-lg text-left transition-all',
-              compact ? 'px-2.5 py-2' : 'gap-3 rounded-xl px-4 py-3',
+              'flex w-full shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all',
               selectedUserId === null && 'ring-2 ring-amber-400'
             )}
             style={{
@@ -287,119 +341,95 @@ export function DayPlannerPanel({
             }}
           >
             <span
-              className={cn(
-                'flex shrink-0 items-center justify-center rounded-full font-bold',
-                compact ? 'h-7 w-7 text-xs' : 'h-10 w-10 text-sm'
-              )}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold"
               style={{ background: 'rgba(245,158,11,0.15)', color: '#D97706' }}
             >
               ?
             </span>
             <div className="min-w-0">
-              <p className={cn('font-medium', compact ? 'text-xs' : 'text-sm')} style={{ color: 'var(--text-primary)' }}>
-                Open dienst
-              </p>
-              {!compact && (
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Nog geen medewerker toegewezen</p>
-              )}
+              <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Open dienst</p>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Nog geen medewerker toegewezen</p>
             </div>
-            {selectedUserId === null && <Check className="ml-auto h-3.5 w-3.5 shrink-0 text-amber-500" />}
+            {selectedUserId === null && <Check className="ml-auto h-4 w-4 text-amber-500" />}
           </button>
 
-          <div className={cn('min-h-0 flex-1 space-y-1 overflow-y-auto', compact ? 'max-h-[140px]' : 'max-h-[320px] space-y-1.5 pr-0.5')}>
+          <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-0.5">
             {ranked.length > 0 && (
-              <p className="sticky top-0 py-1 text-[10px] font-bold uppercase tracking-wider" style={{ color: '#10B981', background: 'var(--surface-card)' }}>
+              <p
+                className="sticky top-0 z-10 py-1 text-[10px] font-bold uppercase tracking-wider"
+                style={{ color: '#10B981', background: 'var(--surface-card)' }}
+              >
                 Aanbevolen · beschikbaar
               </p>
             )}
-            {ranked.map(({ user, warnings, reasons }) => {
-              const sel = selectedUserId === user.id
-              const hours = monthlyHoursForUser(user.id, shifts)
-              return (
-                <button
-                  key={user.id}
-                  type="button"
-                  onClick={() => setSelectedUserId(user.id)}
-                  className={cn(
-                    'flex w-full items-center gap-2 rounded-lg text-left transition-all',
-                    compact ? 'px-2.5 py-1.5' : 'flex-col gap-2 rounded-xl px-4 py-3',
-                    sel ? 'ring-2 ring-brand-500' : 'hover:ring-1 hover:ring-brand-500/30'
-                  )}
-                  style={{
-                    background: sel ? 'rgba(59,130,246,0.06)' : 'var(--surface-subtle)',
-                    border: '1px solid var(--border)',
-                  }}
-                >
-                  <span
-                    className={cn(
-                      'flex shrink-0 items-center justify-center rounded-full font-bold',
-                      compact ? 'h-7 w-7 text-xs' : 'h-10 w-10 text-sm'
-                    )}
-                    style={{ background: 'var(--brand-muted)', color: 'var(--brand-strong)' }}
-                  >
-                    {user.full_name[0]?.toUpperCase()}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className={cn('truncate font-medium', compact ? 'text-xs' : 'text-sm')} style={{ color: 'var(--text-primary)' }}>
-                      {user.full_name}
-                    </p>
-                    <p className={cn(compact ? 'text-[10px]' : 'text-xs')} style={{ color: 'var(--text-muted)' }}>
-                      {compact ? `${hours.toFixed(0)}u` : `${user.primary_position ?? 'Medewerker'} · ${hours.toFixed(0)}u deze maand`}
-                    </p>
-                  </div>
-                  {sel && <Check className="h-3.5 w-3.5 shrink-0 text-brand-600" />}
-                  {!compact && reasons[0] && !warnings.length && (
-                    <p className="text-[10px] font-medium" style={{ color: '#10B981' }}>{reasons[0]}</p>
-                  )}
-                  {!compact && warnings.length > 0 && <ConflictList warnings={warnings} compact />}
-                </button>
-              )
-            })}
+            {ranked.map(({ user, warnings, reasons }) => (
+              <EmployeeRow
+                key={user.id}
+                user={user}
+                hours={monthlyHoursForUser(user.id, shifts)}
+                reasons={reasons}
+                warnings={warnings}
+                selected={selectedUserId === user.id}
+                onSelect={() => setSelectedUserId(user.id)}
+                dense={popover}
+              />
+            ))}
 
             {others.length > 0 && (
               <>
-                <p className="pt-2 text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                  Overige
+                <p className="pt-1 text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+                  Overige medewerkers
                 </p>
                 {others.map((user) => {
-                  const sel = selectedUserId === user.id
+                  const warnings = getWarnings(user.id, slot, availability, leave, shifts, 160)
+                  const hours = monthlyHoursForUser(user.id, shifts)
                   return (
-                    <button
+                    <EmployeeRow
                       key={user.id}
-                      type="button"
-                      onClick={() => setSelectedUserId(user.id)}
-                      className={cn(
-                        'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left opacity-80',
-                        sel && 'ring-2 ring-brand-500 opacity-100'
-                      )}
-                      style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
-                    >
-                      <span className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold" style={{ background: 'var(--border)', color: 'var(--text-muted)' }}>
-                        {user.full_name[0]}
-                      </span>
-                      <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{user.full_name}</p>
-                    </button>
+                      user={user}
+                      hours={hours}
+                      reasons={warnings.length ? [] : ['Niet in top aanbevelingen']}
+                      warnings={warnings}
+                      selected={selectedUserId === user.id}
+                      onSelect={() => setSelectedUserId(user.id)}
+                      dense={popover}
+                    />
                   )
                 })}
               </>
             )}
+
+            {pool.length === 0 && (
+              <p className="py-4 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+                Geen medewerkers gevonden
+              </p>
+            )}
           </div>
 
-          {selectedRank && selectedRank.warnings.length > 0 && !compact && (
-            <div className="flex items-start gap-2 rounded-xl px-3 py-2 text-xs" style={{ background: 'rgba(245,158,11,0.08)', color: '#D97706' }}>
-              <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-              Conflicten gedetecteerd — je kunt alsnog inplannen als manager.
+          {selectedWarnings.length > 0 && (
+            <div
+              className="flex shrink-0 items-start gap-2 rounded-xl px-3 py-2 text-xs"
+              style={{ background: 'rgba(245,158,11,0.08)', color: '#D97706' }}
+            >
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <div>
+                <p className="font-medium">Conflicten gedetecteerd</p>
+                <p className="mt-0.5 opacity-90">Je kunt alsnog inplannen als manager.</p>
+                <div className="mt-1.5">
+                  <ConflictList warnings={selectedWarnings} />
+                </div>
+              </div>
             </div>
           )}
         </div>
       </div>
 
       <div
-        className={cn('shrink-0', compact ? 'border-t px-3 py-2.5' : 'px-5 pb-5')}
-        style={compact ? { borderColor: 'var(--border)' } : undefined}
+        className={cn('shrink-0', popover ? 'border-t px-4 py-3' : 'px-5 pb-5')}
+        style={popover ? { borderColor: 'var(--border)' } : undefined}
       >
-        <Button className="w-full" size={compact ? 'sm' : 'md'} loading={saving} onClick={handleSave}>
-          {selectedUserId ? 'Inplannen' : 'Open dienst'}
+        <Button className="w-full" loading={saving} onClick={handleSave}>
+          {selectedUserId ? 'Medewerker inplannen' : 'Open dienst aanmaken'}
         </Button>
       </div>
     </div>

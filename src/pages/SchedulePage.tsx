@@ -49,7 +49,7 @@ export function SchedulePage() {
   const [editShift, setEditShift] = useState<Shift | null>(null)
   const [modalUserId, setModalUserId] = useState<string | null>(null)
   const [modalDate, setModalDate] = useState(todayStr())
-  const [popover, setPopover] = useState<{ date: string; anchor: DOMRect } | null>(null)
+  const [popover, setPopover] = useState<{ date: string; anchor: DOMRect; point: { x: number; y: number } } | null>(null)
 
   const { start, end } = useMemo(() => getMonthRange(monthAnchor), [monthAnchor])
   const periodKey = useMemo(
@@ -217,12 +217,12 @@ export function SchedulePage() {
             size="large"
             monthAnchor={monthAnchor}
             selectedDate={selectedDate}
-            onSelectDate={(d, anchor) => {
+            onSelectDate={(d, anchor, point) => {
               if (!isSameMonth(new Date(d + 'T12:00:00'), monthAnchor)) return
               setSelectedDate(d)
               if (isAdmin) {
                 setPopover((prev) =>
-                  prev?.date === d ? null : { date: d, anchor }
+                  prev?.date === d ? null : { date: d, anchor, point }
                 )
               }
             }}
@@ -235,6 +235,7 @@ export function SchedulePage() {
           <DayPlannerPopover
             date={popover.date}
             anchor={popover.anchor}
+            point={popover.point}
             shifts={shifts}
             employees={employees}
             availability={availability}

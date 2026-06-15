@@ -16,7 +16,7 @@ export type DaySelectAnchor = { date: string; rect: DOMRect }
 interface MonthCalendarProps {
   monthAnchor: Date
   selectedDate?: string | null
-  onSelectDate?: (dateStr: string, anchor: DOMRect) => void
+  onSelectDate?: (dateStr: string, anchor: DOMRect, point: { x: number; y: number }) => void
   hasMarker?: (dateStr: string) => boolean
   getDayMeta?: (dateStr: string) => DayMeta | undefined
   getDayShifts?: (dateStr: string) => Shift[]
@@ -64,7 +64,10 @@ export function MonthCalendar({
               disabled={!inMonth || !onSelectDate}
               onClick={(e) => {
                 if (!inMonth || !onSelectDate) return
-                onSelectDate(dateStr, e.currentTarget.getBoundingClientRect())
+                onSelectDate(dateStr, e.currentTarget.getBoundingClientRect(), {
+                  x: e.clientX,
+                  y: e.clientY,
+                })
               }}
               className={cn(
                 'group relative flex min-h-[88px] w-full flex-col rounded-2xl p-3 text-left transition-all duration-200 sm:min-h-[104px] sm:p-4',

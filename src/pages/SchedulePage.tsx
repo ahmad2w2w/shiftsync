@@ -11,7 +11,7 @@ import { getAllUsers } from '../services/users'
 import { getLeaveRequests } from '../services/leave'
 import { publishMonth } from '../services/monthPlanner'
 import { notifyShiftPublished } from '../services/notifications'
-import { DayPlannerPanel } from '../components/schedule/DayPlannerPanel'
+import { DayPlannerPopover } from '../components/schedule/DayPlannerPopover'
 import { ShiftModal } from '../components/schedule/ShiftModal'
 import { PublishPreviewModal } from '../components/schedule/PublishPreviewModal'
 import { ScheduleActionsMenu } from '../components/schedule/ScheduleActionsMenu'
@@ -49,6 +49,7 @@ export function SchedulePage() {
   const [editShift, setEditShift] = useState<Shift | null>(null)
   const [modalUserId, setModalUserId] = useState<string | null>(null)
   const [modalDate, setModalDate] = useState(todayStr())
+  const [popover, setPopover] = useState<{ date: string; anchor: DOMRect } | null>(null)
 
   const { start, end } = useMemo(() => getMonthRange(monthAnchor), [monthAnchor])
   const periodKey = useMemo(
@@ -92,6 +93,10 @@ export function SchedulePage() {
       })
     return () => { cancelled = true }
   }, [profile?.id, isAdmin, periodKey, fetchData])
+
+  useEffect(() => {
+    setPopover(null)
+  }, [monthAnchor])
 
   useEffect(() => {
     if (!selectedDate) return
@@ -212,23 +217,30 @@ export function SchedulePage() {
             size="large"
             monthAnchor={monthAnchor}
             selectedDate={selectedDate}
-            onSelectDate={(d) => {
-              if (isSameMonth(new Date(d + 'T12:00:00'), monthAnchor)) setSelectedDate(d)
+            onSelectDate={(d, anchor) => {
+              if (!isSameMonth(new Date(d + 'T12:00:00'), monthAnchor)) return
+              setSelectedDate(d)
+              if (isAdmin) {
+                setPopover((prev) =>
+                  prev?.date === d ? null : { date: d, anchor }
+                )
+              }
             }}
             getDayMeta={isAdmin ? dayMeta : undefined}
             getDayShifts={isAdmin ? getDayShifts : undefined}
           />
         </div>
 
-        {isAdmin && selectedDate && (
-          <DayPlannerPanel
-            date={selectedDate}
+        {isAdmin && popover && (
+          <DayPlannerPopover
+            date={popover.date}
+            anchor={popover.anchor}
             shifts={shifts}
             employees={employees}
             availability={availability}
             leave={leave}
             onSaved={reload}
-            onClose={() => setSelectedDate(null)}
+            onClose={() => setPopover(null)}
           />
         )}
 
@@ -263,9 +275,9 @@ export function SchedulePage() {
           </div>
         )}
 
-        {isAdmin && !selectedDate && (
-          <p className="py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
-            Klik op een dag om te plannen — beschikbare medewerkers verschijnen direct
+        {isAdmin && !popover && (
+          <p className="py-4 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+            Klik op een dag — planner opent naast de cel
           </p>
         )}
       </div>

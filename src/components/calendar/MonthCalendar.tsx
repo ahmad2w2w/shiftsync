@@ -11,10 +11,12 @@ export interface DayMeta {
   available: number
 }
 
+export type DaySelectAnchor = { date: string; rect: DOMRect }
+
 interface MonthCalendarProps {
   monthAnchor: Date
   selectedDate?: string | null
-  onSelectDate?: (dateStr: string) => void
+  onSelectDate?: (dateStr: string, anchor: DOMRect) => void
   hasMarker?: (dateStr: string) => boolean
   getDayMeta?: (dateStr: string) => DayMeta | undefined
   getDayShifts?: (dateStr: string) => Shift[]
@@ -58,8 +60,12 @@ export function MonthCalendar({
             <button
               key={dateStr}
               type="button"
+              data-calendar-day={dateStr}
               disabled={!inMonth || !onSelectDate}
-              onClick={() => onSelectDate?.(dateStr)}
+              onClick={(e) => {
+                if (!inMonth || !onSelectDate) return
+                onSelectDate(dateStr, e.currentTarget.getBoundingClientRect())
+              }}
               className={cn(
                 'group relative flex min-h-[88px] w-full flex-col rounded-2xl p-3 text-left transition-all duration-200 sm:min-h-[104px] sm:p-4',
                 inMonth && onSelectDate && 'cursor-pointer',

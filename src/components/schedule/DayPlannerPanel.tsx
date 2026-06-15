@@ -29,6 +29,7 @@ interface DayPlannerPanelProps {
   leave: LeaveRequest[]
   onSaved: () => Promise<void>
   onClose?: () => void
+  compact?: boolean
 }
 
 export function DayPlannerPanel({
@@ -39,6 +40,7 @@ export function DayPlannerPanel({
   leave,
   onSaved,
   onClose,
+  compact,
 }: DayPlannerPanelProps) {
   const { organization } = useOrganization()
   const toast = useToast()
@@ -117,30 +119,36 @@ export function DayPlannerPanel({
 
   return (
     <div
-      className="animate-slide-up overflow-hidden rounded-2xl"
-      style={{
-        background: 'var(--surface-card)',
-        border: '1px solid var(--border)',
-        boxShadow: '0 8px 32px rgba(15,23,42,0.08)',
-      }}
+      className={cn('overflow-hidden', !compact && 'animate-slide-up rounded-2xl')}
+      style={
+        compact
+          ? undefined
+          : {
+              background: 'var(--surface-card)',
+              border: '1px solid var(--border)',
+              boxShadow: '0 8px 32px rgba(15,23,42,0.08)',
+            }
+      }
     >
-      {/* Header */}
       <div
-        className="flex items-center justify-between gap-4 px-5 py-4"
+        className={cn('flex items-center justify-between gap-3', compact ? 'px-4 py-3' : 'px-5 py-4')}
         style={{
           background: 'linear-gradient(135deg, rgba(59,130,246,0.06) 0%, transparent 100%)',
           borderBottom: '1px solid var(--border)',
         }}
       >
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--brand-strong)' }}>
-            Dag plannen
-          </p>
-          <h2 className="text-lg font-semibold capitalize" style={{ color: 'var(--text-primary)' }}>
+        <div className="min-w-0">
+          {!compact && (
+            <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--brand-strong)' }}>
+              Dag plannen
+            </p>
+          )}
+          <h2 className={cn('font-semibold capitalize', compact ? 'text-base' : 'text-lg')} style={{ color: 'var(--text-primary)' }}>
             {formatDayHeader(date)}
           </h2>
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            {dayShifts.length} dienst{dayShifts.length !== 1 ? 'en' : ''} · kies medewerker en tijden
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {dayShifts.length} dienst{dayShifts.length !== 1 ? 'en' : ''}
+            {!compact && ' · kies medewerker en tijden'}
           </p>
         </div>
         {onClose && (
@@ -156,15 +164,15 @@ export function DayPlannerPanel({
         )}
       </div>
 
-      <div className="grid gap-6 p-5 lg:grid-cols-[1fr_1.2fr]">
+      <div className={cn('grid gap-4', compact ? 'p-4' : 'gap-6 p-5 lg:grid-cols-[1fr_1.2fr]')}>
         {/* Left: config + existing */}
-        <div className="space-y-5">
+        <div className={cn('space-y-3', !compact && 'space-y-5')}>
           {dayShifts.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                Geplande diensten
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+                Gepland
               </p>
-              <ul className="space-y-2">
+              <ul className="space-y-1.5">
                 {dayShifts
                   .sort((a, b) => a.start_time.localeCompare(b.start_time))
                   .map((shift) => {
@@ -203,10 +211,10 @@ export function DayPlannerPanel({
             </div>
           )}
 
-          <div className="space-y-3 rounded-xl p-4" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
-            <p className="flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-              <Clock className="h-4 w-4" style={{ color: 'var(--brand-strong)' }} />
-              Dienst instellen
+          <div className="space-y-2 rounded-xl p-3" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
+            <p className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
+              <Clock className="h-3.5 w-3.5" style={{ color: 'var(--brand-strong)' }} />
+              Tijd & afdeling
             </p>
             <Select
               label="Afdeling"
@@ -222,10 +230,10 @@ export function DayPlannerPanel({
         </div>
 
         {/* Right: employee picker */}
-        <div className="space-y-3">
-          <p className="flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-            <UserPlus className="h-4 w-4" style={{ color: 'var(--brand-strong)' }} />
-            Kies medewerker
+        <div className="space-y-2">
+          <p className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
+            <UserPlus className="h-3.5 w-3.5" style={{ color: 'var(--brand-strong)' }} />
+            Medewerker
           </p>
 
           {/* Open shift option */}
@@ -254,7 +262,7 @@ export function DayPlannerPanel({
             {selectedUserId === null && <Check className="ml-auto h-4 w-4 text-amber-500" />}
           </button>
 
-          <div className="max-h-[320px] space-y-2 overflow-y-auto pr-1">
+          <div className={cn('space-y-1.5 overflow-y-auto pr-0.5', compact ? 'max-h-[200px]' : 'max-h-[320px]')}>
             {ranked.length > 0 && (
               <p className="sticky top-0 py-1 text-[10px] font-bold uppercase tracking-wider" style={{ color: '#10B981', background: 'var(--surface-card)' }}>
                 Aanbevolen · beschikbaar

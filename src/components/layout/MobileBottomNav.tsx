@@ -25,23 +25,34 @@ export function MobileBottomNav({ onOpenMenu }: MobileBottomNavProps) {
           to={to}
           className={({ isActive }) =>
             cn(
-              'flex flex-1 flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-medium transition-colors',
+              'flex flex-1 flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium transition-colors',
               isActive ? 'text-brand-600' : 'text-[var(--text-muted)]'
             )
           }
         >
-          <Icon className="h-5 w-5" />
-          {label}
+          {({ isActive }) => (
+            <>
+              <span
+                className={cn('flex h-7 w-12 items-center justify-center rounded-full transition-colors')}
+                style={isActive ? { background: 'var(--brand-muted)' } : undefined}
+              >
+                <Icon className="h-5 w-5" />
+              </span>
+              {label}
+            </>
+          )}
         </NavLink>
       ))}
       <button
         type="button"
         onClick={onOpenMenu}
-        className="flex flex-1 flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-medium"
+        className="flex flex-1 flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium"
         style={{ color: 'var(--text-muted)' }}
         aria-label="Meer menu openen"
       >
-        <Menu className="h-5 w-5" />
+        <span className="flex h-7 w-12 items-center justify-center rounded-full">
+          <Menu className="h-5 w-5" />
+        </span>
         Meer
       </button>
     </nav>

@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
-import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
   Calendar,
   CalendarCheck,
+  CalendarRange,
   Clock,
   Users,
   Palmtree,
@@ -14,12 +15,18 @@ import {
   X,
   Zap,
   CreditCard,
-  BarChart3,
   Sun,
   Moon,
   Settings,
   Thermometer,
   ArrowLeftRight,
+  Search,
+  Plus,
+  ChevronDown,
+  PanelLeftClose,
+  PanelLeftOpen,
+  UserPlus,
+  CalendarPlus,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useOrganization } from '../../context/OrganizationContext'
@@ -27,109 +34,124 @@ import { useTheme } from '../../context/ThemeContext'
 import { ErrorBoundary } from '../ErrorBoundary'
 import { MobileBottomNav } from './MobileBottomNav'
 import { TrialBanner } from './TrialBanner'
+import { NotificationCenter } from './NotificationCenter'
+import { Avatar } from '../ui/Avatar'
+import { CountBadge } from '../ui/Badge'
+import { Kbd } from '../ui/Kbd'
+import { Popover } from '../ui/Popover'
+import { CommandMenu, type Command } from '../ui/CommandMenu'
+import { useAttention } from '../../lib/useAttention'
 import { cn } from '../../lib/utils'
 
-const employeeNav = [
-  { to: '/app/dashboard',       label: 'Dashboard',        icon: LayoutDashboard },
-  { to: '/app/rooster',         label: 'Mijn rooster',     icon: Calendar },
-  { to: '/app/beschikbaarheid', label: 'Beschikbaarheid',  icon: CalendarCheck },
-  { to: '/app/klok',            label: 'In-/Uitklokken',   icon: Clock },
-  { to: '/app/uren',            label: 'Mijn uren',        icon: Timer },
-  { to: '/app/verlof',          label: 'Verlof',           icon: Palmtree },
-  { to: '/app/ziek',            label: 'Ziekmelden',       icon: Thermometer },
-  { to: '/app/ruilen',          label: 'Diensten ruilen',  icon: ArrowLeftRight },
-  { to: '/app/profiel',         label: 'Profiel',          icon: UserCircle },
-]
+type BadgeKey = 'leave' | 'sick' | 'swaps'
 
-type NavItem = {
+interface NavItem {
   to: string
   label: string
   icon: typeof LayoutDashboard
+  badge?: BadgeKey
 }
 
-const employeeNavTyped: NavItem[] = employeeNav
+interface NavGroup {
+  label: string
+  items: NavItem[]
+}
 
-const managerNav: NavItem[] = [
-  { to: '/app/dashboard',       label: 'Dashboard',        icon: LayoutDashboard },
-  { to: '/app/medewerkers',     label: 'Medewerkers',      icon: Users },
-  { to: '/app/rooster',         label: 'Rooster',          icon: Calendar },
-  { to: '/app/maandplanner',    label: 'Maandplanner',     icon: BarChart3 },
-  { to: '/app/klok',            label: 'Klokregistratie',  icon: Clock },
-  { to: '/app/uren',            label: 'Urenoverzicht',    icon: Timer },
-  { to: '/app/verlof',          label: 'Verlofaanvragen',  icon: Palmtree },
-  { to: '/app/ziek',            label: 'Ziekmeldingen',    icon: Thermometer },
-  { to: '/app/ruilen',          label: 'Diensten ruilen',  icon: ArrowLeftRight },
-  { to: '/app/instellingen',    label: 'Instellingen',     icon: Settings },
-  { to: '/app/profiel',         label: 'Profiel',          icon: UserCircle },
+const managerGroups: NavGroup[] = [
+  { label: 'Overzicht', items: [{ to: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard }] },
+  {
+    label: 'Planning',
+    items: [
+      { to: '/app/rooster', label: 'Rooster', icon: Calendar },
+      { to: '/app/maandplanner', label: 'Maandplanner', icon: CalendarRange },
+    ],
+  },
+  {
+    label: 'Tijd & verlof',
+    items: [
+      { to: '/app/klok', label: 'Klokregistratie', icon: Clock },
+      { to: '/app/uren', label: 'Urenoverzicht', icon: Timer },
+      { to: '/app/verlof', label: 'Verlofaanvragen', icon: Palmtree, badge: 'leave' },
+      { to: '/app/ziek', label: 'Ziekmeldingen', icon: Thermometer, badge: 'sick' },
+      { to: '/app/ruilen', label: 'Diensten ruilen', icon: ArrowLeftRight, badge: 'swaps' },
+    ],
+  },
+  { label: 'Team', items: [{ to: '/app/medewerkers', label: 'Medewerkers', icon: Users }] },
+  { label: 'Beheer', items: [{ to: '/app/instellingen', label: 'Instellingen', icon: Settings }] },
 ]
 
-function UserAvatar({ name, avatarUrl, size = 'md' }: { name?: string; avatarUrl?: string | null; size?: 'sm' | 'md' }) {
-  const dim = size === 'sm' ? 'h-7 w-7 text-xs' : 'h-8 w-8 text-sm'
-  if (avatarUrl) {
-    return (
-      <img
-        src={avatarUrl}
-        alt=""
-        className={cn('shrink-0 rounded-full object-cover', dim)}
-      />
-    )
-  }
-  return (
-    <div className={cn('flex shrink-0 items-center justify-center rounded-full bg-brand-500/20 font-bold text-brand-400', dim)}>
-      {name?.[0]?.toUpperCase() ?? '?'}
-    </div>
-  )
-}
+const employeeGroups: NavGroup[] = [
+  { label: 'Overzicht', items: [{ to: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard }] },
+  {
+    label: 'Planning',
+    items: [
+      { to: '/app/rooster', label: 'Mijn rooster', icon: Calendar },
+      { to: '/app/beschikbaarheid', label: 'Beschikbaarheid', icon: CalendarCheck },
+    ],
+  },
+  {
+    label: 'Tijd & verlof',
+    items: [
+      { to: '/app/klok', label: 'In-/Uitklokken', icon: Clock },
+      { to: '/app/uren', label: 'Mijn uren', icon: Timer },
+      { to: '/app/verlof', label: 'Verlof', icon: Palmtree },
+      { to: '/app/ziek', label: 'Ziekmelden', icon: Thermometer },
+      { to: '/app/ruilen', label: 'Diensten ruilen', icon: ArrowLeftRight, badge: 'swaps' },
+    ],
+  },
+]
+
+const COLLAPSE_KEY = 'shiftsync-sidebar-collapsed'
 
 export function AppLayout() {
   const { profile, isAdmin, signOut } = useAuth()
   const { organization, isSubscribed, pricePerEmployee } = useOrganization()
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
+  const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COLLAPSE_KEY) === '1')
+  const [paletteOpen, setPaletteOpen] = useState(false)
   const mobileNavRef = useRef<HTMLElement>(null)
-  const nav = isAdmin ? managerNav : employeeNavTyped
+
+  const groups = isAdmin ? managerGroups : employeeGroups
+  const attention = useAttention(true)
+
+  const badgeCount = (key?: BadgeKey) => {
+    if (!key) return 0
+    if (key === 'leave') return attention.pendingLeave
+    if (key === 'sick') return attention.activeSick
+    return attention.openSwaps
+  }
+
+  // Refresh badges when navigating (an approval likely changed counts)
+  useEffect(() => { attention.refresh() }, [location.pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (mobileOpen && mobileNavRef.current) {
-      const first = mobileNavRef.current.querySelector<HTMLElement>('a, button')
-      first?.focus()
+    localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0')
+  }, [collapsed])
+
+  // Cmd/Ctrl+K opens command palette
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setPaletteOpen((v) => !v)
+      }
     }
-  }, [mobileOpen])
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [])
 
   useEffect(() => {
     if (!mobileOpen) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setMobileOpen(false)
-    }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMobileOpen(false) }
     document.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
     return () => {
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = ''
     }
-  }, [mobileOpen])
-
-  useEffect(() => {
-    if (!mobileOpen || !mobileNavRef.current) return
-    const panel = mobileNavRef.current
-    const focusable = panel.querySelectorAll<HTMLElement>(
-      'a, button, [tabindex]:not([tabindex="-1"])'
-    )
-    const first = focusable[0]
-    const last = focusable[focusable.length - 1]
-    const trap = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab' || focusable.length === 0) return
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault()
-        last?.focus()
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault()
-        first?.focus()
-      }
-    }
-    panel.addEventListener('keydown', trap)
-    return () => panel.removeEventListener('keydown', trap)
   }, [mobileOpen])
 
   const handleSignOut = async () => {
@@ -139,112 +161,138 @@ export function AppLayout() {
 
   const planLabel = isSubscribed ? 'Actief' : `€${pricePerEmployee}/medew.`
 
-  const NavItems = () => (
-    <div className="space-y-0.5">
-      {nav.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            onClick={() => setMobileOpen(false)}
-            className={({ isActive }) =>
-              cn(
-                'relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150',
-                isActive
-                  ? 'bg-brand-500/15 text-white shadow-sm before:absolute before:left-0 before:top-1/2 before:h-6 before:w-1 before:-translate-y-1/2 before:rounded-r-full before:bg-brand-500'
-                  : 'text-white/55 hover:bg-white/8 hover:text-white/95'
+  const currentTitle = useMemo(() => {
+    for (const g of groups) {
+      const match = g.items.find((i) => location.pathname.startsWith(i.to))
+      if (match) return match.label
+    }
+    if (location.pathname.startsWith('/app/profiel')) return 'Profiel'
+    if (location.pathname.startsWith('/app/abonnement')) return 'Abonnement'
+    return 'ShiftSync'
+  }, [location.pathname, groups])
+
+  const commands = useMemo<Command[]>(() => {
+    const navCommands: Command[] = groups.flatMap((g) =>
+      g.items.map((i) => ({
+        id: `nav-${i.to}`,
+        label: i.label,
+        group: 'Navigatie',
+        icon: <i.icon className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />,
+        perform: () => navigate(i.to),
+      }))
+    )
+    const actions: Command[] = []
+    if (isAdmin) {
+      actions.push(
+        { id: 'act-shift', label: 'Nieuwe dienst plannen', hint: 'Rooster', group: 'Acties', icon: <CalendarPlus className="h-4 w-4" style={{ color: 'var(--brand-strong)' }} />, perform: () => navigate('/app/rooster') },
+        { id: 'act-invite', label: 'Medewerker uitnodigen', hint: 'Medewerkers', group: 'Acties', icon: <UserPlus className="h-4 w-4" style={{ color: 'var(--brand-strong)' }} />, perform: () => navigate('/app/medewerkers') },
+        { id: 'act-billing', label: 'Abonnement beheren', group: 'Acties', icon: <CreditCard className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />, perform: () => navigate('/app/abonnement') },
+      )
+    }
+    actions.push(
+      { id: 'act-profile', label: 'Profiel', group: 'Acties', icon: <UserCircle className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />, perform: () => navigate('/app/profiel') },
+      { id: 'act-theme', label: theme === 'dark' ? 'Licht thema' : 'Donker thema', group: 'Acties', icon: theme === 'dark' ? <Sun className="h-4 w-4" style={{ color: 'var(--text-muted)' }} /> : <Moon className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />, perform: toggleTheme },
+      { id: 'act-signout', label: 'Uitloggen', group: 'Acties', icon: <LogOut className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />, perform: handleSignOut },
+    )
+    return [...navCommands, ...actions]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groups, isAdmin, theme])
+
+  const NavSection = ({ onNavigate, showLabels }: { onNavigate?: () => void; showLabels: boolean }) => (
+    <div className="space-y-4">
+      {groups.map((group) => (
+        <div key={group.label}>
+          {showLabels && (
+            <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-white/35">
+              {group.label}
+            </p>
+          )}
+          <div className="space-y-0.5">
+            {group.items.map(({ to, label, icon: Icon, badge }) => {
+              const count = badgeCount(badge)
+              return (
+                <NavLink
+                  key={to}
+                  to={to}
+                  onClick={onNavigate}
+                  title={!showLabels ? label : undefined}
+                  className={({ isActive }) =>
+                    cn(
+                      'group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150',
+                      !showLabels && 'justify-center px-0',
+                      isActive
+                        ? 'bg-white/10 text-white shadow-sm before:absolute before:left-0 before:top-1/2 before:h-6 before:w-1 before:-translate-y-1/2 before:rounded-r-full before:bg-brand-500'
+                        : 'text-white/55 hover:bg-white/8 hover:text-white/95'
+                    )
+                  }
+                >
+                  <span className="relative shrink-0">
+                    <Icon className="h-[18px] w-[18px]" />
+                    {!showLabels && count > 0 && (
+                      <span className="absolute -right-2 -top-2">
+                        <CountBadge count={count} tone="danger" />
+                      </span>
+                    )}
+                  </span>
+                  {showLabels && <span className="flex-1">{label}</span>}
+                  {showLabels && count > 0 && <CountBadge count={count} tone="danger" />}
+                </NavLink>
               )
-            }
-          >
-            <Icon className="h-[17px] w-[17px] shrink-0" />
-            <span className="flex-1">{label}</span>
-          </NavLink>
-        ))}
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   )
 
-  const SidebarContent = () => (
-    <>
-      <div className="flex items-center gap-3 px-4 py-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-500 shadow-lg shadow-brand-500/30">
-          <Zap className="h-4 w-4 text-white" />
-        </div>
+  const SidebarBrand = ({ compact }: { compact: boolean }) => (
+    <div className={cn('flex items-center gap-3 px-4 py-5', compact && 'justify-center px-0')} style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-500 shadow-lg shadow-brand-500/30">
+        <Zap className="h-5 w-5 text-white" />
+      </div>
+      {!compact && (
         <div className="min-w-0">
-          <p className="font-bold text-white tracking-tight text-sm">ShiftSync</p>
+          <p className="text-sm font-bold tracking-tight text-white">ShiftSync</p>
           <p className="truncate text-xs text-white/40">{organization?.name ?? '...'}</p>
         </div>
-      </div>
-
-      <nav className="flex-1 px-3 py-3">
-        <NavItems />
-      </nav>
-
-      <div className="px-3 py-3 space-y-0.5" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-        {isAdmin && (
-          <NavLink
-            to="/app/abonnement"
-            onClick={() => setMobileOpen(false)}
-            className={({ isActive }) =>
-              cn(
-                'flex items-center justify-between rounded-xl px-3 py-2.5 text-sm transition-all',
-                isActive
-                  ? 'bg-brand-500/15 text-brand-400'
-                  : 'text-white/50 hover:bg-white/8 hover:text-white/90'
-              )
-            }
-          >
-            <div className="flex items-center gap-3">
-              <CreditCard className="h-[17px] w-[17px] shrink-0" />
-              <span className="font-medium">Abonnement</span>
-            </div>
-            <span className="text-xs font-semibold text-brand-400">
-              {planLabel}
-            </span>
-          </NavLink>
-        )}
-
-        <div className="flex items-center gap-3 rounded-xl px-3 py-2.5">
-          <UserAvatar name={profile?.full_name} avatarUrl={profile?.avatar_url} size="sm" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-white/80">{profile?.full_name}</p>
-            <p className="text-xs text-white/40">{isAdmin ? 'Manager' : 'Medewerker'}</p>
-          </div>
-        </div>
-
-        <button
-          onClick={handleSignOut}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white/40 transition-all hover:bg-white/8 hover:text-white/80"
-        >
-          <LogOut className="h-[17px] w-[17px] shrink-0" />
-          Uitloggen
-        </button>
-      </div>
-    </>
+      )}
+    </div>
   )
 
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--surface-page)' }}>
-      <a href="#main-content" className="skip-link">
-        Naar hoofdinhoud
-      </a>
+      <a href="#main-content" className="skip-link">Naar hoofdinhoud</a>
+
+      {/* Desktop sidebar */}
       <aside
-        className="app-sidebar hidden w-60 shrink-0 flex-col lg:flex"
+        className={cn('app-sidebar hidden shrink-0 flex-col transition-[width] duration-200 lg:flex', collapsed ? 'w-[76px]' : 'w-64')}
         style={{ background: 'var(--sidebar-bg)', borderRight: '1px solid rgba(255,255,255,0.06)' }}
       >
-        <SidebarContent />
+        <SidebarBrand compact={collapsed} />
+        <nav className={cn('flex-1 overflow-y-auto py-4', collapsed ? 'px-2' : 'px-3')}>
+          <NavSection showLabels={!collapsed} />
+        </nav>
+        <div className={cn('py-3', collapsed ? 'px-2' : 'px-3')} style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          <button
+            type="button"
+            onClick={() => setCollapsed((v) => !v)}
+            className={cn('flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white/45 transition-all hover:bg-white/8 hover:text-white/85', collapsed && 'justify-center px-0')}
+            title={collapsed ? 'Menu uitklappen' : 'Menu inklappen'}
+          >
+            {collapsed ? <PanelLeftOpen className="h-[18px] w-[18px]" /> : <PanelLeftClose className="h-[18px] w-[18px]" />}
+            {!collapsed && <span>Inklappen</span>}
+          </button>
+        </div>
       </aside>
 
+      {/* Mobile drawer */}
       {mobileOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
-          onClick={() => setMobileOpen(false)}
-          aria-hidden="true"
-        />
+        <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden" onClick={() => setMobileOpen(false)} aria-hidden="true" />
       )}
-
       <aside
         ref={mobileNavRef}
         className={cn(
-          'app-sidebar fixed inset-y-0 left-0 z-50 flex w-60 flex-col transition-transform duration-200 lg:hidden',
+          'app-sidebar fixed inset-y-0 left-0 z-50 flex w-64 flex-col transition-transform duration-200 lg:hidden',
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}
         style={{ background: 'var(--sidebar-bg)', borderRight: '1px solid rgba(255,255,255,0.06)' }}
@@ -255,84 +303,102 @@ export function AppLayout() {
       >
         <div className="flex items-center justify-between px-4 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-500">
-              <Zap className="h-3.5 w-3.5 text-white" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500">
+              <Zap className="h-4 w-4 text-white" />
             </div>
-            <span className="font-bold text-white text-sm">ShiftSync</span>
+            <span className="text-sm font-bold text-white">ShiftSync</span>
           </div>
-          <button
-            type="button"
-            onClick={() => setMobileOpen(false)}
-            className="rounded-lg p-1 text-white/40 hover:text-white/80"
-            aria-label="Menu sluiten"
-          >
+          <button type="button" onClick={() => setMobileOpen(false)} className="rounded-lg p-1 text-white/40 hover:text-white/80" aria-label="Menu sluiten">
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="flex flex-1 flex-col overflow-y-auto">
-          <SidebarContent />
+        <nav className="flex-1 overflow-y-auto px-3 py-4">
+          <NavSection showLabels onNavigate={() => setMobileOpen(false)} />
+        </nav>
+        <div className="px-3 py-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          <button onClick={handleSignOut} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white/45 transition-all hover:bg-white/8 hover:text-white/85">
+            <LogOut className="h-[18px] w-[18px]" />
+            Uitloggen
+          </button>
         </div>
       </aside>
 
+      {/* Main column */}
       <div className="flex min-w-0 flex-1 flex-col">
         <header
-          className="sticky top-0 z-30 flex items-center gap-3 px-4 py-3 lg:px-6 backdrop-blur-md"
-          style={{
-            background: 'var(--topbar-bg)',
-            borderBottom: '1px solid var(--topbar-border)',
-          }}
+          className="sticky top-0 z-30 flex items-center gap-3 px-4 py-3 backdrop-blur-md lg:px-6"
+          style={{ background: 'var(--topbar-bg)', borderBottom: '1px solid var(--topbar-border)' }}
         >
           <button
             type="button"
-            className="rounded-xl p-2 transition-colors hover:bg-black/5 dark:hover:bg-white/5 lg:hidden"
+            className="press rounded-xl p-2 transition-colors hover:bg-black/5 dark:hover:bg-white/5 lg:hidden"
             style={{ color: 'var(--text-muted)' }}
             onClick={() => setMobileOpen(true)}
             aria-label="Menu openen"
-            aria-expanded={mobileOpen}
           >
-            <Menu className="h-4 w-4" />
+            <Menu className="h-5 w-5" />
           </button>
-          <div className="flex flex-1 items-center justify-between min-w-0">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="hidden sm:block">
-                <UserAvatar name={profile?.full_name} avatarUrl={profile?.avatar_url} size="md" />
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                  {organization?.name}
-                </p>
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  {profile?.full_name}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {isAdmin && (
-                <Link
-                  to="/app/abonnement"
-                  className="hidden sm:flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-80"
-                  style={{ color: 'var(--text-muted)', border: '1px solid var(--border)' }}
-                >
-                  <span className={cn('h-1.5 w-1.5 rounded-full', isSubscribed ? 'bg-brand-500' : 'bg-[#94A3B8]')} />
-                  {planLabel}
-                </Link>
-              )}
-              <button
-                type="button"
-                onClick={toggleTheme}
-                className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-                style={{ color: 'var(--text-muted)', border: '1px solid var(--border)' }}
-                aria-label={theme === 'dark' ? 'Schakel naar licht thema' : 'Schakel naar donker thema'}
-              >
-                {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              </button>
-            </div>
+
+          <h1 className="shrink-0 text-base font-semibold lg:text-lg" style={{ color: 'var(--text-primary)' }}>
+            {currentTitle}
+          </h1>
+
+          {/* Global search → command palette */}
+          <button
+            type="button"
+            onClick={() => setPaletteOpen(true)}
+            className="press group ml-auto hidden items-center gap-2 rounded-xl px-3 py-2 text-sm transition-colors hover:bg-black/[0.03] dark:hover:bg-white/5 sm:flex"
+            style={{ color: 'var(--text-muted)', border: '1px solid var(--border)', minWidth: 220 }}
+          >
+            <Search className="h-4 w-4" />
+            <span className="flex-1 text-left">Zoeken...</span>
+            <span className="flex items-center gap-0.5">
+              <Kbd>⌘</Kbd>
+              <Kbd>K</Kbd>
+            </span>
+          </button>
+
+          <div className="ml-auto flex items-center gap-2 sm:ml-0">
+            <button
+              type="button"
+              onClick={() => setPaletteOpen(true)}
+              className="press flex h-9 w-9 items-center justify-center rounded-xl transition-colors hover:bg-black/5 dark:hover:bg-white/8 sm:hidden"
+              style={{ color: 'var(--text-muted)', border: '1px solid var(--border)' }}
+              aria-label="Zoeken"
+            >
+              <Search className="h-4 w-4" />
+            </button>
+
+            {isAdmin && <QuickAdd onNavigate={navigate} />}
+
+            <NotificationCenter attention={attention} />
+
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="press flex h-9 w-9 items-center justify-center rounded-xl transition-colors hover:bg-black/5 dark:hover:bg-white/8"
+              style={{ color: 'var(--text-muted)', border: '1px solid var(--border)' }}
+              aria-label={theme === 'dark' ? 'Licht thema' : 'Donker thema'}
+            >
+              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+
+            <UserMenu
+              name={profile?.full_name}
+              avatarUrl={profile?.avatar_url}
+              roleLabel={isAdmin ? 'Manager' : 'Medewerker'}
+              isAdmin={isAdmin}
+              planLabel={planLabel}
+              isSubscribed={isSubscribed}
+              onNavigate={navigate}
+              onSignOut={handleSignOut}
+            />
           </div>
         </header>
 
         <TrialBanner />
 
-        <main id="main-content" className={cn('flex-1 p-4 lg:p-6 print-page', !isAdmin && 'pb-20 lg:pb-6')}>
+        <main id="main-content" className={cn('print-page flex-1 p-4 lg:p-6', !isAdmin && 'pb-20 lg:pb-6')}>
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>
@@ -340,6 +406,149 @@ export function AppLayout() {
       </div>
 
       {!isAdmin && <MobileBottomNav onOpenMenu={() => setMobileOpen(true)} />}
+
+      <CommandMenu open={paletteOpen} onClose={() => setPaletteOpen(false)} commands={commands} />
     </div>
+  )
+}
+
+function QuickAdd({ onNavigate }: { onNavigate: (to: string) => void }) {
+  return (
+    <Popover
+      width={240}
+      trigger={({ toggle, ref, open }) => (
+        <button
+          ref={ref}
+          type="button"
+          onClick={toggle}
+          aria-expanded={open}
+          className="press hidden items-center gap-1.5 rounded-xl bg-brand-500 px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-brand-500/25 transition-colors hover:bg-brand-600 sm:flex"
+        >
+          <Plus className="h-4 w-4" />
+          Snel toevoegen
+          <ChevronDown className="h-3.5 w-3.5 opacity-80" />
+        </button>
+      )}
+    >
+      {({ close }) => (
+        <div className="p-1.5">
+          {[
+            { label: 'Nieuwe dienst', icon: CalendarPlus, to: '/app/rooster' },
+            { label: 'Medewerker uitnodigen', icon: UserPlus, to: '/app/medewerkers' },
+            { label: 'Maandplanner', icon: CalendarRange, to: '/app/maandplanner' },
+          ].map(({ label, icon: Icon, to }) => (
+            <button
+              key={to}
+              type="button"
+              onClick={() => { onNavigate(to); close() }}
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/8"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              <Icon className="h-4 w-4" style={{ color: 'var(--brand-strong)' }} />
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+    </Popover>
+  )
+}
+
+function UserMenu({
+  name,
+  avatarUrl,
+  roleLabel,
+  isAdmin,
+  planLabel,
+  isSubscribed,
+  onNavigate,
+  onSignOut,
+}: {
+  name?: string
+  avatarUrl?: string | null
+  roleLabel: string
+  isAdmin: boolean
+  planLabel: string
+  isSubscribed: boolean
+  onNavigate: (to: string) => void
+  onSignOut: () => void
+}) {
+  return (
+    <Popover
+      width={240}
+      trigger={({ toggle, ref, open }) => (
+        <button
+          ref={ref}
+          type="button"
+          onClick={toggle}
+          aria-expanded={open}
+          aria-label="Accountmenu"
+          className="press flex items-center gap-2 rounded-xl py-1 pl-1 pr-2 transition-colors hover:bg-black/5 dark:hover:bg-white/8"
+          style={{ border: '1px solid var(--border)' }}
+        >
+          <Avatar name={name} src={avatarUrl} size="sm" />
+          <ChevronDown className="hidden h-3.5 w-3.5 sm:block" style={{ color: 'var(--text-muted)' }} />
+        </button>
+      )}
+    >
+      {({ close }) => (
+        <div>
+          <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+            <Avatar name={name} src={avatarUrl} size="md" />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{name}</p>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{roleLabel}</p>
+            </div>
+          </div>
+          <div className="p-1.5">
+            <MenuButton icon={UserCircle} label="Profiel" onClick={() => { onNavigate('/app/profiel'); close() }} />
+            {isAdmin && (
+              <MenuButton
+                icon={CreditCard}
+                label="Abonnement"
+                trailing={<span className="text-xs font-semibold" style={{ color: isSubscribed ? 'var(--color-success)' : 'var(--brand-strong)' }}>{planLabel}</span>}
+                onClick={() => { onNavigate('/app/abonnement'); close() }}
+              />
+            )}
+            {isAdmin && <MenuButton icon={Settings} label="Instellingen" onClick={() => { onNavigate('/app/instellingen'); close() }} />}
+          </div>
+          <div className="p-1.5" style={{ borderTop: '1px solid var(--border)' }}>
+            <button
+              type="button"
+              onClick={() => { onSignOut(); close() }}
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-red-500 transition-colors hover:bg-red-500/10"
+            >
+              <LogOut className="h-4 w-4" />
+              Uitloggen
+            </button>
+          </div>
+        </div>
+      )}
+    </Popover>
+  )
+}
+
+function MenuButton({
+  icon: Icon,
+  label,
+  trailing,
+  onClick,
+}: {
+  icon: typeof UserCircle
+  label: string
+  trailing?: React.ReactNode
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/8"
+      style={{ color: 'var(--text-primary)' }}
+    >
+      <Icon className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />
+      <span className="flex-1">{label}</span>
+      {trailing}
+    </button>
   )
 }

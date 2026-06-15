@@ -2,8 +2,8 @@ import { cn } from '../../lib/utils'
 import { forwardRef, type ButtonHTMLAttributes } from 'react'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
-  size?: 'sm' | 'md' | 'lg'
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'success'
+  size?: 'xs' | 'sm' | 'md' | 'lg'
   loading?: boolean
 }
 
@@ -21,21 +21,26 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 ) {
   const variants = {
     primary:
-      'bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700 shadow-sm shadow-brand-500/20',
+      'bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700 shadow-sm shadow-brand-500/25',
     secondary:
-      'text-[var(--text-primary)] border hover:opacity-90',
+      'text-[var(--text-primary)] border hover:bg-black/[0.03] dark:hover:bg-white/[0.04]',
     danger:
-      'bg-red-500 text-white hover:bg-red-600 active:bg-red-700 shadow-sm shadow-red-500/20',
+      'bg-red-500 text-white hover:bg-red-600 active:bg-red-700 shadow-sm shadow-red-500/25',
+    success:
+      'text-white shadow-sm',
     ghost:
-      'hover:opacity-90',
+      'hover:bg-black/5 dark:hover:bg-white/8',
   }
   const variantStyle =
     variant === 'secondary'
       ? { background: 'var(--surface-card)', borderColor: 'var(--border-strong)' }
       : variant === 'ghost'
         ? { color: 'var(--text-secondary)', background: 'transparent' }
-        : undefined
+        : variant === 'success'
+          ? { background: 'var(--color-success)' }
+          : undefined
   const sizes = {
+    xs: 'px-2.5 py-1 text-xs font-semibold rounded-lg gap-1',
     sm: 'px-3 py-1.5 text-xs font-semibold rounded-lg',
     md: 'px-4 py-2 text-sm font-semibold rounded-xl',
     lg: 'px-6 py-3 text-sm font-semibold rounded-xl',
@@ -45,8 +50,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     <button
       ref={ref}
       className={cn(
-        'inline-flex items-center justify-center gap-1.5 transition-colors duration-150',
-        'disabled:opacity-40 disabled:cursor-not-allowed',
+        'press focus-ring inline-flex items-center justify-center gap-1.5 transition-all duration-150',
+        'disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none',
         variants[variant],
         sizes[size],
         className

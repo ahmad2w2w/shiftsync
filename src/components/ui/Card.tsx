@@ -1,14 +1,48 @@
 import { cn } from '../../lib/utils'
 import type { HTMLAttributes, ReactNode } from 'react'
 
-export function Card({ className, children, style, ...props }: HTMLAttributes<HTMLDivElement> & { children: ReactNode }) {
+interface CardProps extends HTMLAttributes<HTMLDivElement> {
+  children: ReactNode
+  elevation?: 0 | 1 | 2 | 3
+  interactive?: boolean
+  padding?: 'none' | 'sm' | 'md' | 'lg'
+}
+
+const elevationVar: Record<number, string> = {
+  0: 'none',
+  1: 'var(--shadow-1)',
+  2: 'var(--shadow-2)',
+  3: 'var(--shadow-3)',
+}
+
+const paddingClass = {
+  none: '',
+  sm: 'p-3',
+  md: 'p-5',
+  lg: 'p-6',
+}
+
+export function Card({
+  className,
+  children,
+  style,
+  elevation = 1,
+  interactive,
+  padding = 'md',
+  ...props
+}: CardProps) {
   return (
     <div
-      className={cn('rounded-2xl p-5', className)}
+      className={cn(
+        'rounded-2xl',
+        paddingClass[padding],
+        interactive && 'press hover-lift cursor-pointer transition-shadow hover:shadow-[var(--shadow-3)]',
+        className
+      )}
       style={{
         background: 'var(--surface-card)',
         border: '1px solid var(--border)',
-        boxShadow: 'var(--shadow-card)',
+        boxShadow: elevationVar[elevation],
         ...style,
       }}
       {...props}

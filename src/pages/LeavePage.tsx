@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { useOrganization } from '../context/OrganizationContext'
 import { useToast } from '../context/ToastContext'
 import { getLeaveRequests, createLeaveRequest, updateLeaveStatus } from '../services/leave'
-import { notifyLeaveDecision } from '../services/notifications'
+import { notifyLeaveDecision, createNotification } from '../services/notifications'
 import type { LeaveRequest } from '../types/database'
 import { Card, CardHeader } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
@@ -68,6 +68,16 @@ export function LeavePage() {
     setReviewingId(r.id)
     try {
       await updateLeaveStatus(r.id, 'approved')
+      if (organization) {
+        await createNotification({
+          organizationId: organization.id,
+          userId: r.user_id,
+          type: 'leave_approved',
+          title: 'Verlof goedgekeurd',
+          body: `${formatDate(r.start_date)} – ${formatDate(r.end_date)} is goedgekeurd.`,
+          link: '/app/verlof',
+        }).catch(() => {})
+      }
       if (hasFeature('notifications') && r.user) {
         const user = r.user as { email?: string; full_name?: string }
         if (user.email) {
@@ -84,6 +94,16 @@ export function LeavePage() {
     setReviewingId(r.id)
     try {
       await updateLeaveStatus(r.id, 'rejected', rejectNote || undefined)
+      if (organization) {
+        await createNotification({
+          organizationId: organization.id,
+          userId: r.user_id,
+          type: 'leave_rejected',
+          title: 'Verlof afgewezen',
+          body: `${formatDate(r.start_date)} – ${formatDate(r.end_date)}${rejectNote ? ` · ${rejectNote}` : ''}`,
+          link: '/app/verlof',
+        }).catch(() => {})
+      }
       if (hasFeature('notifications') && r.user) {
         const user = r.user as { email?: string; full_name?: string }
         if (user.email) {

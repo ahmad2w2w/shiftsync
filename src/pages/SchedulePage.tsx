@@ -23,7 +23,7 @@ import { getAllAvailabilityForPeriod } from '../services/availability'
 import { getAllUsers } from '../services/users'
 import { getLeaveRequests } from '../services/leave'
 import { publishMonth } from '../services/monthPlanner'
-import { notifyShiftPublished } from '../services/notifications'
+import { notifyShiftPublished, createNotificationsBulk } from '../services/notifications'
 import { DayPlannerPopover } from '../components/schedule/DayPlannerPopover'
 import { DayPlannerPanel } from '../components/schedule/DayPlannerPanel'
 import { WeekView } from '../components/schedule/WeekView'
@@ -225,11 +225,23 @@ export function SchedulePage() {
     setPublishing(true)
     try {
       await publishMonth(anchor, profile.id, organization.id)
+      const label = monthLabel(anchor)
+      const assignedIds = new Set(shifts.filter((s) => s.user_id).map((s) => s.user_id))
+      const recipients = employees.filter((e) => assignedIds.has(e.id))
+      // In-app notifications (core)
+      await createNotificationsBulk(
+        recipients.map((e) => ({
+          organizationId: organization.id,
+          userId: e.id,
+          type: 'shift_published' as const,
+          title: 'Rooster gepubliceerd',
+          body: `Je rooster voor ${label} staat klaar.`,
+          link: '/app/rooster',
+        }))
+      ).catch(() => {})
+      // Email notifications (optional feature)
       if (hasFeature('notifications')) {
-        const label = monthLabel(anchor)
-        const assignedIds = new Set(shifts.filter((s) => s.user_id).map((s) => s.user_id))
-        const recipients = employees.filter((e) => assignedIds.has(e.id) && e.email)
-        await Promise.all(recipients.map((e) => notifyShiftPublished(e.email, e.full_name, label)))
+        await Promise.all(recipients.filter((e) => e.email).map((e) => notifyShiftPublished(e.email, e.full_name, label)))
       }
       await reload()
       setPublishModalOpen(false)

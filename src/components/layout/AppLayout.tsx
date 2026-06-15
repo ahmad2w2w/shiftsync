@@ -27,6 +27,7 @@ import {
   PanelLeftOpen,
   UserPlus,
   CalendarPlus,
+  Megaphone,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useOrganization } from '../../context/OrganizationContext'
@@ -35,6 +36,7 @@ import { ErrorBoundary } from '../ErrorBoundary'
 import { MobileBottomNav } from './MobileBottomNav'
 import { TrialBanner } from './TrialBanner'
 import { NotificationCenter } from './NotificationCenter'
+import { AnnouncementModal } from './AnnouncementModal'
 import { Avatar } from '../ui/Avatar'
 import { CountBadge } from '../ui/Badge'
 import { Kbd } from '../ui/Kbd'
@@ -112,6 +114,7 @@ export function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COLLAPSE_KEY) === '1')
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [announceOpen, setAnnounceOpen] = useState(false)
   const mobileNavRef = useRef<HTMLElement>(null)
 
   const groups = isAdmin ? managerGroups : employeeGroups
@@ -186,6 +189,7 @@ export function AppLayout() {
       actions.push(
         { id: 'act-shift', label: 'Nieuwe dienst plannen', hint: 'Rooster', group: 'Acties', icon: <CalendarPlus className="h-4 w-4" style={{ color: 'var(--brand-strong)' }} />, perform: () => navigate('/app/rooster') },
         { id: 'act-invite', label: 'Medewerker uitnodigen', hint: 'Medewerkers', group: 'Acties', icon: <UserPlus className="h-4 w-4" style={{ color: 'var(--brand-strong)' }} />, perform: () => navigate('/app/medewerkers') },
+        { id: 'act-announce', label: 'Mededeling versturen', hint: 'Team', group: 'Acties', icon: <Megaphone className="h-4 w-4" style={{ color: 'var(--brand-strong)' }} />, perform: () => setAnnounceOpen(true) },
         { id: 'act-billing', label: 'Abonnement beheren', group: 'Acties', icon: <CreditCard className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />, perform: () => navigate('/app/abonnement') },
       )
     }
@@ -369,9 +373,9 @@ export function AppLayout() {
               <Search className="h-4 w-4" />
             </button>
 
-            {isAdmin && <QuickAdd onNavigate={navigate} />}
+            {isAdmin && <QuickAdd onNavigate={navigate} onAnnounce={() => setAnnounceOpen(true)} />}
 
-            <NotificationCenter attention={attention} />
+            <NotificationCenter />
 
             <button
               type="button"
@@ -408,11 +412,12 @@ export function AppLayout() {
       {!isAdmin && <MobileBottomNav onOpenMenu={() => setMobileOpen(true)} />}
 
       <CommandMenu open={paletteOpen} onClose={() => setPaletteOpen(false)} commands={commands} />
+      {isAdmin && <AnnouncementModal open={announceOpen} onClose={() => setAnnounceOpen(false)} />}
     </div>
   )
 }
 
-function QuickAdd({ onNavigate }: { onNavigate: (to: string) => void }) {
+function QuickAdd({ onNavigate, onAnnounce }: { onNavigate: (to: string) => void; onAnnounce: () => void }) {
   return (
     <Popover
       width={240}
@@ -433,14 +438,15 @@ function QuickAdd({ onNavigate }: { onNavigate: (to: string) => void }) {
       {({ close }) => (
         <div className="p-1.5">
           {[
-            { label: 'Nieuwe dienst', icon: CalendarPlus, to: '/app/rooster' },
-            { label: 'Medewerker uitnodigen', icon: UserPlus, to: '/app/medewerkers' },
-            { label: 'Maandplanner', icon: CalendarRange, to: '/app/maandplanner' },
-          ].map(({ label, icon: Icon, to }) => (
+            { label: 'Nieuwe dienst', icon: CalendarPlus, action: () => onNavigate('/app/rooster') },
+            { label: 'Medewerker uitnodigen', icon: UserPlus, action: () => onNavigate('/app/medewerkers') },
+            { label: 'Maandplanner', icon: CalendarRange, action: () => onNavigate('/app/maandplanner') },
+            { label: 'Mededeling versturen', icon: Megaphone, action: onAnnounce },
+          ].map(({ label, icon: Icon, action }) => (
             <button
-              key={to}
+              key={label}
               type="button"
-              onClick={() => { onNavigate(to); close() }}
+              onClick={() => { action(); close() }}
               className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/8"
               style={{ color: 'var(--text-primary)' }}
             >

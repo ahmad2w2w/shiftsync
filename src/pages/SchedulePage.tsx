@@ -393,6 +393,8 @@ export function SchedulePage() {
                 monthAnchor={anchor}
                 selectedDate={selectedDate}
                 onSelectDate={(d) => { if (isSameMonth(new Date(d + 'T12:00:00'), anchor)) setSelectedDate(d) }}
+                getDayMeta={dayMeta}
+                getDayShifts={getDayShifts}
               />
             </div>
             <div className="rounded-2xl p-5" style={{ background: 'var(--surface-card)', border: '1px solid var(--border)' }}>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Users,
@@ -56,11 +56,13 @@ export function ManagerDashboard() {
   const { start: weekStart, end: weekEnd, days: weekDays } = useMemo(() => getWeekRange(new Date()), [])
   const weekKey = format(weekStart, 'yyyy-MM-dd')
 
-  useEffect(() => {
+  const loadDashboard = useCallback(async () => {
+    setLoading(true)
+    setLoadError(false)
     const todayStart = new Date(today + 'T00:00:00')
     const todayEnd = new Date(today + 'T23:59:59')
 
-    Promise.all([
+    const results = await Promise.allSettled([
       getAllUsers(),
       getPendingLeaveCount(),
       getActiveSickCount(),
@@ -69,21 +71,47 @@ export function ManagerDashboard() {
       getShiftsForPeriod(weekStart, weekEnd),
       getShiftsForPeriod(todayStart, todayEnd),
     ])
-      .then(([users, pending, sick, swaps, clocks, week, todayS]) => {
-        setEmployees(users.filter((u) => u.role === 'employee'))
-        setPendingLeave(pending)
-        setActiveSick(sick)
-        setOpenSwaps(swaps)
-        setActiveClocks(clocks.filter((c) => !c.clock_out))
-        setWeekShifts(week)
-        setTodayShifts(todayS)
-      })
-      .catch(() => {
-        setLoadError(true)
-        toast.error('Dashboard laden mislukt')
-      })
-      .finally(() => setLoading(false))
-  }, [today, weekKey]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    const pick = <T,>(i: number, fallback: T): T =>
+      results[i].status === 'fulfilled' ? (results[i] as PromiseFulfilledResult<T>).value : fallback
+
+    const failed = results
+      .map((r, i) => (r.status === 'rejected' ? i : -1))
+      .filter((i) => i >= 0)
+    if (failed.length) {
+      console.warn('Dashboard: sommige gegevens niet geladen', failed.map((i) => results[i]))
+    }
+
+    const users = pick<User[]>(0, [])
+    const pending = pick(1, 0)
+    const sick = pick(2, 0)
+    const swaps = pick(3, 0)
+    const clocks = pick<ClockRecord[]>(4, [])
+    const week = pick<Shift[]>(5, [])
+    const todayS = pick<Shift[]>(6, [])
+
+    // Alleen volledige fout als kerngegevens (users + shifts) beide falen
+    const coreFailed = results[0].status === 'rejected' && results[5].status === 'rejected'
+    if (coreFailed) {
+      setLoadError(true)
+      toast.error('Dashboard laden mislukt')
+    } else if (failed.length) {
+      toast.info('Dashboard deels geladen — sommige statistieken ontbreken')
+    }
+
+    setEmployees(users.filter((u) => u.role === 'employee'))
+    setPendingLeave(pending)
+    setActiveSick(sick)
+    setOpenSwaps(swaps)
+    setActiveClocks(clocks.filter((c) => !c.clock_out))
+    setWeekShifts(week)
+    setTodayShifts(todayS)
+    setLoading(false)
+  }, [today, weekStart, weekEnd, toast])
+
+  useEffect(() => {
+    loadDashboard()
+  }, [loadDashboard, weekKey])
 
   const rateById = useMemo(() => {
     const m = new Map<string, number>()
@@ -139,13 +167,7 @@ export function ManagerDashboard() {
   if (loading) return <DashboardSkeleton />
   if (loadError) {
     return (
-      <LoadError
-        onRetry={() => {
-          setLoadError(false)
-          setLoading(true)
-          window.location.reload()
-        }}
-      />
+      <LoadError onRetry={loadDashboard} />
     )
   }
 

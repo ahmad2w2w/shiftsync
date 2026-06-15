@@ -137,7 +137,7 @@ export function MonthCalendar({
                 </div>
               )}
 
-              {inMonth && dayShifts.length === 0 && onSelectDate && (
+              {inMonth && dayShifts.length === 0 && onSelectDate && getDayMeta && (
                 <span
                   className="mt-auto pt-2 text-[10px] font-medium opacity-0 transition-opacity group-hover:opacity-100"
                   style={{ color: 'var(--brand-strong)' }}

@@ -3,7 +3,7 @@ import { FileText, FileSpreadsheet } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useOrganization } from '../context/OrganizationContext'
 import { useToast } from '../context/ToastContext'
-import { getClockRecords, sumHours } from '../services/clock'
+import { getClockRecords, sumHours, setClockApproval } from '../services/clock'
 import { getAllUsers } from '../services/users'
 import { exportHoursToPDF, exportHoursToExcel } from '../services/export'
 import type { ClockRecord, User } from '../types/database'
@@ -15,8 +15,9 @@ import { PageHeader } from '../components/ui/PageHeader'
 import { DashboardSkeleton } from '../components/ui/Skeleton'
 import { LoadError } from '../components/ui/LoadError'
 import { Table, TableHead, TableHeaderCell, TableBody, TableRow, TableCell } from '../components/ui/Table'
+import { Badge } from '../components/ui/Badge'
 import { EmptyState } from '../components/ui/EmptyState'
-import { Timer } from 'lucide-react'
+import { Timer, Check } from 'lucide-react'
 import { Select } from '../components/ui/Select'
 import { formatDateTime, addWeeks, subWeeks, addMonths, subMonths, weekLabel, monthLabel } from '../lib/utils'
 
@@ -61,6 +62,16 @@ export function HoursPage() {
 
   const total = sumHours(records)
   const periodLabel = range === 'week' ? weekLabel(anchor) : monthLabel(anchor)
+
+  const toggleApproval = async (record: ClockRecord) => {
+    if (!profile) return
+    try {
+      await setClockApproval(record.id, !record.approved, profile.id)
+      setRecords((prev) => prev.map((r) => (r.id === record.id ? { ...r, approved: !record.approved } : r)))
+    } catch {
+      toast.error('Goedkeuren mislukt')
+    }
+  }
   const canExport = hasFeature('export')
 
   const exportUsers = isAdmin
@@ -172,15 +183,32 @@ export function HoursPage() {
                 <TableHeaderCell>Ingeklokt</TableHeaderCell>
                 <TableHeaderCell>Uitgeklokt</TableHeaderCell>
                 <TableHeaderCell>Uren</TableHeaderCell>
+                <TableHeaderCell>Status</TableHeaderCell>
+                {isAdmin && <TableHeaderCell>Actie</TableHeaderCell>}
               </TableHead>
               <TableBody>
                 {records.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell>{formatDateTime(r.clock_in)}</TableCell>
                     <TableCell>{r.clock_out ? formatDateTime(r.clock_out) : '—'}</TableCell>
-                    <TableCell className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                      {r.total_hours ?? '—'}
+                    <TableCell className="font-semibold tabular-nums" style={{ color: 'var(--text-primary)' }}>
+                      {r.corrected_hours ?? r.total_hours ?? '—'}
                     </TableCell>
+                    <TableCell>
+                      {r.approved ? <Badge variant="approved" dot>Goedgekeurd</Badge> : <Badge variant="pending" dot>Te beoordelen</Badge>}
+                    </TableCell>
+                    {isAdmin && (
+                      <TableCell>
+                        <Button
+                          size="xs"
+                          variant={r.approved ? 'secondary' : 'success'}
+                          onClick={() => toggleApproval(r)}
+                          disabled={!r.clock_out}
+                        >
+                          {r.approved ? 'Intrekken' : <><Check className="h-3.5 w-3.5" /> Goedkeuren</>}
+                        </Button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>

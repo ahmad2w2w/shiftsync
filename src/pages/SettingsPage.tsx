@@ -21,6 +21,7 @@ import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
 import { DashboardSkeleton } from '../components/ui/Skeleton'
 import { LoadError } from '../components/ui/LoadError'
+import { OrgStructure } from '../components/settings/OrgStructure'
 
 export function SettingsPage() {
   const { isAdmin } = useAuth()
@@ -156,6 +157,8 @@ export function SettingsPage() {
           <Input label="Abonnement" value={organization?.plan?.toUpperCase() ?? ''} readOnly />
         </div>
       </Card>
+
+      <OrgStructure />
 
       <Card>
         <CardHeader

@@ -177,7 +177,33 @@ export async function getAllClockRecords(limit = 50): Promise<ClockRecord[]> {
 }
 
 export function sumHours(records: ClockRecord[]): number {
-  return records.reduce((sum, r) => sum + (r.total_hours ?? 0), 0)
+  return records.reduce((sum, r) => sum + (r.corrected_hours ?? r.total_hours ?? 0), 0)
+}
+
+export async function setClockApproval(recordId: string, approved: boolean, approverId: string): Promise<ClockRecord> {
+  const { data, error } = await supabase
+    .from('clock_records')
+    .update({
+      approved,
+      approved_by: approved ? approverId : null,
+      approved_at: approved ? new Date().toISOString() : null,
+    })
+    .eq('id', recordId)
+    .select()
+    .single()
+  if (error) throw error
+  return data as ClockRecord
+}
+
+export async function setClockCorrection(recordId: string, hours: number | null, note: string | null): Promise<ClockRecord> {
+  const { data, error } = await supabase
+    .from('clock_records')
+    .update({ corrected_hours: hours, correction_note: note })
+    .eq('id', recordId)
+    .select()
+    .single()
+  if (error) throw error
+  return data as ClockRecord
 }
 
 export function isOnBreak(record: ClockRecord): boolean {

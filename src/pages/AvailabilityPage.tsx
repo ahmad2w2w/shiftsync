@@ -7,9 +7,12 @@ import {
   getAllAvailabilityForPeriod,
   setDayAvailable,
   removeDayAvailable,
+  upsertAvailability,
 } from '../services/availability'
+import { useToast } from '../context/ToastContext'
 import type { Availability } from '../types/database'
 import { Card, CardHeader } from '../components/ui/Card'
+import { Button } from '../components/ui/Button'
 import { PageHeader } from '../components/ui/PageHeader'
 import { DashboardSkeleton } from '../components/ui/Skeleton'
 import { LoadError } from '../components/ui/LoadError'
@@ -28,6 +31,7 @@ function toDateStr(d: Date) {
 export function AvailabilityPage() {
   const { profile, isAdmin } = useAuth()
   const { organization } = useOrganization()
+  const toast = useToast()
   const [monthAnchor, setMonthAnchor]   = useState(new Date())
   const [entries, setEntries]           = useState<Availability[]>([])
   const [allEntries, setAllEntries]     = useState<(Availability & { users?: { full_name: string } })[]>([])
@@ -63,6 +67,23 @@ export function AvailabilityPage() {
   }, [monthAnchor, profile, isAdmin])
 
   const isAvailable = (date: string) => entries.some((e) => e.date === date)
+
+  const saveWindow = async (entry: Availability, from: string | null, until: string | null) => {
+    try {
+      await upsertAvailability({
+        user_id: userId,
+        date: entry.date,
+        organization_id: organization!.id,
+        available_from: from,
+        available_until: until,
+        note: entry.note ?? null,
+      })
+      await load()
+      toast.success('Tijden opgeslagen')
+    } catch {
+      toast.error('Opslaan mislukt')
+    }
+  }
 
   const toggleDay = async (date: string) => {
     const d = new Date(date + 'T12:00:00')
@@ -326,11 +347,78 @@ export function AvailabilityPage() {
 
           <p className="mt-5 flex items-start gap-1.5 text-xs" style={{ color: 'var(--text-disabled)' }}>
             <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            Je geeft hier alleen aan of je in principe beschikbaar bent.
+            Je geeft hier aan of je in principe beschikbaar bent. Stel hieronder eventueel een tijdvak per dag in.
             Je manager plant de exacte tijden in via het Rooster.
           </p>
         </Card>
       )}
+
+      {!loading && !loadError && entries.length > 0 && (
+        <Card>
+          <CardHeader
+            title="Tijdvakken per dag"
+            subtitle="Laat leeg voor 'hele dag', of geef door tussen welke tijden je kunt"
+          />
+          <ul className="space-y-2">
+            {[...entries]
+              .sort((a, b) => a.date.localeCompare(b.date))
+              .map((entry) => (
+                <AvailWindowRow key={entry.id} entry={entry} onSave={saveWindow} />
+              ))}
+          </ul>
+        </Card>
+      )}
     </div>
+  )
+}
+
+function AvailWindowRow({
+  entry,
+  onSave,
+}: {
+  entry: Availability
+  onSave: (entry: Availability, from: string | null, until: string | null) => Promise<void>
+}) {
+  const [from, setFrom] = useState(entry.available_from?.slice(0, 5) ?? '')
+  const [until, setUntil] = useState(entry.available_until?.slice(0, 5) ?? '')
+  const [saving, setSaving] = useState(false)
+  const dirty = (entry.available_from?.slice(0, 5) ?? '') !== from || (entry.available_until?.slice(0, 5) ?? '') !== until
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await onSave(entry, from || null, until || null)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <li className="flex flex-wrap items-center gap-3 rounded-xl px-4 py-3" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
+      <span className="w-32 shrink-0 text-sm font-medium capitalize" style={{ color: 'var(--text-primary)' }}>
+        {format(new Date(entry.date + 'T12:00:00'), 'EEE d MMM', { locale: nl })}
+      </span>
+      <div className="flex items-center gap-2">
+        <input
+          type="time"
+          value={from}
+          onChange={(e) => setFrom(e.target.value)}
+          className="rounded-lg px-2 py-1.5 text-sm"
+          style={{ background: 'var(--surface-card)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+        />
+        <span style={{ color: 'var(--text-muted)' }}>–</span>
+        <input
+          type="time"
+          value={until}
+          onChange={(e) => setUntil(e.target.value)}
+          className="rounded-lg px-2 py-1.5 text-sm"
+          style={{ background: 'var(--surface-card)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+        />
+      </div>
+      {!from && !until && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Hele dag</span>}
+      {dirty && (
+        <Button size="xs" onClick={handleSave} loading={saving} className="ml-auto">Opslaan</Button>
+      )}
+    </li>
   )
 }

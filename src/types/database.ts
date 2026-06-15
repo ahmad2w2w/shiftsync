@@ -52,8 +52,73 @@ export interface User {
   role: UserRole
   hourly_rate: number
   primary_position?: string
+  department_id?: string | null
   avatar_url?: string | null
   created_at: string
+}
+
+export interface Department {
+  id: string
+  organization_id: string
+  name: string
+  color: string
+  created_at: string
+}
+
+export interface Position {
+  id: string
+  organization_id: string
+  name: string
+  color: string
+  department_id: string | null
+  sort_order: number
+  created_at: string
+}
+
+export type NotificationType =
+  | 'info'
+  | 'shift_published'
+  | 'shift_assigned'
+  | 'leave_approved'
+  | 'leave_rejected'
+  | 'leave_requested'
+  | 'swap_requested'
+  | 'sick_reported'
+  | 'announcement'
+
+export interface AppNotification {
+  id: string
+  organization_id: string
+  user_id: string
+  type: NotificationType
+  title: string
+  body: string | null
+  link: string | null
+  read_at: string | null
+  created_at: string
+}
+
+export interface LeaveType {
+  id: string
+  organization_id: string
+  name: string
+  color: string
+  paid: boolean
+  default_balance_hours: number
+  created_at: string
+}
+
+export interface LeaveBalance {
+  id: string
+  organization_id: string
+  user_id: string
+  leave_type_id: string
+  year: number
+  balance_hours: number
+  used_hours: number
+  created_at: string
+  leave_type?: LeaveType
+  user?: User
 }
 
 export interface Availability {
@@ -79,6 +144,7 @@ export interface Shift {
   published: boolean
   template_id: string | null
   slot_index: number
+  department_id?: string | null
   created_at: string
   user?: User | null
 }
@@ -120,6 +186,11 @@ export interface ClockRecord {
   clock_out_lat?: number | null
   clock_out_lng?: number | null
   location_id?: string | null
+  approved?: boolean
+  approved_by?: string | null
+  approved_at?: string | null
+  corrected_hours?: number | null
+  correction_note?: string | null
   created_at: string
   user?: User
 }

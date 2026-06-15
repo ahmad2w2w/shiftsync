@@ -55,8 +55,8 @@
   --border-strong:   #CBD5E1;
   --border-input:    #CBD5E1;
 
-  --shadow-card:     0 1px 3px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);
-  --shadow-card-md:  0 4px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04);
+  --shadow-card:     0 0 0 1px rgba(0,0,0,0.06);
+  --shadow-card-md:  0 1px 4px rgba(0,0,0,0.06);
 
   /* Badge colors – light */
   --badge-pending-bg:   #FEF3C7; --badge-pending-text:   #92400E; --badge-pending-ring:   #F59E0B;

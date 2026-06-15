@@ -1,12 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   Plus,
-  Users,
-  CalendarPlus,
-  Trash2,
-  Sparkles,
-  UserPlus,
-  Copy,
+  MoreHorizontal,
 } from 'lucide-react'
 import { subDays, format } from 'date-fns'
 import type { Shift, Availability, User } from '../../types/database'
@@ -17,8 +12,8 @@ import { useConfirm } from '../../context/ConfirmContext'
 import { Button } from '../ui/Button'
 import { formatDayHeader } from '../calendar/MonthCalendar'
 import { ScheduleShiftCard } from './ScheduleShiftCard'
-import { ScheduleTimeline } from './ScheduleTimeline'
 import { ShiftEditorForm, type ShiftFormValues } from './ShiftEditorForm'
+import { Dropdown } from '../ui/Dropdown'
 import { DEFAULT_SHIFT_END, DEFAULT_SHIFT_START, DEFAULT_SHIFT_POSITION, cn } from '../../lib/utils'
 
 export { DEFAULT_SHIFT_START, DEFAULT_SHIFT_END }
@@ -29,6 +24,7 @@ interface DayScheduleEditorProps {
   shifts: Shift[]
   employees: User[]
   onSaved: () => Promise<void>
+  onAddShift?: () => void
 }
 
 const emptyForm = (): ShiftFormValues => ({
@@ -44,6 +40,7 @@ export function DayScheduleEditor({
   shifts,
   employees,
   onSaved,
+  onAddShift,
 }: DayScheduleEditorProps) {
   const { organization } = useOrganization()
   const toast = useToast()
@@ -56,7 +53,6 @@ export function DayScheduleEditor({
 
   const dayShifts = useMemo(() => shifts.filter((s) => s.date === date), [shifts, date])
   const assigned = useMemo(() => dayShifts.filter((s) => s.user_id), [dayShifts])
-  const openShifts = useMemo(() => dayShifts.filter((s) => !s.user_id), [dayShifts])
   const assignedIds = useMemo(() => new Set(assigned.map((s) => s.user_id)), [assigned])
 
   const availableToday = useMemo(
@@ -284,69 +280,51 @@ export function DayScheduleEditor({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold capitalize" style={{ color: 'var(--text-primary)' }}>
+          <h2 className="text-lg font-semibold capitalize" style={{ color: 'var(--text-primary)' }}>
             {formatDayHeader(date)}
           </h2>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {[
-              { label: 'Ingepland', value: assigned.length, color: '#3B82F6' },
-              { label: 'Open', value: openShifts.length, color: '#F59E0B' },
-              { label: 'Beschikbaar', value: availableToday.length, color: '#10B981' },
-            ].map(({ label, value, color }) => (
-              <span
-                key={label}
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
-                style={{ background: `${color}18`, color, border: `1px solid ${color}33` }}
-              >
-                {value} {label.toLowerCase()}
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            {dayShifts.length === 0 ? 'Geen diensten' : `${dayShifts.length} dienst${dayShifts.length !== 1 ? 'en' : ''}`}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {onAddShift ? (
+            <Button size="sm" onClick={onAddShift}>
+              <Plus className="h-4 w-4" /> Toevoegen
+            </Button>
+          ) : (
+            <Button size="sm" onClick={() => { setAdding('open'); setEditId(null); setForm(emptyForm()) }}>
+              <Plus className="h-4 w-4" /> Toevoegen
+            </Button>
+          )}
+          <Dropdown
+            align="right"
+            aria-label="Dag acties"
+            trigger={
+              <span className="inline-flex rounded-lg p-2" style={{ border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
+                <MoreHorizontal className="h-4 w-4" />
               </span>
-            ))}
-          </div>
+            }
+            items={[
+              { id: 'plan', label: 'Plan beschikbaren', onClick: planAllAvailable, disabled: unscheduledAvailable.length === 0 },
+              { id: 'copy', label: 'Kopieer gisteren', onClick: copyFromYesterday },
+              { id: 'clear', label: 'Dag leegmaken', onClick: clearDay, disabled: dayShifts.length === 0, danger: true },
+            ]}
+          />
         </div>
-
-        <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="secondary" onClick={() => { setAdding('open'); setEditId(null); setForm(emptyForm()) }} loading={busy === 'create'}>
-            <CalendarPlus className="h-4 w-4" /> Open dienst
-          </Button>
-          <Button size="sm" onClick={() => { setAdding('employee'); setEditId(null); setForm({ ...emptyForm(), user_id: employeeOptions[0]?.id ?? null }) }}>
-            <UserPlus className="h-4 w-4" /> Medewerker
-          </Button>
-        </div>
-      </div>
-
-      {dayShifts.length > 0 && <ScheduleTimeline shifts={dayShifts} />}
-
-      {/* Quick actions bar */}
-      <div
-        className="flex flex-wrap gap-2 rounded-2xl p-3"
-        style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}
-      >
-        <Button size="sm" variant="ghost" onClick={planAllAvailable} disabled={unscheduledAvailable.length === 0} loading={busy === 'all'}>
-          <Sparkles className="h-4 w-4" /> Plan alle beschikbaren
-        </Button>
-        <Button size="sm" variant="ghost" onClick={copyFromYesterday} loading={busy === 'copy'}>
-          <Copy className="h-4 w-4" /> Kopieer gisteren
-        </Button>
-        <Button size="sm" variant="ghost" onClick={clearDay} disabled={dayShifts.length === 0} loading={busy === 'clear'}>
-          <Trash2 className="h-4 w-4" /> Leeg dag
-        </Button>
       </div>
 
       {(adding === 'open' || adding === 'employee') && (
-        <div className="rounded-2xl p-4 animate-slide-up" style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border)' }}>
-          <p className="mb-3 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-            {adding === 'open' ? 'Nieuwe open dienst' : 'Medewerker inplannen'}
-          </p>
+        <div className="rounded-xl p-4" style={{ border: '1px solid var(--border)', background: 'var(--surface-subtle)' }}>
           <ShiftEditorForm
             values={form}
             onChange={(p) => setForm((f) => ({ ...f, ...p }))}
             onSubmit={handleCreate}
             onCancel={() => setAdding(null)}
-            submitLabel="Toevoegen"
+            submitLabel="Opslaan"
             loading={busy === 'create'}
             employees={employeeOptions}
             showEmployee={adding === 'employee'}
@@ -354,17 +332,14 @@ export function DayScheduleEditor({
         </div>
       )}
 
-      {/* Open shifts */}
-      {openShifts.length > 0 && (
-        <section className="space-y-3">
-          <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider" style={{ color: '#F59E0B' }}>
-            <CalendarPlus className="h-4 w-4" /> Open diensten ({openShifts.length})
-          </h3>
-          <ul className="space-y-2">
-            {openShifts.map((shift) => (
+      {dayShifts.length > 0 ? (
+        <ul className="space-y-2">
+          {[...dayShifts]
+            .sort((a, b) => a.start_time.localeCompare(b.start_time))
+            .map((shift) => (
               <li key={shift.id}>
                 {editId === shift.id ? (
-                  <div className="rounded-2xl p-4" style={{ border: '1px solid var(--border)', background: 'var(--surface-subtle)' }}>
+                  <div className="rounded-xl p-4" style={{ border: '1px solid var(--border)', background: 'var(--surface-subtle)' }}>
                     <ShiftEditorForm
                       values={form}
                       onChange={(p) => setForm((f) => ({ ...f, ...p }))}
@@ -386,78 +361,20 @@ export function DayScheduleEditor({
                 )}
               </li>
             ))}
-          </ul>
-        </section>
+        </ul>
+      ) : !adding && (
+        <p className="py-6 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+          Nog geen diensten op deze dag.
+        </p>
       )}
 
-      {/* Assigned shifts */}
-      <section className="space-y-3">
-        <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--brand-strong)' }}>
-          <Users className="h-4 w-4" /> Ingeplande diensten ({assigned.length})
-        </h3>
-        {assigned.length === 0 ? (
-          <div
-            className="rounded-2xl px-6 py-10 text-center"
-            style={{ border: '1px dashed var(--border-strong)', background: 'var(--surface-subtle)' }}
-          >
-            <Users className="mx-auto mb-2 h-8 w-8" style={{ color: 'var(--text-disabled)' }} />
-            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Nog niemand ingepland</p>
-            <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>Voeg medewerkers toe of plan beschikbaren in.</p>
-          </div>
-        ) : (
-          <ul className="space-y-2">
-            {assigned
-              .sort((a, b) => a.start_time.localeCompare(b.start_time))
-              .map((shift) => (
-                <li key={shift.id}>
-                  {editId === shift.id ? (
-                    <div className="rounded-2xl p-4" style={{ border: '1px solid var(--border)', background: 'var(--surface-subtle)' }}>
-                      <ShiftEditorForm
-                        values={form}
-                        onChange={(p) => setForm((f) => ({ ...f, ...p }))}
-                        onSubmit={() => handleUpdate(shift.id)}
-                        onCancel={() => setEditId(null)}
-                        loading={busy === `edit-${shift.id}`}
-                        employees={employeeOptions}
-                        showEmployee
-                      />
-                    </div>
-                  ) : (
-                    <ScheduleShiftCard
-                      shift={shift}
-                      admin
-                      onEdit={() => startEdit(shift)}
-                      onDelete={() => handleDelete(shift)}
-                      onTogglePublish={() => handleTogglePublish(shift)}
-                    />
-                  )}
-                </li>
-              ))}
-          </ul>
-        )}
-      </section>
-
-      {/* Available pool */}
       {unscheduledAvailable.length > 0 && (
-        <section className="space-y-3">
-          <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider" style={{ color: '#10B981' }}>
-            <Plus className="h-4 w-4" /> Beschikbaar — kies medewerker
-          </h3>
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            Klik op een naam om tijden en functie in te stellen voordat je inplant.
+        <div className="space-y-2 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
+          <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+            Beschikbaar ({unscheduledAvailable.length})
           </p>
-
           {quickAddUserId && (
-            <div
-              className="rounded-2xl p-4 animate-slide-up"
-              style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)' }}
-            >
-              <p className="mb-3 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                Dienst instellen voor{' '}
-                {employeeOptions.find((e) => e.id === quickAddUserId)?.full_name ??
-                  unscheduledAvailable.find((a) => a.user_id === quickAddUserId)?.users?.full_name ??
-                  'medewerker'}
-              </p>
+            <div className="rounded-xl p-4" style={{ border: '1px solid var(--border)', background: 'var(--surface-subtle)' }}>
               <ShiftEditorForm
                 values={form}
                 onChange={(p) => setForm((f) => ({ ...f, ...p }))}
@@ -470,47 +387,26 @@ export function DayScheduleEditor({
               />
             </div>
           )}
-
           <div className="flex flex-wrap gap-2">
-            {unscheduledAvailable.map((a) => {
-              const active = quickAddUserId === a.user_id
-              return (
-                <button
-                  key={a.id}
-                  type="button"
-                  disabled={!!busy && !active}
-                  onClick={() => startQuickAdd(a.user_id)}
-                  className={cn(
-                    'rounded-xl px-4 py-2.5 text-sm font-medium transition-all hover:-translate-y-0.5 hover:shadow-sm disabled:opacity-50',
-                    active && 'ring-2 ring-emerald-500'
-                  )}
-                  style={{
-                    background: active ? 'rgba(16,185,129,0.18)' : 'rgba(16,185,129,0.1)',
-                    border: `1px solid ${active ? 'rgba(16,185,129,0.45)' : 'rgba(16,185,129,0.25)'}`,
-                    color: '#059669',
-                  }}
-                >
-                  {a.users?.full_name ?? 'Medewerker'}
-                </button>
-              )
-            })}
-          </div>
-        </section>
-      )}
-
-      {availableToday.length === 0 && assigned.length === 0 && openShifts.length === 0 && !adding && (
-        <div
-          className="flex flex-col items-center justify-center rounded-2xl px-6 py-14 text-center"
-          style={{ border: '1px dashed var(--border-strong)', background: 'var(--surface-subtle)' }}
-        >
-          <Users className="mb-3 h-10 w-10" style={{ color: 'var(--text-disabled)' }} />
-          <p className="font-medium" style={{ color: 'var(--text-primary)' }}>Lege dag</p>
-          <p className="mt-1 max-w-sm text-sm" style={{ color: 'var(--text-muted)' }}>
-            Nog geen beschikbaarheid of diensten. Voeg handmatig een open dienst of medewerker toe.
-          </p>
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
-            <Button size="sm" onClick={() => setAdding('open')}>Open dienst</Button>
-            <Button size="sm" variant="secondary" onClick={() => setAdding('employee')}>Medewerker</Button>
+            {unscheduledAvailable.map((a) => (
+              <button
+                key={a.id}
+                type="button"
+                disabled={!!busy}
+                onClick={() => startQuickAdd(a.user_id)}
+                className={cn(
+                  'rounded-lg px-3 py-1.5 text-sm transition-colors',
+                  quickAddUserId === a.user_id && 'ring-2 ring-brand-500'
+                )}
+                style={{
+                  background: 'var(--surface-subtle)',
+                  border: '1px solid var(--border)',
+                  color: 'var(--text-primary)',
+                }}
+              >
+                {a.users?.full_name ?? 'Medewerker'}
+              </button>
+            ))}
           </div>
         </div>
       )}

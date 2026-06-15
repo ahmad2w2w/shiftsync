@@ -14,7 +14,6 @@ import {
   Users,
   Send,
   Wand2,
-  ArrowLeft,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useOrganization } from '../context/OrganizationContext'
@@ -29,7 +28,6 @@ import {
   getScheduleMonth,
   generateMonthFromTemplates,
   previewMonthGeneration,
-  removeDuplicateOpenShifts,
   assignShift,
   publishMonth,
   plannerStats,
@@ -45,7 +43,6 @@ import { LoadError } from '../components/ui/LoadError'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
-import { Badge } from '../components/ui/Badge'
 import { EmployeePool } from '../components/planner/EmployeePool'
 import { MonthPlannerGrid } from '../components/planner/MonthPlannerGrid'
 import { TemplateManager } from '../components/planner/TemplateManager'
@@ -53,8 +50,7 @@ import { AvailabilityOverview } from '../components/planner/AvailabilityOverview
 import { PlannerDetailPanel } from '../components/planner/PlannerDetailPanel'
 import { MobilePlannerList } from '../components/planner/MobilePlannerList'
 import { PageHeader } from '../components/ui/PageHeader'
-import { ScheduleExportButton } from '../components/schedule/ScheduleExportButton'
-import { ClearMonthScheduleButton } from '../components/schedule/ClearMonthScheduleButton'
+import { ScheduleActionsMenu } from '../components/schedule/ScheduleActionsMenu'
 import { getMonthRange, addMonths, subMonths, monthLabel, cn } from '../lib/utils'
 
 type Tab = 'planner' | 'templates' | 'availability'
@@ -217,23 +213,6 @@ export function MonthPlannerPage() {
     }
   }
 
-  const handleCleanupDuplicates = async () => {
-    setBusy('cleanup')
-    try {
-      const removed = await removeDuplicateOpenShifts(start, end)
-      await fetchPlannerData()
-      toast.success(
-        removed > 0
-          ? `${removed} dubbele open diensten verwijderd.`
-          : 'Geen dubbele open diensten gevonden.'
-      )
-    } catch {
-      setActionError('Opschonen mislukt.')
-    } finally {
-      setBusy('')
-    }
-  }
-
   const handlePublish = async () => {
     const ok = await confirm({
       title: 'Maandrooster publiceren?',
@@ -305,27 +284,28 @@ export function MonthPlannerPage() {
     <div className="flex min-h-[calc(100vh-8rem)] flex-col gap-4">
       <PageHeader
         title="Maandplanner"
-        subtitle={`Slimme planning · ${monthLabel(monthAnchor)}`}
+        subtitle={monthLabel(monthAnchor)}
         action={
           <div className="flex flex-wrap items-center gap-2">
-            <ScheduleExportButton
-              shifts={shifts}
-              employees={employees}
-              organizationName={organization?.name ?? 'ShiftSync'}
-              periodLabel={monthLabel(monthAnchor)}
-              periodStart={start}
-              periodEnd={end}
-            />
             <Link to="/app/rooster">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4" /> Rooster
-              </Button>
+              <Button variant="ghost" size="sm">← Rooster</Button>
             </Link>
             <MonthNavigator
               monthAnchor={monthAnchor}
               onPrev={() => setMonthAnchor(subMonths(monthAnchor, 1))}
               onNext={() => setMonthAnchor(addMonths(monthAnchor, 1))}
               onToday={() => setMonthAnchor(new Date())}
+            />
+            <ScheduleActionsMenu
+              shifts={shifts}
+              employees={employees}
+              organizationName={organization?.name ?? 'ShiftSync'}
+              periodLabel={monthLabel(monthAnchor)}
+              periodStart={start}
+              periodEnd={end}
+              monthAnchor={monthAnchor}
+              onPublish={handlePublish}
+              onCleared={fetchPlannerData}
             />
           </div>
         }
@@ -341,34 +321,26 @@ export function MonthPlannerPage() {
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-2">
-        {tabs.map(({ id, label, icon: Icon }) => (
+      <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+        {stats.filled} ingepland · {stats.open} open · {publishedAt ? 'Gepubliceerd' : 'Concept'}
+      </p>
+
+      <div className="flex flex-wrap gap-2">
+        {tabs.map(({ id, label }) => (
           <button
             key={id}
             type="button"
             onClick={() => setTab(id)}
-            className={cn(
-              'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors',
+            className={cn('rounded-lg px-3 py-1.5 text-sm font-medium transition-colors')}
+            style={
               tab === id
-                ? 'bg-brand-600 text-white shadow-sm'
-                : 'hover:opacity-80'
-            )}
-            style={tab !== id ? { color: 'var(--text-muted)' } : undefined}
+                ? { background: 'var(--brand-muted)', color: 'var(--brand-strong)' }
+                : { color: 'var(--text-muted)' }
+            }
           >
-            <Icon className="h-4 w-4" />
             {label}
           </button>
         ))}
-      </div>
-
-      <div className="flex flex-wrap gap-3">
-        <Badge variant={stats.open > 0 ? 'pending' : 'approved'}>
-          {stats.open} open
-        </Badge>
-        <Badge variant="scheduled">{stats.filled} ingevuld</Badge>
-        <Badge variant={publishedAt ? 'approved' : 'pending'}>
-          {publishedAt ? 'Gepubliceerd' : 'Concept'}
-        </Badge>
       </div>
 
       {tab === 'templates' && (
@@ -381,41 +353,21 @@ export function MonthPlannerPage() {
 
       {tab === 'planner' && (
         <>
-          <Card className="flex flex-wrap items-center gap-3 p-4">
-            <Button
-              onClick={handleGenerate}
-              loading={busy === 'generate'}
-              variant="secondary"
-            >
-              <Wand2 className="h-4 w-4" />
-              Genereer maand uit templates
+          <Card className="flex flex-wrap items-center gap-2 p-3">
+            <Button onClick={handleGenerate} loading={busy === 'generate'} variant="secondary" size="sm">
+              <Wand2 className="h-4 w-4" /> Genereer uit templates
             </Button>
-            <Button
-              onClick={handleCleanupDuplicates}
-              loading={busy === 'cleanup'}
-              variant="ghost"
-              size="sm"
-            >
-              Verwijder dubbele open diensten
+            <Button onClick={handlePublish} loading={busy === 'publish'} size="sm">
+              <Send className="h-4 w-4" /> Publiceren
             </Button>
-            <Button onClick={handlePublish} loading={busy === 'publish'}>
-              <Send className="h-4 w-4" />
-              Publiceer maandrooster
-            </Button>
-            <ClearMonthScheduleButton
-              monthAnchor={monthAnchor}
-              shiftCount={shifts.length}
-              periodLabel={monthLabel(monthAnchor)}
-              onCleared={fetchPlannerData}
-            />
-            <label className="ml-auto flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-              Max uren/medewerker:
+            <label className="ml-auto flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+              Max uren:
               <input
                 type="number"
                 value={maxHours}
                 onChange={(e) => setMaxHours(Number(e.target.value))}
-                className="w-16 rounded-lg px-2 py-1 outline-none"
-                style={{ background: 'var(--surface-input)', color: 'var(--text-primary)', border: '1px solid var(--border-input)' }}
+                className="w-14 rounded-lg px-2 py-1 outline-none"
+                style={{ background: 'var(--surface-input)', border: '1px solid var(--border-input)' }}
               />
             </label>
           </Card>

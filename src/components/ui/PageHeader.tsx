@@ -9,16 +9,16 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, subtitle, action, badge }: PageHeaderProps) {
   return (
-    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2.5">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-[1.625rem]" style={{ color: 'var(--text-primary)' }}>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
             {title}
           </h1>
           {badge}
         </div>
         {subtitle && (
-          <p className="mt-1.5 text-sm sm:text-[0.9375rem]" style={{ color: 'var(--text-muted)' }}>
+          <p className="mt-0.5 text-sm" style={{ color: 'var(--text-muted)' }}>
             {subtitle}
           </p>
         )}

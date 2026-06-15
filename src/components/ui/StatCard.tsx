@@ -24,34 +24,19 @@ export function StatCard({ label, value, icon: Icon, to, trend, accent = 'brand'
   const style = accentStyles[accent]
   const inner = (
     <div
-      className={cn(
-        'group rounded-2xl p-5 transition-all duration-200',
-        to && 'hover:-translate-y-0.5 hover:shadow-md cursor-pointer'
-      )}
+      className={cn('rounded-xl p-4', to && 'cursor-pointer hover:opacity-90')}
       style={{
         background: 'var(--surface-card)',
         border: '1px solid var(--border)',
-        boxShadow: 'var(--shadow-card)',
       }}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-            {label}
-          </p>
-          <p className="mt-2 text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-            {value}
-          </p>
-          {trend && (
-            <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>{trend}</p>
-          )}
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</p>
+          <p className="mt-1 text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>{value}</p>
+          {trend && <p className="mt-0.5 text-xs" style={{ color: 'var(--text-muted)' }}>{trend}</p>}
         </div>
-        <div
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105"
-          style={{ background: style.bg }}
-        >
-          <Icon className="h-5 w-5" style={{ color: style.icon }} />
-        </div>
+        <Icon className="h-5 w-5 shrink-0 opacity-40" style={{ color: style.icon }} />
       </div>
     </div>
   )

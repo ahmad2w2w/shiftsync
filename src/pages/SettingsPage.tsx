@@ -11,6 +11,7 @@ import {
   deleteLocation,
   updateOrganizationGps,
 } from '../services/locations'
+import { updateOrganizationName } from '../services/organization'
 import type { Location } from '../types/database'
 import { PageHeader } from '../components/ui/PageHeader'
 import { HelpTooltip } from '../components/ui/Tooltip'
@@ -34,6 +35,8 @@ export function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [gpsEnabled, setGpsEnabled] = useState(false)
   const [gpsRadius, setGpsRadius] = useState('100')
+  const [orgName, setOrgName] = useState('')
+  const [savingName, setSavingName] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [locForm, setLocForm] = useState({
     name: '',
@@ -55,6 +58,7 @@ export function SettingsPage() {
       setLocations(locs)
       setGpsEnabled(organization.gps_enabled ?? false)
       setGpsRadius(String(organization.gps_radius_meters ?? 100))
+      setOrgName(organization.name ?? '')
     } catch {
       setLoadError(true)
     } finally {
@@ -67,6 +71,21 @@ export function SettingsPage() {
   }, [organization?.id])
 
   if (!isAdmin) return <Navigate to="/app/dashboard" replace />
+
+  const handleNameSave = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!organization || !orgName.trim()) return
+    setSavingName(true)
+    try {
+      await updateOrganizationName(organization.id, orgName.trim())
+      await refreshOrganization()
+      toast.success('Bedrijfsnaam opgeslagen')
+    } catch {
+      toast.error('Opslaan mislukt')
+    } finally {
+      setSavingName(false)
+    }
+  }
 
   const handleGpsSave = async (e: FormEvent) => {
     e.preventDefault()
@@ -151,11 +170,16 @@ export function SettingsPage() {
       <PageHeader title="Instellingen" subtitle="Bedrijfsgegevens, locaties en GPS-inklokken" />
 
       <Card>
-        <CardHeader title="Bedrijfsgegevens" />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input label="Bedrijfsnaam" value={organization?.name ?? ''} readOnly />
+        <CardHeader title="Bedrijfsgegevens" subtitle="Pas je organisatienaam aan" />
+        <form onSubmit={handleNameSave} className="grid gap-4 sm:grid-cols-2">
+          <Input label="Bedrijfsnaam" value={orgName} onChange={(e) => setOrgName(e.target.value)} required />
           <Input label="Abonnement" value={organization?.plan?.toUpperCase() ?? ''} readOnly />
-        </div>
+          <div className="sm:col-span-2">
+            <Button type="submit" loading={savingName} disabled={!orgName.trim() || orgName.trim() === organization?.name}>
+              Naam opslaan
+            </Button>
+          </div>
+        </form>
       </Card>
 
       <OrgStructure />

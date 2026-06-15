@@ -1,6 +1,7 @@
 import { format, isToday } from 'date-fns'
 import { nl } from 'date-fns/locale'
-import { cn, getCalendarGrid, isSameMonth } from '../../lib/utils'
+import { cn, getCalendarGrid, getPositionColor, isSameMonth } from '../../lib/utils'
+import type { Shift } from '../../types/database'
 
 const WEEKDAYS = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo']
 
@@ -14,9 +15,9 @@ interface MonthCalendarProps {
   monthAnchor: Date
   selectedDate?: string | null
   onSelectDate?: (dateStr: string) => void
-  renderDay?: (dateStr: string, inMonth: boolean) => React.ReactNode
   hasMarker?: (dateStr: string) => boolean
   getDayMeta?: (dateStr: string) => DayMeta | undefined
+  getDayShifts?: (dateStr: string) => Shift[]
   size?: 'default' | 'large'
 }
 
@@ -24,135 +25,120 @@ export function MonthCalendar({
   monthAnchor,
   selectedDate,
   onSelectDate,
-  renderDay,
-  hasMarker,
   getDayMeta,
-  size = 'default',
+  getDayShifts,
 }: MonthCalendarProps) {
   const grid = getCalendarGrid(monthAnchor)
-  const large = size === 'large'
 
   return (
     <div className="w-full">
-      <div className="w-full">
-        <div className={cn('mb-2 grid grid-cols-7', large ? 'gap-2 sm:gap-3' : 'gap-1.5')}>
-          {WEEKDAYS.map((d) => (
-            <div
-              key={d}
-              className={cn('py-1 text-center font-semibold uppercase tracking-wider', large ? 'text-xs' : 'text-[10px]')}
-              style={{ color: 'var(--text-muted)' }}
+      <div className={cn('mb-3 grid grid-cols-7 gap-2 sm:gap-3')}>
+        {WEEKDAYS.map((d) => (
+          <div
+            key={d}
+            className="py-2 text-center text-xs font-semibold uppercase tracking-widest"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            {d}
+          </div>
+        ))}
+      </div>
+
+      <div className={cn('grid grid-cols-7 gap-2 sm:gap-3')}>
+        {grid.map((day) => {
+          const dateStr = format(day, 'yyyy-MM-dd')
+          const inMonth = isSameMonth(day, monthAnchor)
+          const selected = selectedDate === dateStr
+          const today = isToday(day)
+          const meta = getDayMeta?.(dateStr)
+          const dayShifts = getDayShifts?.(dateStr) ?? []
+          const total = (meta?.filled ?? 0) + (meta?.open ?? 0)
+
+          return (
+            <button
+              key={dateStr}
+              type="button"
+              disabled={!inMonth || !onSelectDate}
+              onClick={() => onSelectDate?.(dateStr)}
+              className={cn(
+                'group relative flex min-h-[88px] w-full flex-col rounded-2xl p-3 text-left transition-all duration-200 sm:min-h-[104px] sm:p-4',
+                inMonth && onSelectDate && 'cursor-pointer',
+                !inMonth && 'pointer-events-none opacity-20',
+                selected && 'scale-[1.02] z-10',
+                !selected && inMonth && onSelectDate && 'hover:scale-[1.01]'
+              )}
+              style={{
+                background: selected
+                  ? 'linear-gradient(145deg, rgba(59,130,246,0.14) 0%, rgba(59,130,246,0.04) 100%)'
+                  : today
+                    ? 'rgba(59,130,246,0.04)'
+                    : 'var(--surface-subtle)',
+                border: selected
+                  ? '2px solid rgba(59,130,246,0.5)'
+                  : today
+                    ? '1px solid rgba(59,130,246,0.25)'
+                    : '1px solid var(--border)',
+                boxShadow: selected ? '0 4px 20px rgba(59,130,246,0.15)' : undefined,
+              }}
             >
-              {d}
-            </div>
-          ))}
-        </div>
-
-        <div className={cn('grid grid-cols-7', large ? 'gap-2 sm:gap-3' : 'gap-1.5')}>
-          {grid.map((day) => {
-            const dateStr = format(day, 'yyyy-MM-dd')
-            const inMonth = isSameMonth(day, monthAnchor)
-            const selected = selectedDate === dateStr
-            const today = isToday(day)
-            const marker = hasMarker?.(dateStr)
-            const meta = getDayMeta?.(dateStr)
-            const total = (meta?.filled ?? 0) + (meta?.open ?? 0)
-
-            let cellBg = 'transparent'
-            if (inMonth && meta && total > 0) {
-              const intensity = Math.min(total / 5, 1)
-              cellBg = `rgba(59,130,246,${0.04 + intensity * 0.12})`
-            } else if (inMonth && meta?.available) {
-              cellBg = 'rgba(16,185,129,0.06)'
-            }
-
-            return (
-              <button
-                key={dateStr}
-                type="button"
-                disabled={!inMonth || !onSelectDate}
-                onClick={() => onSelectDate?.(dateStr)}
-                className={cn(
-                  'relative flex w-full flex-col rounded-xl text-left transition-colors',
-                  large
-                    ? 'aspect-[4/3] min-h-[100px] p-3 sm:aspect-auto sm:min-h-[128px] sm:p-4 lg:min-h-[140px]'
-                    : 'min-h-[80px] p-2 sm:min-h-[92px]',
-                  inMonth && onSelectDate && 'hover:bg-black/[0.02]',
-                  inMonth
-                    ? selected
-                      ? 'ring-2 ring-brand-500 shadow-md'
-                      : today
-                        ? 'ring-1 ring-brand-500/40'
-                        : ''
-                    : 'opacity-25 pointer-events-none',
-                  !onSelectDate && inMonth && 'cursor-default'
-                )}
-                style={{
-                  background: selected ? 'rgba(59,130,246,0.12)' : cellBg,
-                  border: inMonth ? (selected ? '1px solid rgba(59,130,246,0.4)' : '1px solid var(--border)') : '1px solid transparent',
-                }}
-              >
-                <div className="flex items-center justify-between gap-1">
+              <div className="flex items-start justify-between">
+                <span
+                  className={cn(
+                    'flex h-8 w-8 items-center justify-center rounded-xl text-sm font-bold sm:h-9 sm:w-9',
+                    selected && 'bg-brand-600 text-white shadow-md shadow-brand-600/30',
+                    today && !selected && 'text-brand-600'
+                  )}
+                  style={!selected ? { color: 'var(--text-primary)' } : undefined}
+                >
+                  {format(day, 'd')}
+                </span>
+                {total > 0 && (
                   <span
-                    className={cn(
-                      'flex items-center justify-center rounded-full font-bold',
-                      large ? 'h-10 w-10 text-base sm:h-11 sm:w-11' : 'h-8 w-8 text-sm',
-                      selected && 'bg-brand-600 text-white shadow-sm',
-                      today && !selected && 'ring-2 ring-brand-500/30'
-                    )}
-                    style={!selected ? { color: inMonth ? 'var(--text-primary)' : 'var(--text-disabled)' } : {}}
+                    className="rounded-lg px-2 py-0.5 text-[10px] font-bold tabular-nums"
+                    style={{ background: 'rgba(59,130,246,0.12)', color: '#2563EB' }}
                   >
-                    {format(day, 'd')}
+                    {total}
                   </span>
-                  {meta && total > 0 && (
-                    <span
-                      className="rounded-full px-2 py-0.5 text-xs font-bold"
-                      style={{ background: 'rgba(59,130,246,0.15)', color: '#2563EB' }}
-                    >
-                      {total}
+                )}
+              </div>
+
+              {/* Shift preview bars */}
+              {inMonth && dayShifts.length > 0 && (
+                <div className="mt-auto flex flex-col gap-1 pt-2">
+                  {dayShifts.slice(0, 3).map((s) => {
+                    const c = getPositionColor(s.position)
+                    return (
+                      <div
+                        key={s.id}
+                        className="flex items-center gap-1.5 truncate rounded-md px-1.5 py-0.5 text-[10px] font-medium sm:text-[11px]"
+                        style={{ background: c.bg, color: c.text }}
+                      >
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: c.accent }} />
+                        <span className="truncate">
+                          {s.start_time.slice(0, 5)} {s.position}
+                        </span>
+                      </div>
+                    )
+                  })}
+                  {dayShifts.length > 3 && (
+                    <span className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>
+                      +{dayShifts.length - 3} meer
                     </span>
                   )}
                 </div>
+              )}
 
-                {inMonth && meta && (
-                  <div className="mt-auto space-y-1 pt-2">
-                    {meta.filled > 0 && (
-                      <div className="flex items-center gap-1.5 text-xs font-medium sm:text-sm" style={{ color: '#2563EB' }}>
-                        <span className="h-2 w-2 shrink-0 rounded-full bg-brand-500" />
-                        <span className="truncate">{meta.filled} ingepland</span>
-                      </div>
-                    )}
-                    {meta.open > 0 && (
-                      <div className="flex items-center gap-1.5 text-xs font-medium sm:text-sm" style={{ color: '#D97706' }}>
-                        <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />
-                        <span className="truncate">{meta.open} open</span>
-                      </div>
-                    )}
-                    {meta.available > 0 && (
-                      <div className="flex items-center gap-1.5 text-xs sm:text-sm" style={{ color: '#059669' }}>
-                        <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
-                        <span className="truncate">{meta.available} beschikbaar</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {marker && inMonth && !meta && !selected && (
-                  <span className="mt-auto h-1.5 w-1.5 rounded-full bg-brand-500" />
-                )}
-
-                {inMonth && renderDay?.(dateStr, inMonth)}
-              </button>
-            )
-          })}
-        </div>
-
-        {getDayMeta && (
-          <div className="mt-4 flex flex-wrap gap-4 text-xs" style={{ color: 'var(--text-muted)' }}>
-            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-brand-500" /> Ingepland</span>
-            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-amber-500" /> Open dienst</span>
-            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Beschikbaar</span>
-          </div>
-        )}
+              {inMonth && dayShifts.length === 0 && onSelectDate && (
+                <span
+                  className="mt-auto pt-2 text-[10px] font-medium opacity-0 transition-opacity group-hover:opacity-100"
+                  style={{ color: 'var(--brand-strong)' }}
+                >
+                  + Plannen
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
     </div>
   )

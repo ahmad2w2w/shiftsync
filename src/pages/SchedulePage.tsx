@@ -11,7 +11,7 @@ import { getAllUsers } from '../services/users'
 import { getLeaveRequests } from '../services/leave'
 import { publishMonth } from '../services/monthPlanner'
 import { notifyShiftPublished } from '../services/notifications'
-import { DayScheduleEditor } from '../components/schedule/DayScheduleEditor'
+import { DayPlannerPanel } from '../components/schedule/DayPlannerPanel'
 import { ShiftModal } from '../components/schedule/ShiftModal'
 import { PublishPreviewModal } from '../components/schedule/PublishPreviewModal'
 import { ScheduleActionsMenu } from '../components/schedule/ScheduleActionsMenu'
@@ -147,10 +147,18 @@ export function SchedulePage() {
   const dayMeta = useCallback(
     (dateStr: string) => {
       const day = shiftsByDate.get(dateStr) ?? []
-      const count = day.length
-      if (count === 0) return undefined
-      return { filled: day.filter((s) => s.user_id).length, open: day.filter((s) => !s.user_id).length, available: 0 }
+      if (day.length === 0) return undefined
+      return {
+        filled: day.filter((s) => s.user_id).length,
+        open: day.filter((s) => !s.user_id).length,
+        available: 0,
+      }
     },
+    [shiftsByDate]
+  )
+
+  const getDayShifts = useCallback(
+    (dateStr: string) => shiftsByDate.get(dateStr) ?? [],
     [shiftsByDate]
   )
 
@@ -161,7 +169,7 @@ export function SchedulePage() {
   if (loading) return <DashboardSkeleton />
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-5">
       <PageHeader
         title="Rooster"
         subtitle={isAdmin ? monthLabelStr : `Je diensten · ${monthLabelStr}`}
@@ -195,50 +203,41 @@ export function SchedulePage() {
         }
       />
 
-      {isAdmin && shifts.length > 0 && (
-        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-          {shifts.filter((s) => s.user_id).length} ingepland
-          {' · '}
-          {shifts.filter((s) => !s.user_id).length} open
-          {' · '}
-          {shifts.filter((s) => !s.published).length} concept
-        </p>
-      )}
+      <div className={cn('space-y-4 transition-opacity', refreshing && 'opacity-60')}>
+        <div
+          className="rounded-2xl p-4 sm:p-5"
+          style={{ background: 'var(--surface-card)', border: '1px solid var(--border)' }}
+        >
+          <MonthCalendar
+            size="large"
+            monthAnchor={monthAnchor}
+            selectedDate={selectedDate}
+            onSelectDate={(d) => {
+              if (isSameMonth(new Date(d + 'T12:00:00'), monthAnchor)) setSelectedDate(d)
+            }}
+            getDayMeta={isAdmin ? dayMeta : undefined}
+            getDayShifts={isAdmin ? getDayShifts : undefined}
+          />
+        </div>
 
-      <div
-        className={cn('rounded-xl p-3 sm:p-4 transition-opacity', refreshing && 'opacity-60')}
-        style={{ background: 'var(--surface-card)', border: '1px solid var(--border)' }}
-      >
-        <MonthCalendar
-          size="large"
-          monthAnchor={monthAnchor}
-          selectedDate={selectedDate}
-          onSelectDate={(d) => {
-            if (isSameMonth(new Date(d + 'T12:00:00'), monthAnchor)) setSelectedDate(d)
-          }}
-          getDayMeta={isAdmin ? dayMeta : undefined}
-          hasMarker={(d) => (shiftsByDate.get(d)?.length ?? 0) > 0}
-        />
-      </div>
-
-      <div
-        className="rounded-xl p-4 sm:p-5"
-        style={{ background: 'var(--surface-card)', border: '1px solid var(--border)' }}
-      >
-        {!selectedDate ? (
-          <EmptyState icon={CalendarDays} title="Kies een dag" description="Klik op een datum in de kalender." />
-        ) : isAdmin ? (
-          <DayScheduleEditor
+        {isAdmin && selectedDate && (
+          <DayPlannerPanel
             date={selectedDate}
-            availability={availability}
             shifts={shifts}
             employees={employees}
+            availability={availability}
+            leave={leave}
             onSaved={reload}
-            onAddShift={() => openAddShift(selectedDate)}
+            onClose={() => setSelectedDate(null)}
           />
-        ) : (
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold capitalize" style={{ color: 'var(--text-primary)' }}>
+        )}
+
+        {!isAdmin && selectedDate && (
+          <div
+            className="rounded-2xl p-5"
+            style={{ background: 'var(--surface-card)', border: '1px solid var(--border)' }}
+          >
+            <h2 className="mb-4 text-lg font-semibold capitalize" style={{ color: 'var(--text-primary)' }}>
               {formatDayHeader(selectedDate)}
             </h2>
             {assignedShifts.length === 0 ? (
@@ -263,13 +262,19 @@ export function SchedulePage() {
             )}
           </div>
         )}
+
+        {isAdmin && !selectedDate && (
+          <p className="py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+            Klik op een dag om te plannen — beschikbare medewerkers verschijnen direct
+          </p>
+        )}
       </div>
 
       {isAdmin && (
-        <p className="text-center text-sm" style={{ color: 'var(--text-muted)' }}>
-          Geavanceerd plannen?{' '}
+        <p className="text-center text-xs" style={{ color: 'var(--text-muted)' }}>
+          Drag-and-drop & templates →{' '}
           <Link to="/app/maandplanner" className="font-medium text-brand-600 hover:underline">
-            Open maandplanner
+            Maandplanner
           </Link>
         </p>
       )}

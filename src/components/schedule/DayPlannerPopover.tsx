@@ -116,13 +116,14 @@ export function DayPlannerPopover({
       />
       {mobile ? (
         <div
-          className="fixed inset-x-0 bottom-0 z-[100] flex max-h-[90vh] flex-col overflow-hidden rounded-t-2xl animate-slide-up"
+          className="fixed inset-x-0 bottom-0 z-[100] flex max-h-[92dvh] w-full max-w-[100vw] flex-col overflow-hidden rounded-t-2xl animate-slide-up pb-[env(safe-area-inset-bottom)]"
           style={{
             background: 'var(--surface-card)',
             boxShadow: '0 -8px 40px rgba(15,23,42,0.15)',
           }}
           role="dialog"
           aria-modal="true"
+          onClick={(e) => e.stopPropagation()}
         >
           <DayPlannerPanel {...panelProps} date={date} popover onClose={onClose} />
         </div>

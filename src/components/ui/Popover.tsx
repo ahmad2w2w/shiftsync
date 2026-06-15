@@ -18,7 +18,7 @@ interface PopoverProps {
 
 export function Popover({ trigger, children, align = 'end', width = 320, className }: PopoverProps) {
   const [open, setOpen] = useState(false)
-  const [pos, setPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
+  const [pos, setPos] = useState<{ top: number; left: number; panelWidth: number }>({ top: 0, left: 0, panelWidth: width })
   const anchorRef = useRef<HTMLElement | null>(null)
   const panelRef = useRef<HTMLDivElement>(null)
 
@@ -27,9 +27,10 @@ export function Popover({ trigger, children, align = 'end', width = 320, classNa
     if (!el) return
     const r = el.getBoundingClientRect()
     const vw = window.innerWidth
-    let left = align === 'end' ? r.right - width : r.left
-    left = Math.max(12, Math.min(left, vw - width - 12))
-    setPos({ top: r.bottom + 8, left })
+    const panelWidth = Math.min(width, vw - 24)
+    let left = align === 'end' ? r.right - panelWidth : r.left
+    left = Math.max(12, Math.min(left, vw - panelWidth - 12))
+    setPos({ top: r.bottom + 8, left, panelWidth })
   }
 
   useLayoutEffect(() => {
@@ -75,7 +76,8 @@ export function Popover({ trigger, children, align = 'end', width = 320, classNa
             style={{
               top: pos.top,
               left: pos.left,
-              width,
+              width: pos.panelWidth,
+              maxWidth: 'calc(100vw - 24px)',
               transformOrigin: 'top',
               background: 'var(--surface-card)',
               border: '1px solid var(--border)',

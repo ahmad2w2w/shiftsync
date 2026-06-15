@@ -91,7 +91,7 @@ function EmployeeRow({
         {selected && <Check className="h-4 w-4 shrink-0 text-brand-600" />}
       </div>
       {reasons[0] && !warnings.length && (
-        <p className="text-[11px] font-medium pl-11" style={{ color: '#10B981' }}>
+        <p className="break-words pl-11 text-[11px] font-medium" style={{ color: '#10B981' }}>
           {reasons.join(' · ')}
         </p>
       )}
@@ -198,7 +198,7 @@ export function DayPlannerPanel({
   return (
     <div
       className={cn(
-        'flex min-h-0 flex-col overflow-hidden',
+        'flex min-h-0 min-w-0 max-w-full flex-col overflow-hidden',
         !popover && 'animate-slide-up rounded-2xl'
       )}
       style={
@@ -244,15 +244,17 @@ export function DayPlannerPanel({
 
       <div
         className={cn(
-          'grid min-h-0 flex-1 overflow-hidden',
-          popover ? 'grid-cols-[minmax(220px,260px)_1fr]' : 'gap-6 p-5 lg:grid-cols-[1fr_1.2fr]'
+          'grid min-h-0 min-w-0 flex-1 overflow-hidden',
+          popover
+            ? 'grid-cols-1 md:grid-cols-[minmax(0,260px)_minmax(0,1fr)]'
+            : 'grid-cols-1 gap-6 p-5 lg:grid-cols-[1fr_1.2fr]'
         )}
       >
         {/* Left: existing shifts + slot config */}
         <div
           className={cn(
-            'flex min-h-0 flex-col gap-3 overflow-y-auto',
-            popover ? 'border-r p-4' : 'space-y-5'
+            'flex min-h-0 min-w-0 flex-col gap-3 overflow-y-auto',
+            popover ? 'border-b p-4 md:border-b-0 md:border-r' : 'space-y-5'
           )}
           style={popover ? { borderColor: 'var(--border)' } : undefined}
         >
@@ -323,7 +325,7 @@ export function DayPlannerPanel({
         </div>
 
         {/* Right: employee picker */}
-        <div className={cn('flex min-h-0 flex-col gap-2', popover ? 'p-4' : 'space-y-2')}>
+        <div className={cn('flex min-h-0 min-w-0 flex-col gap-2 overflow-hidden', popover ? 'p-4' : 'space-y-2')}>
           <p className="flex shrink-0 items-center gap-1.5 text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
             <UserPlus className="h-3.5 w-3.5" style={{ color: 'var(--brand-strong)' }} />
             Medewerker

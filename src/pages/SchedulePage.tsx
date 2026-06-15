@@ -261,7 +261,7 @@ export function SchedulePage() {
   if (loading) return <DashboardSkeleton />
 
   return (
-    <div className="w-full space-y-5">
+    <div className="w-full min-w-0 max-w-full space-y-5">
       <PageHeader
         title="Rooster"
         subtitle={isAdmin ? headerLabel : `Je diensten · ${monthLabel(anchor)}`}
@@ -269,6 +269,7 @@ export function SchedulePage() {
           <div className="flex flex-wrap items-center gap-2">
             {isAdmin && (
               <SegmentedControl
+                className="max-w-full overflow-x-auto"
                 value={view}
                 onChange={(v) => setView(v)}
                 segments={[
@@ -370,7 +371,7 @@ export function SchedulePage() {
           <div className="space-y-3">
             <div className="flex items-center justify-center gap-3">
               <Button variant="secondary" size="sm" onClick={() => setSelectedDate(format(addDays(parseISO(selectedDate), -1), 'yyyy-MM-dd'))} aria-label="Vorige dag"><ChevronLeft className="h-4 w-4" /></Button>
-              <span className="min-w-[180px] text-center text-sm font-semibold capitalize" style={{ color: 'var(--text-primary)' }}>{formatDayHeader(selectedDate)}</span>
+              <span className="min-w-0 flex-1 text-center text-sm font-semibold capitalize sm:flex-none sm:min-w-[180px]" style={{ color: 'var(--text-primary)' }}>{formatDayHeader(selectedDate)}</span>
               <Button variant="secondary" size="sm" onClick={() => setSelectedDate(format(addDays(parseISO(selectedDate), 1), 'yyyy-MM-dd'))} aria-label="Volgende dag"><ChevronRight className="h-4 w-4" /></Button>
             </div>
             <DayPlannerPanel

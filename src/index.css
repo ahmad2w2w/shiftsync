@@ -441,6 +441,10 @@
   .app-main-column {
     min-height: 0;
   }
+
+  #main-content {
+    overflow-x: hidden;
+  }
 }
 
 .mobile-bottom-nav {

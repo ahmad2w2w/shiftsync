@@ -35,7 +35,7 @@ export function MonthCalendar({
   return (
     <div className="w-full">
       <div className="w-full">
-        <div className={cn('mb-3 grid grid-cols-7', large ? 'gap-3' : 'gap-1.5')}>
+        <div className={cn('mb-2 grid grid-cols-7', large ? 'gap-2 sm:gap-3' : 'gap-1.5')}>
           {WEEKDAYS.map((d) => (
             <div
               key={d}
@@ -47,7 +47,7 @@ export function MonthCalendar({
           ))}
         </div>
 
-        <div className={cn('grid grid-cols-7', large ? 'gap-3' : 'gap-1.5')}>
+        <div className={cn('grid grid-cols-7', large ? 'gap-2 sm:gap-3' : 'gap-1.5')}>
           {grid.map((day) => {
             const dateStr = format(day, 'yyyy-MM-dd')
             const inMonth = isSameMonth(day, monthAnchor)
@@ -72,11 +72,11 @@ export function MonthCalendar({
                 disabled={!inMonth || !onSelectDate}
                 onClick={() => onSelectDate?.(dateStr)}
                 className={cn(
-                  'relative flex flex-col rounded-2xl text-left transition-all duration-150',
+                  'relative flex w-full flex-col rounded-xl text-left transition-colors',
                   large
-                    ? 'min-h-[120px] p-3 sm:min-h-[136px] sm:p-4 md:min-h-[148px]'
+                    ? 'aspect-[4/3] min-h-[100px] p-3 sm:aspect-auto sm:min-h-[128px] sm:p-4 lg:min-h-[140px]'
                     : 'min-h-[80px] p-2 sm:min-h-[92px]',
-                  inMonth && onSelectDate && 'hover:-translate-y-0.5 hover:shadow-md',
+                  inMonth && onSelectDate && 'hover:bg-black/[0.02]',
                   inMonth
                     ? selected
                       ? 'ring-2 ring-brand-500 shadow-md'

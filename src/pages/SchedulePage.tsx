@@ -161,7 +161,7 @@ export function SchedulePage() {
   if (loading) return <DashboardSkeleton />
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       <PageHeader
         title="Rooster"
         subtitle={isAdmin ? monthLabelStr : `Je diensten · ${monthLabelStr}`}
@@ -206,7 +206,7 @@ export function SchedulePage() {
       )}
 
       <div
-        className={cn('rounded-xl p-4 transition-opacity', refreshing && 'opacity-60')}
+        className={cn('rounded-xl p-3 sm:p-4 transition-opacity', refreshing && 'opacity-60')}
         style={{ background: 'var(--surface-card)', border: '1px solid var(--border)' }}
       >
         <MonthCalendar
